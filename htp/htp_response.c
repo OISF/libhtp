@@ -356,8 +356,30 @@ int htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
     } else {
         // We have a response body
 
+        htp_header_t *ct = table_get_c(connp->out_tx->response_headers, "content-type");
         htp_header_t *cl = table_get_c(connp->out_tx->response_headers, "content-length");
         htp_header_t *te = table_get_c(connp->out_tx->response_headers, "transfer-encoding");
+
+        if (ct != NULL) {
+            connp->out_tx->response_content_type = bstr_dup_lower(ct->value);
+            if (connp->out_tx->response_content_type == NULL) {
+                return HTP_ERROR;
+            }
+
+            // Ignore parameters
+            char *data = bstr_ptr(connp->out_tx->response_content_type);
+            size_t len = bstr_len(ct->value);
+            size_t newlen = 0;
+            while (newlen < len) {
+                // TODO Some platforms may do things differently here
+                if (htp_is_space(data[newlen]) || (data[newlen] == ';')) {
+                    bstr_util_adjust_len(connp->out_tx->response_content_type, newlen);
+                    break;
+                }
+
+                newlen++;
+            }
+        }
 
         // 2. If a Transfer-Encoding header field (section 14.40) is present and
         //   indicates that the "chunked" transfer coding has been applied, then
@@ -411,7 +433,6 @@ int htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
             //   the presence in a request of a Range header with multiple byte-range
             //   specifiers implies that the client can parse multipart/byteranges
             //   responses.
-            htp_header_t *ct = table_get_c(connp->out_tx->response_headers, "content-type");
             if (ct != NULL) {
                 // TODO Handle multipart/byteranges
 

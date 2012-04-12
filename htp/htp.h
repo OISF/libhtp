@@ -1089,6 +1089,12 @@ struct htp_tx_t {
     /** Compression; currently COMPRESSION_NONE or COMPRESSION_GZIP. */
     int response_content_encoding;   
     
+    /** This field will contain the response content type when that information
+     *  is available in response headers. The contents of the field will be converted
+     *  to lowercase and any parameters (e.g., character set information) removed.
+     */
+    bstr *response_content_type;
+
     // Common
 
     /** Parsing flags: HTP_INVALID_CHUNKING, HTP_INVALID_FOLDING,

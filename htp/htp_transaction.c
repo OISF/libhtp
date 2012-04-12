@@ -179,6 +179,7 @@ void htp_tx_destroy(htp_tx_t *tx) {
     }
     
     bstr_free(&tx->request_content_type);
+    bstr_free(&tx->response_content_type);
 
     htp_urlenp_destroy(&tx->request_urlenp_query);
     htp_urlenp_destroy(&tx->request_urlenp_body);
