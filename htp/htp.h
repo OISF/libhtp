@@ -1051,6 +1051,16 @@ struct htp_tx_t {
     /** Parsed response headers. */
     table_t *response_headers;
 
+    /** Contains raw response headers. This field is generated on demand, use
+     *  htp_tx_get_response_headers_raw() to get it.
+     */
+    bstr *response_headers_raw;
+
+    /** How many response header lines have been included in the raw
+      * buffer (above).
+      */
+    size_t response_headers_raw_lines;
+
     /** Contains response header separator. */
     bstr *response_headers_sep;
 
@@ -1316,6 +1326,9 @@ int htp_resembles_response_line(htp_tx_t *tx);
 
 bstr *htp_tx_generate_request_headers_raw(htp_tx_t *tx);
 bstr *htp_tx_get_request_headers_raw(htp_tx_t *tx);
+
+bstr *htp_tx_generate_response_headers_raw(htp_tx_t *tx);
+bstr *htp_tx_get_response_headers_raw(htp_tx_t *tx);
 
 int htp_req_run_hook_body_data(htp_connp_t *connp, htp_tx_data_t *d);
 int htp_res_run_hook_body_data(htp_connp_t *connp, htp_tx_data_t *d);
