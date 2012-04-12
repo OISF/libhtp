@@ -474,6 +474,11 @@ struct htp_cfg_t {
     /** Request hook, invoked after a complete request is seen. */
     htp_hook_t *hook_request;
 
+    /** Response startup hook, invoked when a response transaction is found and
+     *  processing started.
+     */
+    htp_hook_t *hook_response_start;
+
     /** Response line hook, invoked after a response line has been parsed. */
     htp_hook_t *hook_response_line;
 
@@ -1157,6 +1162,7 @@ void htp_config_register_request_file_data(htp_cfg_t *cfg, int (*callback_fn)(ht
 void htp_config_register_request_trailer(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
 void htp_config_register_request(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
 
+void htp_config_register_response_start(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
 void htp_config_register_response_line(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
 void htp_config_register_response_headers(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
 void htp_config_register_response_body_data(htp_cfg_t *cfg, int (*callback_fn)(htp_tx_data_t *));

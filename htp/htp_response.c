@@ -792,6 +792,14 @@ int htp_connp_RES_IDLE(htp_connp_t * connp) {
     connp->out_header_line_index = -1;
     connp->out_header_line_counter = 0;
 
+    // Run hook RESPONSE_START
+    int rc = hook_run_all(connp->cfg->hook_response_start, connp);
+    if (rc != HOOK_OK) {
+        htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
+            "Response start callback returned error (%d)", rc);
+        return HTP_ERROR;
+    }
+
     // Change state into response line parsing, except if we're following
     // a short HTTP/0.9 request, because such requests to not have a
     // response line and headers.

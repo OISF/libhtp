@@ -256,6 +256,14 @@ htp_cfg_t *htp_config_copy(htp_cfg_t *cfg) {
         }
     }
     
+    if (cfg->hook_response_start != NULL) {
+        copy->hook_response_start = hook_copy(cfg->hook_response_start);
+        if (copy->hook_response_start == NULL) {
+            htp_config_destroy(copy);
+            return NULL;
+        }
+    }
+
     if (cfg->hook_response_line != NULL) {
         copy->hook_response_line = hook_copy(cfg->hook_response_line);
         if (copy->hook_response_line == NULL) {
@@ -322,6 +330,7 @@ void htp_config_destroy(htp_cfg_t *cfg) {
     hook_destroy(cfg->hook_request_file_data);
     hook_destroy(cfg->hook_request_trailer);
     hook_destroy(cfg->hook_request);
+    hook_destroy(cfg->hook_response_start);
     hook_destroy(cfg->hook_response_line);
     hook_destroy(cfg->hook_response_headers);
     hook_destroy(cfg->hook_response_body_data);
@@ -454,6 +463,17 @@ void htp_config_register_response_body_data(htp_cfg_t *cfg, int (*callback_fn)(h
 void htp_config_register_response_headers(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *)) {
     hook_register(&cfg->hook_response_headers, (htp_callback_fn_t)callback_fn);
 }
+
+/**
+ * Registers a response_start callback.
+ *
+ * @param cfg
+ * @param callback_fn
+ */
+void htp_config_register_response_start(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *)) {
+    hook_register(&cfg->hook_response_start, (htp_callback_fn_t)callback_fn);
+}
+
 
 /**
  * Registers a request_line callback.
