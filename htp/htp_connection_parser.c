@@ -233,9 +233,14 @@ htp_log_t *htp_connp_get_last_error(htp_connp_t *connp) {
  * @param remote_port Remote port
  * @param local_addr Local address
  * @param local_port Local port
+ * @param use_local_port Use local port for connection port
  * @param timestamp
  */
-void htp_connp_open(htp_connp_t *connp, const char *remote_addr, int remote_port, const char *local_addr, int local_port, htp_time_t *timestamp) {
+void htp_connp_open(htp_connp_t *connp,
+      const char *remote_addr, int remote_port,
+      const char *local_addr, int local_port,
+      int use_local_port,
+      htp_time_t *timestamp) {
     if ((connp->in_status != STREAM_STATE_NEW) || (connp->out_status != STREAM_STATE_NEW)) {
         htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Connection is already open");
         return;
@@ -259,6 +264,9 @@ void htp_connp_open(htp_connp_t *connp, const char *remote_addr, int remote_port
     }
 
     connp->conn->local_port = local_port;
+
+    connp->conn->use_local_port = use_local_port;
+
     memcpy(&connp->conn->open_timestamp, timestamp, sizeof(*timestamp));
     connp->in_status = STREAM_STATE_OPEN;
     connp->out_status = STREAM_STATE_OPEN;

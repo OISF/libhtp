@@ -747,18 +747,30 @@ int htp_connp_REQ_LINE(htp_connp_t *connp) {
                         // Check that the port in the URI is the same
                         // as the port on which the client is talking
                         // to the server
-                        if (connp->in_tx->parsed_uri->port_number != connp->conn->local_port) {
-                            // Incorrect port; use the real port instead
-                            connp->in_tx->parsed_uri->port_number = connp->conn->local_port;
-                            // TODO Log
+                        if (connp->conn->use_local_port) {
+                            if (connp->in_tx->parsed_uri->port_number != connp->conn->local_port) {
+                                // Incorrect port; use the real port instead
+                                connp->in_tx->parsed_uri->port_number = connp->conn->local_port;
+                                // TODO Log
+                            }
+                        } else {
+                            connp->in_tx->parsed_uri->port_number = connp->conn->remote_port;
                         }
                     } else {
                         // Invalid port; use the real port instead
-                        connp->in_tx->parsed_uri->port_number = connp->conn->local_port;
+                        if (connp->conn->use_local_port) {
+                            connp->in_tx->parsed_uri->port_number = connp->conn->local_port;
+                        } else {
+                            connp->in_tx->parsed_uri->port_number = connp->conn->remote_port;
+                        }
                         // TODO Log
                     }
                 } else {
-                    connp->in_tx->parsed_uri->port_number = connp->conn->local_port;
+                    if (connp->conn->use_local_port) {
+                        connp->in_tx->parsed_uri->port_number = connp->conn->local_port;
+                    } else {
+                        connp->in_tx->parsed_uri->port_number = connp->conn->remote_port;
+                    }
                 }
 
                 // Path
