@@ -435,9 +435,16 @@ int htp_connp_REQ_BODY_DETERMINE(htp_connp_t *connp) {
     // Run hook REQUEST_HEADERS
     int rc = hook_run_all(connp->cfg->hook_request_headers, connp);
     if (rc != HOOK_OK) {
-        htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
-            "Request headers callback returned error (%d)", rc);
-        return HTP_ERROR;
+        switch (rc) {
+            case HOOK_STOP:
+                return HTP_STOP;
+            case HOOK_ERROR:
+            case HOOK_DECLINED:
+            default:
+                htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
+                    "Request headers callback returned error (%d)", rc);
+                return HTP_ERROR;
+        }
     }
 
     return HTP_OK;
@@ -534,9 +541,16 @@ int htp_connp_REQ_HEADERS(htp_connp_t *connp) {
                     // Run hook REQUEST_TRAILER
                     int rc = hook_run_all(connp->cfg->hook_request_trailer, connp);
                     if (rc != HOOK_OK) {
-                        htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
-                            "Request trailer callback returned error (%d)", rc);
-                        return HTP_ERROR;
+                        switch (rc) {
+                            case HOOK_STOP:
+                                return HTP_STOP;
+                            case HOOK_ERROR:
+                            case HOOK_DECLINED:
+                            default:
+                                htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
+                                    "Request headers callback returned error (%d)", rc);
+                                return HTP_ERROR;
+                        }
                     }
 
                     // We've completed parsing this request
@@ -704,9 +718,16 @@ int htp_connp_REQ_LINE(htp_connp_t *connp) {
                 // Run hook REQUEST_URI_NORMALIZE
                 int rc = hook_run_all(connp->cfg->hook_request_uri_normalize, connp);
                 if (rc != HOOK_OK) {
-                    htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
-                            "Request URI normalize callback returned error (%d)", rc);
-                    return HTP_ERROR;
+                    switch (rc) {
+                        case HOOK_STOP:
+                            return HTP_STOP;
+                        case HOOK_ERROR:
+                        case HOOK_DECLINED:
+                        default:
+                            htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
+                                "Request headers callback returned error (%d)", rc);
+                            return HTP_ERROR;
+                    }
                 }
 
                 // Now is a good time to generate request_uri_normalized, before we finalize
@@ -773,9 +794,16 @@ int htp_connp_REQ_LINE(htp_connp_t *connp) {
             // Run hook REQUEST_LINE
             int rc = hook_run_all(connp->cfg->hook_request_line, connp);
             if (rc != HOOK_OK) {
-                htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
-                    "Request line callback returned error (%d)", rc);
-                return HTP_ERROR;
+                switch (rc) {
+                    case HOOK_STOP:
+                        return HTP_STOP;
+                    case HOOK_ERROR:
+                    case HOOK_DECLINED:
+                    default:
+                        htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
+                            "Request headers callback returned error (%d)", rc);
+                        return HTP_ERROR;
+                }
             }
 
             // Clean up.
@@ -815,9 +843,16 @@ int htp_connp_REQ_IDLE(htp_connp_t * connp) {
         // Run hook REQUEST
         int rc = hook_run_all(connp->cfg->hook_request, connp);
         if (rc != HOOK_OK) {
-            htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
-                "Request callback returned error (%d)", rc);
-            return HTP_ERROR;
+            switch (rc) {
+                case HOOK_STOP:
+                    return HTP_STOP;
+                case HOOK_ERROR:
+                case HOOK_DECLINED:
+                default:
+                    htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
+                        "Request headers callback returned error (%d)", rc);
+                    return HTP_ERROR;
+            }
         }
 
         // Clean-up
@@ -860,9 +895,16 @@ int htp_connp_REQ_IDLE(htp_connp_t * connp) {
     // Run hook TRANSACTION_START
     int rc = hook_run_all(connp->cfg->hook_transaction_start, connp);
     if (rc != HOOK_OK) {
-        htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
-            "Transaction start callback returned error (%d)", rc);
-        return HTP_ERROR;
+        switch (rc) {
+            case HOOK_STOP:
+                return HTP_STOP;
+            case HOOK_ERROR:
+            case HOOK_DECLINED:
+            default:
+                htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
+                    "Request headers callback returned error (%d)", rc);
+                return HTP_ERROR;
+        }
     }
 
     // Change state into request line parsing
@@ -897,6 +939,13 @@ int htp_connp_req_data(htp_connp_t *connp, htp_time_t *timestamp, unsigned char 
     fprint_raw_data(stderr, __FUNCTION__, data, len);
     #endif
 
+    // Return if the connection is in stop state.
+    if (connp->in_status == STREAM_STATE_STOP) {
+        htp_log(connp, HTP_LOG_MARK, HTP_LOG_INFO, 0, "Inbound parser is in STREAM_STATE_STOP");
+
+        return STREAM_STATE_STOP;
+    }
+
     // Return if the connection had a fatal error earlier
     if (connp->in_status == STREAM_STATE_ERROR) {
         htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Inbound parser is in STREAM_STATE_ERROR");
@@ -922,12 +971,9 @@ int htp_connp_req_data(htp_connp_t *connp, htp_time_t *timestamp, unsigned char 
         return STREAM_STATE_CLOSED;
     }
 
-    // Remember the timestamp of the current request data chunk
-    if (timestamp != NULL) {
+    // Store the current chunk information
+    if (timestamp)
         memcpy(&connp->in_timestamp, timestamp, sizeof(*timestamp));
-    }
-    
-    // Store the current chunk information    
     connp->in_current_data = data;
     connp->in_current_len = len;
     connp->in_current_offset = 0;
@@ -1008,6 +1054,17 @@ int htp_connp_req_data(htp_connp_t *connp, htp_time_t *timestamp, unsigned char 
 
                     return STREAM_STATE_DATA_OTHER;
                 }
+            }
+
+            // Check for stop
+            if (rc == HTP_STOP) {
+                #ifdef HTP_DEBUG
+                fprintf(stderr, "htp_connp_req_data: returning STREAM_STATE_STOP\n");
+                #endif
+
+                connp->in_status = STREAM_STATE_STOP;
+
+                return STREAM_STATE_STOP;
             }
 
             // If we're here that means we've encountered an error.

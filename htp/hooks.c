@@ -141,13 +141,15 @@ int hook_register(htp_hook_t **hook, htp_callback_fn_t callback_fn) {
 
 /**
  * Runs all the callbacks associated with a given hook. Only stops if
- * one of the callbacks returns an error (HOOK_ERROR). 
+ * one of the callbacks returns an error (HOOK_ERROR) or stop (HOOK_STOP).
  *
  * @param hook
  * @param data
  * @return HOOK_OK or HOOK_ERROR
  */
 int hook_run_all(htp_hook_t *hook, void *data) {
+    int ret;
+
     if (hook == NULL) {
         return HOOK_OK;
     }
@@ -155,8 +157,12 @@ int hook_run_all(htp_hook_t *hook, void *data) {
     htp_callback_t *callback = NULL;
     list_iterator_reset(hook->callbacks);
     while ((callback = list_iterator_next(hook->callbacks)) != NULL) {
-        if (callback->fn(data) == HOOK_ERROR) {
+        ret = callback->fn(data);
+        if (ret == HOOK_ERROR) {
             return HOOK_ERROR;
+        }
+        else if (ret == HOOK_STOP) {
+            return HOOK_STOP;
         }
     }
 
@@ -179,7 +185,7 @@ int hook_run_one(htp_hook_t *hook, void *data) {
     list_iterator_reset(hook->callbacks);
     while ((callback = list_iterator_next(hook->callbacks)) != NULL) {
         int status = callback->fn(data);
-        // Both HOOK_OK and HOOK_ERROR will stop hook processing
+        // HOOK_OK, HOOK_ERROR and HOOK_STOP will stop hook processing
         if (status != HOOK_DECLINED) {
             return status;
         }

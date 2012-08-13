@@ -43,10 +43,12 @@
 #define HOOK_ERROR      HTP_ERROR
 #define HOOK_OK         HTP_OK
 #define HOOK_DECLINED   HTP_DECLINED
+#define HOOK_STOP       HTP_STOP
 #else
 #define HOOK_ERROR      -1
 #define HOOK_OK          0
 #define HOOK_DECLINED    1
+#define HOOK_STOP        4
 #endif
 
 typedef struct htp_hook_t htp_hook_t;
