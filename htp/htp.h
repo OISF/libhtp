@@ -75,6 +75,7 @@ typedef struct htp_uri_t htp_uri_t;
 #define HTP_DATA                1
 #define HTP_DATA_OTHER          2
 #define HTP_DECLINED            3
+#define HTP_STOP                4
 
 #define PROTOCOL_UNKNOWN        -1
 #define HTTP_0_9                9
@@ -203,6 +204,7 @@ typedef struct htp_uri_t htp_uri_t;
 #define STREAM_STATE_ERROR          3
 #define STREAM_STATE_TUNNEL         4
 #define STREAM_STATE_DATA_OTHER     5
+#define STREAM_STATE_STOP           6
 #define STREAM_STATE_DATA           9
 
 #define URL_DECODER_PRESERVE_PERCENT            0

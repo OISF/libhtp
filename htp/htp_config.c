@@ -436,7 +436,7 @@ void htp_config_register_response(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t
 }
 
 /**
- * Registers a request_body_data callback.
+ * Registers a response_body_data callback.
  *
  * @param cfg
  * @param callback_fn
