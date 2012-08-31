@@ -681,6 +681,11 @@ struct htp_connp_t {
      */
     int64_t in_body_data_left;
 
+    /** Holds the length of data used by the chunk length header line,
+     *  including closing LF
+     */
+    int in_chunked_header_offset;
+
     /** Holds the amount of data that needs to be read from the
      *  current data chunk. Only used with chunked request bodies.
      */
@@ -747,6 +752,11 @@ struct htp_connp_t {
 
     /** The remaining length of the current response body, if known. */
     int64_t out_body_data_left;
+
+    /** Holds the length of data used by the chunk length header line,
+     *  including closing LF
+     */
+    int out_chunked_header_offset;
 
     /** Holds the amount of data that needs to be read from the
      *  current response data chunk. Only used with chunked response bodies.

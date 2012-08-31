@@ -157,6 +157,9 @@ int htp_connp_RES_BODY_CHUNKED_LENGTH(htp_connp_t *connp) {
             // Extract chunk length
             connp->out_chunked_length = htp_parse_chunked_length(connp->out_line, connp->out_line_len);
 
+            // Record the length of the chunk header line
+            connp->out_chunked_header_offset = connp->out_line_len;
+
             // Cleanup for the next line
             connp->out_line_len = 0;
 
