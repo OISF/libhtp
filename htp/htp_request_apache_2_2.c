@@ -92,7 +92,13 @@ int htp_process_request_header_apache_2_2(htp_connp_t *connp) {
             htp_chomp((unsigned char *)line, &llen);            
             bstr_add_mem_noex(tempstr, line, llen);
             hl->header = h;
+
+            if (i != connp->in_header_line_index) {
+                hl->flags |= HTP_FIELD_FOLDED;
+            }
         }
+
+        h->flags |= HTP_FIELD_FOLDED;
 
         data = (unsigned char *) bstr_ptr(tempstr);
         len = bstr_len(tempstr);
@@ -109,6 +115,9 @@ int htp_process_request_header_apache_2_2(htp_connp_t *connp) {
     // Do we already have a header with the same name?
     htp_header_t *h_existing = table_get(connp->in_tx->request_headers, h->name);
     if (h_existing != NULL) {
+        // repeated header
+        int i = 0;
+
         // TODO Do we want to have a list of the headers that are
         //      allowed to be combined in this way?
 
@@ -126,6 +135,12 @@ int htp_process_request_header_apache_2_2(htp_connp_t *connp) {
         h_existing->value = new_value;
         bstr_add_mem_noex(h_existing->value, ", ", 2);
         bstr_add_noex(h_existing->value, h->value);
+
+        // replace the header references in all lines
+        for (i = connp->in_header_line_index; i < connp->in_header_line_counter; i++) {
+          htp_header_line_t *hl = list_get(connp->in_tx->request_header_lines, i);
+          hl->header = h_existing;
+        }
 
         // The header is no longer needed
         bstr_free(&h->name);

@@ -838,7 +838,8 @@ struct htp_header_line_t {
     /** The offset of the first NUL byte, or -1. */
     int first_nul_offset;
 
-    /** Parsing flags: HTP_FIELD_INVALID, HTP_FIELD_LONG, HTP_FIELD_NUL_BYTE */
+    /** Parsing flags: HTP_FIELD_INVALID, HTP_FIELD_LONG, HTP_FIELD_NUL_BYTE,
+     *                 HTP_FIELD_REPEATED, HTP_FIELD_FOLDED */
     unsigned int flags;
     
     /** Header that uses this line. */
@@ -852,7 +853,7 @@ struct htp_header_t {
     /** Header value. */
     bstr *value;   
 
-    /** Parsing flags: HTP_FIELD_INVALID, HTP_FIELD_FOLDED, HTP_FIELD_REPEATED */
+    /** Parsing flags: HTP_FIELD_INVALID, HTP_FIELD_FOLDED, HTP_FIELD_REPEATED, HTP_FIELD_IGNORED */
     unsigned int flags;
 };
 
