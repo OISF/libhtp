@@ -58,7 +58,8 @@ int htp_ch_urlencoded_callback_request_body_data(htp_tx_data_t *d) {
         } else {
             // We have a parameter processor defined, which means we'll
             // need to create a new table
-            d->tx->request_params_body = table_create(table_size(d->tx->request_urlenp_body->params));
+            d->tx->request_params_body =
+                d->tx->cfg->create_table(table_size(d->tx->request_urlenp_body->params));
 
             // Transform parameters and store them into the new table
             bstr *name, *value;
@@ -132,7 +133,8 @@ int htp_ch_urlencoded_callback_request_line(htp_connp_t *connp) {
             // We have a parameter processor defined, which 
             // means we'll need to create a new table
             
-            connp->in_tx->request_params_query = table_create(table_size(connp->in_tx->request_urlenp_query->params));
+            connp->in_tx->request_params_query =
+                connp->cfg->create_table(table_size(connp->in_tx->request_urlenp_query->params));
 
             // Use the parameter processor on each parameter, storing
             // the results in the newly created table
@@ -165,7 +167,8 @@ int htp_ch_multipart_callback_request_body_data(htp_tx_data_t *d) {
         // Finalize parsing
         htp_mpartp_finalize(d->tx->request_mpartp);
 
-        d->tx->request_params_body = table_create(list_size(d->tx->request_mpartp->parts));
+        d->tx->request_params_body =
+            d->tx->cfg->create_table(list_size(d->tx->request_mpartp->parts));
         // TODO RC
 
         // Extract parameters

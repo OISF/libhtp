@@ -138,7 +138,7 @@ htp_urlenp_t *htp_urlenp_create(htp_tx_t *tx) {
 
     urlenp->tx = tx;
 
-    urlenp->params = table_create(HTP_URLENP_DEFAULT_PARAMS_SIZE);
+    urlenp->params = tx->cfg->create_table(HTP_URLENP_DEFAULT_PARAMS_SIZE);
     if (urlenp->params == NULL) {
         free(urlenp);
         return NULL;

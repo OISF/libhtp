@@ -117,22 +117,35 @@ void list_array_destroy(list_array_t **_l);
 
 
 // Table
+#define table_add(T, K, E) (T)->add(T, K, E)
+#define table_addn(T, K, E) (T)->addn(T, K, E)
+#define table_set(T, K, E) (T)->set(T, K, E)
+#define table_get(T, K) (T)->get(T, K)
+#define table_get_c(T, E) (T)->get_c(T, E)
+#define table_iterator_reset(T) (T)->iterator_reset(T)
+#define table_iterator_next(T, E) (T)->iterator_next(T, E)
+#define table_size(T) (T)->size(T)
+#define table_destroy(T) (*(T))->destroy(T)
+#define table_clear(T) (T)->clear(T)
 
 struct table_t {
     list_t *list;
+
+   int (*add)(table_t *, bstr *, void *);
+   int (*addn)(table_t *, bstr *, void *);
+#if 0
+  void (*set)(table_t *, bstr *, void *);
+#endif
+ void *(*get)(const table_t *, const bstr *);
+ void *(*get_c)(const table_t *, const char *);
+  void (*iterator_reset)(table_t *);
+ bstr *(*iterator_next)(table_t *, void **);
+size_t (*size)(const table_t *t);
+  void (*destroy)(table_t **);
+  void (*clear)(table_t *);
 };
 
 table_t *table_create(size_t size);
-     int table_add(table_t *, bstr *, void *);
-     int table_addn(table_t *, bstr *, void *);
-    void table_set(table_t *, bstr *, void *);     
-   void *table_get(const table_t *, const bstr *);
-   void *table_get_c(const table_t *, const char *);
-    void table_iterator_reset(table_t *);
-   bstr *table_iterator_next(table_t *, void **);         
-  size_t table_size(const table_t *t);
-    void table_destroy(table_t **);
-    void table_clear(table_t *);
 
 #ifdef __cplusplus
 }

@@ -308,7 +308,7 @@ htp_mpart_part_t *htp_mpart_part_create(htp_mpartp_t *mpartp) {
     htp_mpart_part_t * part = calloc(1, sizeof (htp_mpart_part_t));
     if (part == NULL) return NULL;
 
-    part->headers = table_create(4);
+    part->headers = mpartp->connp->cfg->create_table(4);
     if (part->headers == NULL) {
         free(part);
         return NULL;
@@ -611,7 +611,7 @@ htp_mpartp_t * htp_mpartp_create(htp_connp_t *connp, char *boundary) {
         return NULL;
     }
 
-    mpartp->parts = list_array_create(64);
+    mpartp->parts = connp->cfg->create_list_array(64);
     if (mpartp->parts == NULL) {
         htp_mpartp_destroy(&mpartp);
         return NULL;

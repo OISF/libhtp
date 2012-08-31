@@ -93,7 +93,8 @@ int htp_parse_cookies_v0(htp_connp_t *connp) {
     if (cookie_header == NULL) return HTP_OK;
 
     // Create a new table to store cookies
-    connp->in_tx->request_cookies = table_create(4);
+    connp->in_tx->request_cookies =
+        connp->cfg->create_table(4);
     if (connp->in_tx->request_cookies == NULL) return HTP_ERROR;
 
     char *data = bstr_ptr(cookie_header->value);

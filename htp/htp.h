@@ -510,6 +510,21 @@ struct htp_cfg_t {
      */
     htp_hook_t *hook_log;
 
+    /**
+     * Create linked list callback, invoked to create an application specific linked list
+     */
+    list_t *(*create_list_linked)(void);
+
+    /**
+     * Create array list callback, invoked to create an application specific array list
+     */
+    list_t *(*create_list_array)(size_t size);
+
+    /**
+     * Create table callback, invoked to create an application specific table
+     */
+    table_t *(*create_table)(size_t size);
+
     /** Opaque user data associated with this configuration structure. */
     void *user_data;
 };
@@ -1168,6 +1183,10 @@ const char *htp_get_version(void);
 htp_cfg_t *htp_config_copy(htp_cfg_t *cfg);
 htp_cfg_t *htp_config_create(void);
       void htp_config_destroy(htp_cfg_t *cfg); 
+
+void htp_config_register_list_linked_create(htp_cfg_t *cfg, list_t *(*callback_fn)(void));
+void htp_config_register_list_array_create(htp_cfg_t *cfg, list_t *(*callback_fn)(size_t size));
+void htp_config_register_table_create(htp_cfg_t *cfg, table_t *(*callback_fn)(size_t size));
 
 void htp_config_register_transaction_start(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
 void htp_config_register_request_line(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
