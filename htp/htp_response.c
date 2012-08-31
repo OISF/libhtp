@@ -332,17 +332,6 @@ int htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
             } else if ((bstr_cmp_c(ce->value, "deflate") == 0) || (bstr_cmp_c(ce->value, "x-deflate") == 0)) {
                 connp->out_tx->response_content_encoding = COMPRESSION_DEFLATE;
             }
-
-            if (connp->out_tx->response_content_encoding != COMPRESSION_NONE) {
-                connp->out_decompressor = (htp_decompressor_t *) htp_gzip_decompressor_create(connp,
-                    connp->out_tx->response_content_encoding);
-                if (connp->out_decompressor != NULL) {
-                    connp->out_decompressor->callback = htp_connp_RES_BODY_DECOMPRESSOR_CALLBACK;
-                } else {
-                    // No need to do anything; the error will have already
-                    // been reported by the failed decompressor.
-                }
-            }
         }
     }
 
@@ -464,6 +453,23 @@ int htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
             "Response headers callback returned error (%d)", rc);
 
         return HTP_ERROR;
+    }
+
+    // start decompression engines if decompression is still enabled
+    if (connp->cfg->response_decompression_enabled) {
+        if (connp->out_tx->response_content_encoding != COMPRESSION_NONE) {
+            connp->out_decompressor = (htp_decompressor_t *) htp_gzip_decompressor_create(connp,
+                connp->out_tx->response_content_encoding);
+            if (connp->out_decompressor != NULL) {
+                connp->out_decompressor->callback = htp_connp_RES_BODY_DECOMPRESSOR_CALLBACK;
+            } else {
+                // No need to do anything; the error will have already
+                // been reported by the failed decompressor.
+            }
+        }
+    } else {
+        // reset content encoding flag to indicate users change in preference
+        connp->out_tx->response_content_encoding = COMPRESSION_NONE;
     }
 
     return HTP_OK;
