@@ -756,6 +756,7 @@ int htp_connp_RES_IDLE(htp_connp_t * connp) {
         if (connp->out_tx->response_transfer_coding != -1) {
             htp_tx_data_t d;
             d.data = NULL;
+            d.len = 0;
             d.tx = connp->out_tx;
             htp_res_run_hook_body_data(connp, &d);
         }

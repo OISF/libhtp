@@ -822,6 +822,7 @@ int htp_connp_REQ_IDLE(htp_connp_t * connp) {
         if (connp->in_tx->request_transfer_coding != -1) {
             htp_tx_data_t d;
             d.data = NULL;
+            d.len = 0;
             d.tx = connp->in_tx;
             htp_req_run_hook_body_data(connp, &d);
         }
