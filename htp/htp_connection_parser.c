@@ -53,7 +53,8 @@ void htp_connp_clear_error(htp_connp_t *connp) {
  */
 void htp_connp_close(htp_connp_t *connp, htp_time_t *timestamp) {
     // Update internal information
-    memcpy(&connp->conn->close_timestamp, timestamp, sizeof(*timestamp));
+    if (timestamp)
+        memcpy(&connp->conn->close_timestamp, timestamp, sizeof(*timestamp));
     connp->in_status = STREAM_STATE_CLOSED;
     connp->out_status = STREAM_STATE_CLOSED;
 
@@ -259,7 +260,8 @@ void htp_connp_open(htp_connp_t *connp, const char *remote_addr, int remote_port
     }
 
     connp->conn->local_port = local_port;
-    memcpy(&connp->conn->open_timestamp, timestamp, sizeof(*timestamp));
+    if (timestamp)
+        memcpy(&connp->conn->open_timestamp, timestamp, sizeof(*timestamp));
     connp->in_status = STREAM_STATE_OPEN;
     connp->out_status = STREAM_STATE_OPEN;
 }
