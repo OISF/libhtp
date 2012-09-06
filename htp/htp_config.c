@@ -168,6 +168,10 @@ htp_cfg_t *htp_config_create(void) {
     // No need to create hooks here; they will be created on-demand,
     // during callback registration
 
+    cfg->create_list_linked = list_linked_create;
+    cfg->create_list_array = list_array_create;
+    cfg->create_table = table_create;
+
     // Set the default personality before we return
     htp_config_set_server_personality(cfg, HTP_SERVER_MINIMAL);
 
@@ -256,6 +260,14 @@ htp_cfg_t *htp_config_copy(htp_cfg_t *cfg) {
         }
     }
     
+    if (cfg->hook_response_start != NULL) {
+        copy->hook_response_start = hook_copy(cfg->hook_response_start);
+        if (copy->hook_response_start == NULL) {
+            htp_config_destroy(copy);
+            return NULL;
+        }
+    }
+
     if (cfg->hook_response_line != NULL) {
         copy->hook_response_line = hook_copy(cfg->hook_response_line);
         if (copy->hook_response_line == NULL) {
@@ -322,6 +334,7 @@ void htp_config_destroy(htp_cfg_t *cfg) {
     hook_destroy(cfg->hook_request_file_data);
     hook_destroy(cfg->hook_request_trailer);
     hook_destroy(cfg->hook_request);
+    hook_destroy(cfg->hook_response_start);
     hook_destroy(cfg->hook_response_line);
     hook_destroy(cfg->hook_response_headers);
     hook_destroy(cfg->hook_response_body_data);
@@ -329,8 +342,24 @@ void htp_config_destroy(htp_cfg_t *cfg) {
     hook_destroy(cfg->hook_response);
     hook_destroy(cfg->hook_log);
 
+    cfg->create_list_linked = NULL;
+    cfg->create_list_array = NULL;
+    cfg->create_table = NULL;
+
     // Free the structure itself
     free(cfg);
+}
+
+void htp_config_register_list_linked_create(htp_cfg_t *cfg, list_t *(*callback_fn)(void)) {
+    cfg->create_list_linked = callback_fn;
+}
+
+void htp_config_register_list_array_create(htp_cfg_t *cfg, list_t *(*callback_fn)(size_t size)) {
+    cfg->create_list_array = callback_fn;
+}
+
+void htp_config_register_table_create(htp_cfg_t *cfg, table_t *(*callback_fn)(size_t size)) {
+    cfg->create_table = callback_fn;
 }
 
 /**
@@ -454,6 +483,17 @@ void htp_config_register_response_body_data(htp_cfg_t *cfg, int (*callback_fn)(h
 void htp_config_register_response_headers(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *)) {
     hook_register(&cfg->hook_response_headers, (htp_callback_fn_t)callback_fn);
 }
+
+/**
+ * Registers a response_start callback.
+ *
+ * @param cfg
+ * @param callback_fn
+ */
+void htp_config_register_response_start(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *)) {
+    hook_register(&cfg->hook_response_start, (htp_callback_fn_t)callback_fn);
+}
+
 
 /**
  * Registers a request_line callback.

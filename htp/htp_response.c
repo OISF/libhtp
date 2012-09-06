@@ -157,6 +157,9 @@ int htp_connp_RES_BODY_CHUNKED_LENGTH(htp_connp_t *connp) {
             // Extract chunk length
             connp->out_chunked_length = htp_parse_chunked_length(connp->out_line, connp->out_line_len);
 
+            // Record the length of the chunk header line
+            connp->out_chunked_header_offset = connp->out_line_len;
+
             // Cleanup for the next line
             connp->out_line_len = 0;
 
@@ -329,17 +332,6 @@ int htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
             } else if ((bstr_cmp_c(ce->value, "deflate") == 0) || (bstr_cmp_c(ce->value, "x-deflate") == 0)) {
                 connp->out_tx->response_content_encoding = COMPRESSION_DEFLATE;
             }
-
-            if (connp->out_tx->response_content_encoding != COMPRESSION_NONE) {
-                connp->out_decompressor = (htp_decompressor_t *) htp_gzip_decompressor_create(connp,
-                    connp->out_tx->response_content_encoding);
-                if (connp->out_decompressor != NULL) {
-                    connp->out_decompressor->callback = htp_connp_RES_BODY_DECOMPRESSOR_CALLBACK;
-                } else {
-                    // No need to do anything; the error will have already
-                    // been reported by the failed decompressor.
-                }
-            }
         }
     }
 
@@ -356,8 +348,30 @@ int htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
     } else {
         // We have a response body
 
+        htp_header_t *ct = table_get_c(connp->out_tx->response_headers, "content-type");
         htp_header_t *cl = table_get_c(connp->out_tx->response_headers, "content-length");
         htp_header_t *te = table_get_c(connp->out_tx->response_headers, "transfer-encoding");
+
+        if (ct != NULL) {
+            connp->out_tx->response_content_type = bstr_dup_lower(ct->value);
+            if (connp->out_tx->response_content_type == NULL) {
+                return HTP_ERROR;
+            }
+
+            // Ignore parameters
+            char *data = bstr_ptr(connp->out_tx->response_content_type);
+            size_t len = bstr_len(ct->value);
+            size_t newlen = 0;
+            while (newlen < len) {
+                // TODO Some platforms may do things differently here
+                if (htp_is_space(data[newlen]) || (data[newlen] == ';')) {
+                    bstr_util_adjust_len(connp->out_tx->response_content_type, newlen);
+                    break;
+                }
+
+                newlen++;
+            }
+        }
 
         // 2. If a Transfer-Encoding header field (section 14.40) is present and
         //   indicates that the "chunked" transfer coding has been applied, then
@@ -411,7 +425,6 @@ int htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
             //   the presence in a request of a Range header with multiple byte-range
             //   specifiers implies that the client can parse multipart/byteranges
             //   responses.
-            htp_header_t *ct = table_get_c(connp->out_tx->response_headers, "content-type");
             if (ct != NULL) {
                 // TODO Handle multipart/byteranges
 
@@ -440,6 +453,23 @@ int htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
             "Response headers callback returned error (%d)", rc);
 
         return HTP_ERROR;
+    }
+
+    // start decompression engines if decompression is still enabled
+    if (connp->cfg->response_decompression_enabled) {
+        if (connp->out_tx->response_content_encoding != COMPRESSION_NONE) {
+            connp->out_decompressor = (htp_decompressor_t *) htp_gzip_decompressor_create(connp,
+                connp->out_tx->response_content_encoding);
+            if (connp->out_decompressor != NULL) {
+                connp->out_decompressor->callback = htp_connp_RES_BODY_DECOMPRESSOR_CALLBACK;
+            } else {
+                // No need to do anything; the error will have already
+                // been reported by the failed decompressor.
+            }
+        }
+    } else {
+        // reset content encoding flag to indicate users change in preference
+        connp->out_tx->response_content_encoding = COMPRESSION_NONE;
     }
 
     return HTP_OK;
@@ -482,9 +512,12 @@ int htp_connp_RES_HEADERS(htp_connp_t * connp) {
             // Should we terminate headers?
             if (htp_connp_is_line_terminator(connp, connp->out_line, connp->out_line_len)) {
                 // Terminator line
-                connp->out_tx->response_headers_sep = bstr_dup_mem((char *)connp->out_line, connp->out_line_len);
                 if (connp->out_tx->response_headers_sep == NULL) {
-                    return HTP_ERROR;
+                    connp->out_tx->response_headers_sep =
+                        bstr_dup_mem((char *)connp->out_line, connp->out_line_len);
+                    if (connp->out_tx->response_headers_sep == NULL) {
+                        return HTP_ERROR;
+                    }
                 }
 
                 // Parse previous header, if any
@@ -792,6 +825,14 @@ int htp_connp_RES_IDLE(htp_connp_t * connp) {
     connp->out_body_data_left = -1;
     connp->out_header_line_index = -1;
     connp->out_header_line_counter = 0;
+
+    // Run hook RESPONSE_START
+    int rc = hook_run_all(connp->cfg->hook_response_start, connp);
+    if (rc != HOOK_OK) {
+        htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
+            "Response start callback returned error (%d)", rc);
+        return HTP_ERROR;
+    }
 
     // Change state into response line parsing, except if we're following
     // a short HTTP/0.9 request, because such requests to not have a

@@ -48,13 +48,13 @@ htp_conn_t *htp_conn_create(htp_connp_t *connp) {
 
     conn->connp = connp;
 
-    conn->transactions = list_array_create(16);
+    conn->transactions = connp->cfg->create_list_array(16);
     if (conn->transactions == NULL) {
         free(conn);
         return NULL;
     }
 
-    conn->messages = list_array_create(8);
+    conn->messages = connp->cfg->create_list_array(8);
     if (conn->messages == NULL) {
         list_destroy(&conn->transactions);
         free(conn);

@@ -54,7 +54,7 @@ int htp_transcode_params(htp_connp_t *connp, table_t **params, int destroy_old) 
     }
 
     // Create a new table that will hold transcoded parameters
-    table_t *output_params = table_create(table_size(input_params));
+    table_t *output_params = connp->cfg->create_table(table_size(input_params));
     if (output_params == NULL) {
         return HTP_ERROR;
     }

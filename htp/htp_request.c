@@ -194,6 +194,9 @@ int htp_connp_REQ_BODY_CHUNKED_LENGTH(htp_connp_t *connp) {
             // Extract chunk length
             connp->in_chunked_length = htp_parse_chunked_length(connp->in_line, connp->in_line_len);
 
+            // Record the length of the chunk header line
+            connp->in_chunked_header_offset = connp->in_line_len;
+
             // Cleanup for the next line
             connp->in_line_len = 0;
 
@@ -747,18 +750,30 @@ int htp_connp_REQ_LINE(htp_connp_t *connp) {
                         // Check that the port in the URI is the same
                         // as the port on which the client is talking
                         // to the server
-                        if (connp->in_tx->parsed_uri->port_number != connp->conn->local_port) {
-                            // Incorrect port; use the real port instead
-                            connp->in_tx->parsed_uri->port_number = connp->conn->local_port;
-                            // TODO Log
+                        if (connp->conn->use_local_port) {
+                            if (connp->in_tx->parsed_uri->port_number != connp->conn->local_port) {
+                                // Incorrect port; use the real port instead
+                                connp->in_tx->parsed_uri->port_number = connp->conn->local_port;
+                                // TODO Log
+                            }
+                        } else {
+                            connp->in_tx->parsed_uri->port_number = connp->conn->remote_port;
                         }
                     } else {
                         // Invalid port; use the real port instead
-                        connp->in_tx->parsed_uri->port_number = connp->conn->local_port;
+                        if (connp->conn->use_local_port) {
+                            connp->in_tx->parsed_uri->port_number = connp->conn->local_port;
+                        } else {
+                            connp->in_tx->parsed_uri->port_number = connp->conn->remote_port;
+                        }
                         // TODO Log
                     }
                 } else {
-                    connp->in_tx->parsed_uri->port_number = connp->conn->local_port;
+                    if (connp->conn->use_local_port) {
+                        connp->in_tx->parsed_uri->port_number = connp->conn->local_port;
+                    } else {
+                        connp->in_tx->parsed_uri->port_number = connp->conn->remote_port;
+                    }
                 }
 
                 // Path

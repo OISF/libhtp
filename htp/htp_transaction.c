@@ -54,14 +54,14 @@ htp_tx_t *htp_tx_create(htp_cfg_t *cfg, int is_cfg_shared, htp_conn_t *conn) {
 
     tx->conn = conn;
 
-    tx->request_header_lines = list_array_create(32);
-    tx->request_headers = table_create(32);
+    tx->request_header_lines = cfg->create_list_array(32);
+    tx->request_headers = cfg->create_table(32);
     tx->request_line_nul_offset = -1;
     tx->parsed_uri = calloc(1, sizeof (htp_uri_t));
     tx->parsed_uri_incomplete = calloc(1, sizeof (htp_uri_t));
 
-    tx->response_header_lines = list_array_create(32);
-    tx->response_headers = table_create(32);
+    tx->response_header_lines = cfg->create_list_array(32);
+    tx->response_headers = cfg->create_table(32);
 
     tx->request_protocol_number = -1;
 
@@ -133,6 +133,9 @@ void htp_tx_destroy(htp_tx_t *tx) {
     if (tx->request_headers_raw != NULL) {
         bstr_free(&tx->request_headers_raw);
     }
+    if (tx->response_headers_raw != NULL) {
+        bstr_free(&tx->response_headers_raw);
+    }
 
     bstr_free(&tx->response_line);
     bstr_free(&tx->response_line_raw);
@@ -176,6 +179,7 @@ void htp_tx_destroy(htp_tx_t *tx) {
     }
     
     bstr_free(&tx->request_content_type);
+    bstr_free(&tx->response_content_type);
 
     htp_urlenp_destroy(&tx->request_urlenp_query);
     htp_urlenp_destroy(&tx->request_urlenp_body);

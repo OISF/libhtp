@@ -446,56 +446,14 @@ list_t *list_array_create(size_t size) {
 // -- Table --
 
 /**
- * Create a new table structure.
- *
- * @param size
- * @return newly created table_t
- */
-table_t *table_create(size_t size) {
-    table_t *t = calloc(1, sizeof (table_t));
-    if (t == NULL) return NULL;
-
-    // Use a list behind the scenes
-    t->list = list_array_create(size * 2);
-    if (t->list == NULL) {
-        free(t);
-        return NULL;
-    }
-    
-    return t;
-}
-
-/**
- * Destroy a table.
+ * Add a new table element. This function currently makes a copy of
+ * the key, which is inefficient.
  *
  * @param table
+ * @param key
+ * @param element
  */
-void table_destroy(table_t **_table) {
-    if ((_table == NULL)||(*_table == NULL)) return;    
-
-    table_t *table = *_table;
-    // Free keys only
-    int counter = 0;
-    void *data = NULL;
-
-    list_iterator_reset(table->list);
-   
-    while ((data = list_iterator_next(table->list)) != NULL) {   
-        // Free key
-        if ((counter % 2) == 0) {
-            free(data);
-        }        
-
-        counter++;
-    }    
-
-    list_destroy(&table->list);   
-
-    free(table);
-    *_table = NULL;
-}
-
-int table_add(table_t *table, bstr *key, void *element) {
+static int list_table_add(table_t *table, bstr *key, void *element) {
     bstr *dupkey = bstr_dup(key);
     if (dupkey == NULL) {
         return -1;
@@ -509,15 +467,7 @@ int table_add(table_t *table, bstr *key, void *element) {
     return rc;
 }
 
-/**
- * Add a new table element. This function currently makes a copy of
- * the key, which is inefficient.
- *
- * @param table
- * @param key
- * @param element
- */
-int table_addn(table_t *table, bstr *key, void *element) {    
+static int list_table_addn(table_t *table, bstr *key, void *element) {
     // Add key
     if (list_add(table->list, key) != 1) {    
         return -1;
@@ -561,7 +511,7 @@ static void *table_get_internal(table_t *table, bstr *key) {
  * @param cstr
  * @return table element, or NULL if not found
  */
-void *table_get_c(const table_t *table, const char *cstr) {
+static void *list_table_get_c(const table_t *table, const char *cstr) {
     // Iterate through the list, comparing
     // keys with the parameter, return data if found.
     bstr *ts = NULL;
@@ -583,7 +533,7 @@ void *table_get_c(const table_t *table, const char *cstr) {
  * @param key
  * @return table element, or NULL if not found
  */
-void *table_get(const table_t *table, const bstr *key) {
+static void *list_table_get(const table_t *table, const bstr *key) {
     // Iterate through the list, comparing
     // keys with the parameter, return data if found.
     bstr *ts = NULL;
@@ -603,7 +553,7 @@ void *table_get(const table_t *table, const bstr *key) {
  *
  * @param table
  */
-void table_iterator_reset(table_t *table) {
+static void list_table_iterator_reset(table_t *table) {
     list_iterator_reset(table->list);
 }
 
@@ -614,7 +564,7 @@ void table_iterator_reset(table_t *table) {
  * @param data
  * @return pointer to the key and the element if there is a next element, NULL otherwise
  */
-bstr *table_iterator_next(table_t *t, void **data) {
+static bstr *list_table_iterator_next(table_t *t, void **data) {
     bstr *s = list_iterator_next(t->list);
     if (s != NULL) {
         *data = list_iterator_next(t->list);
@@ -629,7 +579,7 @@ bstr *table_iterator_next(table_t *t, void **data) {
  * @param table
  * @return table size
  */
-size_t table_size(const table_t *table) {
+static size_t list_table_size(const table_t *table) {
     return list_size(table->list) / 2;
 }
 
@@ -638,7 +588,7 @@ size_t table_size(const table_t *table) {
  *
  * @param table
  */
-void table_clear(table_t *table) {        
+static void list_table_clear(table_t *table) {
     size_t size = list_size(table->list);
 
     list_destroy(&table->list);
@@ -648,6 +598,70 @@ void table_clear(table_t *table) {
     if (table->list == NULL) {
         free(table);        
     }    
+}
+
+/**
+ * Destroy a table.
+ *
+ * @param table
+ */
+static void list_table_destroy(table_t **_table) {
+    if ((_table == NULL)||(*_table == NULL)) return;
+
+    table_t *table = *_table;
+    // Free keys only
+    int counter = 0;
+    void *data = NULL;
+
+    list_iterator_reset(table->list);
+
+    while ((data = list_iterator_next(table->list)) != NULL) {
+        // Free key
+        if ((counter % 2) == 0) {
+            free(data);
+        }
+
+        counter++;
+    }
+
+    list_destroy(&table->list);
+
+    free(table);
+    *_table = NULL;
+}
+
+/**
+ * Create a new table structure.
+ *
+ * @param size
+ * @return newly created table_t
+ */
+table_t *table_create(size_t size) {
+    table_t *t = calloc(1, sizeof (table_t));
+    if (t == NULL) return NULL;
+
+    // Use a list behind the scenes
+    t->list = list_array_create(size * 2);
+    if (t->list == NULL) {
+        free(t);
+        return NULL;
+    }
+
+    // Initialise structure
+    t->add = list_table_add;
+    t->addn = list_table_addn;
+#if 0
+    t->set = list_table_set;
+#endif
+    t->get = list_table_get;
+    t->get_c = list_table_get_c;
+    t->iterator_reset = list_table_iterator_reset;
+    t->iterator_next = list_table_iterator_next;
+    t->size = list_table_size;
+    t->destroy = list_table_destroy;
+    t->clear = list_table_clear;
+
+    return t;
 }
 
 #if 0

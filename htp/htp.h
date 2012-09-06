@@ -474,6 +474,11 @@ struct htp_cfg_t {
     /** Request hook, invoked after a complete request is seen. */
     htp_hook_t *hook_request;
 
+    /** Response startup hook, invoked when a response transaction is found and
+     *  processing started.
+     */
+    htp_hook_t *hook_response_start;
+
     /** Response line hook, invoked after a response line has been parsed. */
     htp_hook_t *hook_response_line;
 
@@ -505,6 +510,21 @@ struct htp_cfg_t {
      */
     htp_hook_t *hook_log;
 
+    /**
+     * Create linked list callback, invoked to create an application specific linked list
+     */
+    list_t *(*create_list_linked)(void);
+
+    /**
+     * Create array list callback, invoked to create an application specific array list
+     */
+    list_t *(*create_list_array)(size_t size);
+
+    /**
+     * Create table callback, invoked to create an application specific table
+     */
+    table_t *(*create_table)(size_t size);
+
     /** Opaque user data associated with this configuration structure. */
     void *user_data;
 };
@@ -524,6 +544,16 @@ struct htp_conn_t {
 
     /** Local port. */
     int local_port;
+
+    /** Whether the local port should be used as the outgoing connection port,
+     *  usually when the local machine is the target of a firewall redirect
+     *  (without dport alteration)
+     *  This will be false (0) in cases where the local machine is:
+     *  - explicitly set as the browser proxy
+     *  - operating as a transparent proxy (eg using linux TRPOXY)
+     *  - using a firewall redirect but with dport altered
+     *  In cases where this is false, the remote port is used */
+    int use_local_port;
 
     /** Transactions carried out on this connection. The list may contain
      *  NULL elements when some of the transactions are deleted (and then
@@ -651,6 +681,11 @@ struct htp_connp_t {
      */
     int64_t in_body_data_left;
 
+    /** Holds the length of data used by the chunk length header line,
+     *  including closing LF
+     */
+    int in_chunked_header_offset;
+
     /** Holds the amount of data that needs to be read from the
      *  current data chunk. Only used with chunked request bodies.
      */
@@ -717,6 +752,11 @@ struct htp_connp_t {
 
     /** The remaining length of the current response body, if known. */
     int64_t out_body_data_left;
+
+    /** Holds the length of data used by the chunk length header line,
+     *  including closing LF
+     */
+    int out_chunked_header_offset;
 
     /** Holds the amount of data that needs to be read from the
      *  current response data chunk. Only used with chunked response bodies.
@@ -808,7 +848,8 @@ struct htp_header_line_t {
     /** The offset of the first NUL byte, or -1. */
     int first_nul_offset;
 
-    /** Parsing flags: HTP_FIELD_INVALID, HTP_FIELD_LONG, HTP_FIELD_NUL_BYTE */
+    /** Parsing flags: HTP_FIELD_INVALID, HTP_FIELD_LONG, HTP_FIELD_NUL_BYTE,
+     *                 HTP_FIELD_REPEATED, HTP_FIELD_FOLDED */
     unsigned int flags;
     
     /** Header that uses this line. */
@@ -822,7 +863,7 @@ struct htp_header_t {
     /** Header value. */
     bstr *value;   
 
-    /** Parsing flags: HTP_FIELD_INVALID, HTP_FIELD_FOLDED, HTP_FIELD_REPEATED */
+    /** Parsing flags: HTP_FIELD_INVALID, HTP_FIELD_FOLDED, HTP_FIELD_REPEATED, HTP_FIELD_IGNORED */
     unsigned int flags;
 };
 
@@ -1051,6 +1092,16 @@ struct htp_tx_t {
     /** Parsed response headers. */
     table_t *response_headers;
 
+    /** Contains raw response headers. This field is generated on demand, use
+     *  htp_tx_get_response_headers_raw() to get it.
+     */
+    bstr *response_headers_raw;
+
+    /** How many response header lines have been included in the raw
+      * buffer (above).
+      */
+    size_t response_headers_raw_lines;
+
     /** Contains response header separator. */
     bstr *response_headers_sep;
 
@@ -1074,6 +1125,12 @@ struct htp_tx_t {
     /** Compression; currently COMPRESSION_NONE or COMPRESSION_GZIP. */
     int response_content_encoding;   
     
+    /** This field will contain the response content type when that information
+     *  is available in response headers. The contents of the field will be converted
+     *  to lowercase and any parameters (e.g., character set information) removed.
+     */
+    bstr *response_content_type;
+
     // Common
 
     /** Parsing flags: HTP_INVALID_CHUNKING, HTP_INVALID_FOLDING,
@@ -1138,6 +1195,10 @@ htp_cfg_t *htp_config_copy(htp_cfg_t *cfg);
 htp_cfg_t *htp_config_create(void);
       void htp_config_destroy(htp_cfg_t *cfg); 
 
+void htp_config_register_list_linked_create(htp_cfg_t *cfg, list_t *(*callback_fn)(void));
+void htp_config_register_list_array_create(htp_cfg_t *cfg, list_t *(*callback_fn)(size_t size));
+void htp_config_register_table_create(htp_cfg_t *cfg, table_t *(*callback_fn)(size_t size));
+
 void htp_config_register_transaction_start(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
 void htp_config_register_request_line(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
 void htp_config_register_request_uri_normalize(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
@@ -1147,6 +1208,7 @@ void htp_config_register_request_file_data(htp_cfg_t *cfg, int (*callback_fn)(ht
 void htp_config_register_request_trailer(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
 void htp_config_register_request(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
 
+void htp_config_register_response_start(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
 void htp_config_register_response_line(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
 void htp_config_register_response_headers(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
 void htp_config_register_response_body_data(htp_cfg_t *cfg, int (*callback_fn)(htp_tx_data_t *));
@@ -1184,7 +1246,11 @@ void htp_config_register_multipart_parser(htp_cfg_t *cfg);
 
 htp_connp_t *htp_connp_create(htp_cfg_t *cfg);
 htp_connp_t *htp_connp_create_copycfg(htp_cfg_t *cfg);
-void htp_connp_open(htp_connp_t *connp, const char *remote_addr, int remote_port, const char *local_addr, int local_port, htp_time_t *timestamp);
+void htp_connp_open(htp_connp_t *connp,
+    const char *remote_addr, int remote_port,
+    const char *local_addr, int local_port,
+    int use_local_port,
+    htp_time_t *timestamp);
 void htp_connp_close(htp_connp_t *connp, htp_time_t *timestamp);
 void htp_connp_destroy(htp_connp_t *connp);
 void htp_connp_destroy_all(htp_connp_t *connp);
@@ -1316,6 +1382,9 @@ int htp_resembles_response_line(htp_tx_t *tx);
 
 bstr *htp_tx_generate_request_headers_raw(htp_tx_t *tx);
 bstr *htp_tx_get_request_headers_raw(htp_tx_t *tx);
+
+bstr *htp_tx_generate_response_headers_raw(htp_tx_t *tx);
+bstr *htp_tx_get_response_headers_raw(htp_tx_t *tx);
 
 int htp_req_run_hook_body_data(htp_connp_t *connp, htp_tx_data_t *d);
 int htp_res_run_hook_body_data(htp_connp_t *connp, htp_tx_data_t *d);
