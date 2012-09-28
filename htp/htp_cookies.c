@@ -73,7 +73,10 @@ int htp_parse_single_cookie_v0(htp_connp_t *connp, char *data, size_t len) {
     // Add cookie
     if (connp->cfg->parameter_processor == NULL) {
         // Add cookie directly
-        table_addn(connp->in_tx->request_cookies, name, value);
+        if (table_addn(connp->in_tx->request_cookies, name, value) == -1) {
+            bstr_free(&value);
+            bstr_free(&name);
+        }
     } else {
         // Add cookie through parameter processor
         connp->cfg->parameter_processor(connp->in_tx->request_cookies, name, value);
