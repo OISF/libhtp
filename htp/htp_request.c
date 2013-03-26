@@ -266,7 +266,7 @@ int htp_connp_REQ_BODY_DETERMINE(htp_connp_t *connp) {
 
     // Check for the Transfer-Encoding header, which
     // would indicate a chunked request body
-    if (te != NULL) {
+    if (te != NULL && te->value != NULL) {
         // Make sure it contains "chunked" only
         if (bstr_cmpc(te->value, "chunked") != 0) {
             // Invalid T-E header value
@@ -299,7 +299,7 @@ int htp_connp_REQ_BODY_DETERMINE(htp_connp_t *connp) {
         connp->in_tx->progress = TX_PROGRESS_REQ_BODY;
     } else
         // Next check for the presence of the Content-Length header
-        if (cl != NULL) {
+        if (cl != NULL && cl->value != NULL) {
         // It seems that we have a request body.
         connp->in_tx->request_transfer_coding = IDENTITY;
 
@@ -460,7 +460,8 @@ int htp_connp_REQ_HEADERS(htp_connp_t *connp) {
             }
 
             // Prepare line for consumption
-            int chomp_result = htp_chomp(connp->in_line, &connp->in_line_len);
+            size_t raw_in_line_len = connp->in_line_len;
+            htp_chomp(connp->in_line, &connp->in_line_len);
 
             // Check for header folding
             if (htp_connp_is_line_folded(connp->in_line, connp->in_line_len) == 0) {
@@ -491,11 +492,27 @@ int htp_connp_REQ_HEADERS(htp_connp_t *connp) {
             }
 
             // Add the raw header line to the list
-            connp->in_header_line->line = bstr_memdup((char *) connp->in_line, connp->in_line_len + chomp_result);
+            if (raw_in_line_len > connp->in_line_len) {
+                if (raw_in_line_len - connp->in_line_len == 2 &&
+                        connp->in_line[connp->in_line_len] == 0x0d &&
+                        connp->in_line[connp->in_line_len + 1] == 0x0a) {
+                    connp->in_header_line->terminators = NULL;
+                } else {
+                    connp->in_header_line->terminators =
+                        bstr_memdup((char *) connp->in_line + connp->in_line_len,
+                                raw_in_line_len - connp->in_line_len);
+                    if (connp->in_header_line->terminators == NULL) {
+                        return HTP_ERROR;
+                    }
+                }
+            } else {
+                connp->in_header_line->terminators = NULL;
+            }
+
+            connp->in_header_line->line = bstr_memdup((char *) connp->in_line, connp->in_line_len);
             if (connp->in_header_line->line == NULL) {
                 return HTP_ERROR;
             }
-            
             list_add(connp->in_tx->request_header_lines, connp->in_header_line);
             connp->in_header_line = NULL;
 

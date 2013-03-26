@@ -704,7 +704,10 @@ struct htp_header_line_t {
 
     /** Parsing flags: HTP_FIELD_INVALID_NOT_FATAL, HTP_FIELD_INVALID_FATAL, HTP_FIELD_LONG */
     unsigned int flags;
-    
+
+    /** terminator characters, if NULL assume RFC compliant 0d 0a */
+    bstr *terminators;
+
     /** Header that uses this line. */
     htp_header_t *header;
 };
@@ -1002,7 +1005,8 @@ void htp_config_set_path_case_insensitive(htp_cfg_t *cfg, int path_case_insensit
 void htp_config_set_path_compress_separators(htp_cfg_t *cfg, int compress_separators);
 void htp_config_set_path_control_char_handling(htp_cfg_t *cfg, int control_char_handling);
 void htp_config_set_path_convert_utf8(htp_cfg_t *cfg, int convert_utf8);
-void htp_config_set_path_decode_separators(htp_cfg_t *cfg, int decode_u_encoding);
+void htp_config_set_path_decode_separators(htp_cfg_t *cfg, int backslash_separators);
+void htp_config_set_path_decode_u_encoding(htp_cfg_t *cfg, int decode_u_encoding);
 void htp_config_set_path_invalid_encoding_handling(htp_cfg_t *cfg, int invalid_encoding_handling);
 void htp_config_set_path_invalid_utf8_handling(htp_cfg_t *cfg, int invalid_utf8_handling);
 void htp_config_set_path_nul_encoded_handling(htp_cfg_t *cfg, int nul_encoded_handling);
