@@ -64,3 +64,16 @@
 - Refactor how normalization options are configured. LibHTP now supports multiple normalization
   contexts, with 2 used at this time: HTP_DECODER_URL_PATH and HTP_DECODER_URLENCODED.
 
+- New hooks to receive raw request header and trailer data: REQUEST_HEADER_DATA and REQUEST_TRAILER_DATA.
+
+- New hooks to receive raw response header and trailer data: RESPONSE_HEADER_DATA and RESPONSE_TRAILER_DATA.
+
+- Removed field htp_tx_t::request_uri_normalized.
+
+- Removed fields htp_tx_t::request_line_nul and htp_tx_t::request_line_nul_offset.
+
+- Renamed htp_tx_t::parsed_uri_incomplete to htp_tx_t::parsed_uri_raw.
+
+- Added request_hostname and request_port_number to htp_tx_t. These fields will hold the information
+  on what's the correct hostname/port, per RFC. Before, this information was in parsed_uri, but parsed_uri
+  now stores only what was actually supplied in the URI.

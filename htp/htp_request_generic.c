@@ -36,9 +36,6 @@
  * @author Ivan Ristic <ivanr@webkreator.com>
  */
 
-#include <ctype.h>
-
-#include "htp.h"
 #include "htp_private.h"
 
 /**
@@ -270,14 +267,13 @@ int htp_parse_request_line_generic(htp_connp_t *connp) {
     if (pos == len) {
         // No, this looks like a HTTP/0.9 request.
         tx->is_protocol_0_9 = 1;
+        tx->request_protocol_number = HTP_PROTOCOL_0_9;
         return HTP_OK;
     }
 
     // The protocol information spreads until the end of the line.
     tx->request_protocol = bstr_dup_mem(data + pos, len - pos);
-    if (tx->request_protocol == NULL) {
-        return HTP_ERROR;
-    }
+    if (tx->request_protocol == NULL) return HTP_ERROR;
 
     tx->request_protocol_number = htp_parse_protocol(tx->request_protocol);
 

@@ -36,9 +36,7 @@
  * @author Ivan Ristic <ivanr@webkreator.com>
  */
 
-#include <ctype.h>
-
-#include "htp.h"
+#include "htp_private.h"
 
 /**
  * Parses a single v0 request cookie and places the results into tx->request_cookies.

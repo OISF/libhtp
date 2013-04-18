@@ -45,8 +45,7 @@
 #include <sys/stat.h>
 
 #include <gtest/gtest.h>
-#include "htp/htp.h"
-#include "htp/htp_decompressors.h"
+#include <htp/htp_private.h>
 
 #ifndef O_BINARY
 #define O_BINARY 0

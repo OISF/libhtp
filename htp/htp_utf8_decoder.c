@@ -58,7 +58,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SO
 // Copyright (c) 2008-2009 Bjoern Hoehrmann <bjoern@hoehrmann.de>
 // See http://bjoern.hoehrmann.de/utf-8/decoder/dfa/ for details.
 
-#include "htp_utf8_decoder.h"
+#include "htp_private.h"
 
 static const uint8_t utf8d[] = {
   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 00..1f
@@ -103,7 +103,7 @@ static const uint8_t utf8d_allow_overlong[] = {
  * @return HTP_UTF8_ACCEPT for a valid character, HTP_UTF8_REJECT for an invalid character,
  *         or something else if the character has not yet been formed
  */
-inline uint32_t htp_utf8_decode(uint32_t* state, uint32_t* codep, uint32_t byte) {
+uint32_t htp_utf8_decode(uint32_t* state, uint32_t* codep, uint32_t byte) {
   uint32_t type = utf8d[byte];
 
   *codep = (*state != HTP_UTF8_ACCEPT) ?
@@ -124,7 +124,7 @@ inline uint32_t htp_utf8_decode(uint32_t* state, uint32_t* codep, uint32_t byte)
  * @return HTP_UTF8_ACCEPT for a valid character, HTP_UTF8_REJECT for an invalid character,
  *         or something else if the character has not yet been formed
  */
-inline uint32_t htp_utf8_decode_allow_overlong(uint32_t* state, uint32_t* codep, uint32_t byte) {
+uint32_t htp_utf8_decode_allow_overlong(uint32_t* state, uint32_t* codep, uint32_t byte) {
   uint32_t type = utf8d_allow_overlong[byte];
 
   *codep = (*state != HTP_UTF8_ACCEPT) ?

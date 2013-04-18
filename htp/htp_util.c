@@ -36,20 +36,7 @@
  * @author Ivan Ristic <ivanr@webkreator.com>
  */
 
-#include <ctype.h>
-
-#if defined(__cplusplus) && !defined(__STDC_FORMAT_MACROS)
-/* C99 requires that inttypes.h only exposes PRI* macros
- * for C++ implementations if this is defined: */
-#define __STDC_FORMAT_MACROS
-#endif
-
-#include <inttypes.h>
-#include <stdarg.h>
-
-#include "htp.h"
 #include "htp_private.h"
-#include "htp_utf8_decoder.h"
 
 /**
  * Is character a linear white space character?
@@ -452,77 +439,108 @@ int htp_connp_is_line_ignorable(htp_connp_t *connp, unsigned char *data, size_t 
     return htp_connp_is_line_terminator(connp, data, len);
 }
 
+static htp_status_t htp_parse_port(unsigned char *data, size_t len, int *port, int *invalid) {
+    if (len == 0) {
+        *port = -1;
+        *invalid = 1;
+        return HTP_OK;
+    }
+
+    int64_t port_parsed = htp_parse_positive_integer_whitespace(data, len, 10);
+
+    if (port_parsed < 0) {
+        // Failed to parse the port number.
+        *port = -1;
+        *invalid = 1;
+    } else if ((port_parsed > 0) && (port_parsed < 65536)) {
+        // Valid port number.
+        *port = port_parsed;
+    } else {
+        // Port number out of range.
+        *port = -1;
+        *invalid = 1;
+    }
+
+    return HTP_OK;
+}
+
 /**
  * Parses an authority string, which consists of a hostname with an optional port number; username
- * and password are not allowed and will not be handled. On success, this function will allocate a
- * new bstring, which the caller will need to manage. If the port information is not available or
- * if it is invalid, the port variable will contain -1. The HTP_HOST_INVALID flag will be set if
- * the authority is in the incorrect format.
+ * and password are not allowed and will not be handled.
  *
  * @param[in] hostport
- * @param[out] hostname
- * @param[out] port
- * @param[out] invalid
- * @return HTP_OK on success, HTP_ERROR on failure.
+ * @param[out] hostname A bstring containing the hostname, or NULL if the hostname is invalid. If this value
+ *                      is not NULL, the caller assumes responsibility for memory management.
+ * @param[out] port Port number, or -1 if the port is not present or invalid.
+ * @param[out] invalid Set to 1 if any part of the authority is invalid.
+ * @return HTP_OK on success, HTP_ERROR on memory allocation failure.
  */
 htp_status_t htp_parse_hostport(bstr *hostport, bstr **hostname, int *port, int *invalid) {
     if ((hostport == NULL) || (hostname == NULL) || (port == NULL) || (invalid == NULL)) return HTP_ERROR;
 
+    *hostname = NULL;
+    *port = -1;
     *invalid = 0;
 
     unsigned char *data = bstr_ptr(hostport);
     size_t len = bstr_len(hostport);
 
-    // Ignore whitespace at the beginning and the end.
     bstr_util_mem_trim(&data, &len);
 
-    // Is there a colon?
-    unsigned char *colon = memchr(data, ':', len);
-    if (colon == NULL) {
-        // Hostname alone, no port.
+    if (len == 0) {
+        *invalid = 1;
+        return HTP_OK;
+    }
 
-        *port = -1;
+    // Check for an IPv6 address.
+    if (data[0] == '[') {
+        // IPv6 host.
 
-        // Ignore one dot at the end.
-        if ((len > 0) && (data[len - 1] == '.')) len--;
-
-        *hostname = bstr_dup_mem(data, len);
-        if (*hostname == NULL) return HTP_ERROR;
-
-        bstr_to_lowercase(*hostname);
-    } else {
-        // Hostname and port.
-
-        // Ignore whitespace at the end of hostname.
-        unsigned char *hostend = colon;
-        while ((hostend > data) && (isspace(*(hostend - 1)))) hostend--;
-
-        // Ignore one dot at the end.
-        if ((hostend > data) && (*(hostend - 1) == '.')) hostend--;
-
-        *hostname = bstr_dup_mem(data, hostend - data);
-        if (*hostname == NULL) return HTP_ERROR;
-
-        bstr_to_lowercase(*hostname);
-
-        // Parse the port.
-
-        unsigned char *portstart = colon + 1;
-        size_t portlen = len - (portstart - data);
-
-        int64_t port_parsed = htp_parse_positive_integer_whitespace(portstart, portlen, 10);
-
-        if (port_parsed < 0) {
-            // Failed to parse the port number.
-            *port = -1;
+        // Find the end of the IPv6 address.
+        size_t pos = 0;
+        while ((pos < len) && (data[pos] != ']')) pos++;
+        if (pos == len) {
             *invalid = 1;
-        } else if ((port_parsed > 0) && (port_parsed < 65536)) {
-            // Valid port number.
-            *port = port_parsed;
+            return HTP_OK;
+        }
+
+        *hostname = bstr_dup_mem(data, pos + 1);
+        if (*hostname == NULL) return HTP_ERROR;       
+
+        // Over the ']'.
+        pos++;
+        if (pos == len) return HTP_OK;
+
+        // Handle port.
+        if (data[pos] == ':') {
+            return htp_parse_port(data + pos + 1, len - pos - 1, port, invalid);
         } else {
-            // Port number out of range.
-            *port = -1;
             *invalid = 1;
+            return HTP_OK;
+        }
+    } else {
+        // Not IPv6 host.
+
+        // Is there a colon?
+        unsigned char *colon = memchr(data, ':', len);
+        if (colon == NULL) {
+            // Hostname alone, no port.
+
+            *hostname = bstr_dup_mem(data, len);
+            if (*hostname == NULL) return HTP_ERROR;
+
+            bstr_to_lowercase(*hostname);
+        } else {
+            // Hostname and port.
+
+            // Ignore whitespace at the end of hostname.
+            unsigned char *hostend = colon;
+            while ((hostend > data) && (isspace(*(hostend - 1)))) hostend--;
+
+            *hostname = bstr_dup_mem(data, hostend - data);
+            if (*hostname == NULL) return HTP_ERROR;           
+
+            return htp_parse_port(colon + 1, len - (colon + 1 - data), port, invalid);
         }
     }
 
@@ -626,6 +644,7 @@ int htp_parse_uri(bstr *input, htp_uri_t **uri) {
         } else {
             // Make a copy of the scheme
             (*uri)->scheme = bstr_dup_mem(data + start, pos - start);
+            if ((*uri)->scheme == NULL) return HTP_ERROR;
 
             // Go over the colon
             pos++;
@@ -664,10 +683,13 @@ int htp_parse_uri(bstr *input, htp_uri_t **uri) {
                 if (m != NULL) {
                     // Username and password
                     (*uri)->username = bstr_dup_mem(credentials_start, m - credentials_start);
+                    if ((*uri)->username == NULL) return HTP_ERROR;
                     (*uri)->password = bstr_dup_mem(m + 1, credentials_len - (m - credentials_start) - 1);
+                    if ((*uri)->password == NULL) return HTP_ERROR;
                 } else {
                     // Username alone
                     (*uri)->username = bstr_dup_mem(credentials_start, credentials_len);
+                    if ((*uri)->username == NULL) return HTP_ERROR;
                 }
             } else {
                 // No credentials
@@ -675,22 +697,50 @@ int htp_parse_uri(bstr *input, htp_uri_t **uri) {
                 hostname_len = pos - start;
             }
 
-            // Still parsing authority; is there a port provided?
-            m = memchr(hostname_start, ':', hostname_len);
-            if (m != NULL) {
-                size_t port_len = hostname_len - (m - hostname_start) - 1;
-                hostname_len = hostname_len - port_len - 1;
+            // Parsing authority without credentials.
+            if ((hostname_len > 0) && (hostname_start[0] == '[')) {
+                // IPv6 address.
 
-                // Port string
-                (*uri)->port = bstr_dup_mem(m + 1, port_len);
+                m = memchr(hostname_start, ']', hostname_len);
+                if (m == NULL) {
+                    // Invalid IPv6 address; use the entire string as hostname.
+                    (*uri)->hostname = bstr_dup_mem(hostname_start, hostname_len);
+                    if ((*uri)->hostname == NULL) return HTP_ERROR;
+                } else {
+                    (*uri)->hostname = bstr_dup_mem(hostname_start, m - hostname_start + 1);
+                    if ((*uri)->hostname == NULL) return HTP_ERROR;                   
 
-                // We deliberately don't want to try to convert the port
-                // string as a number. That will be done later, during
-                // the normalization and validation process.
+                    // Is there a port?
+                    hostname_len = hostname_len - (m - hostname_start + 1);
+                    hostname_start = m + 1;                   
+
+                    m = memchr(hostname_start, ':', hostname_len);
+                    if (m != NULL) {
+                        size_t port_len = hostname_len - (m - hostname_start) - 1;
+                        hostname_len = hostname_len - port_len - 1;
+
+                        // Port string
+                        (*uri)->port = bstr_dup_mem(m + 1, port_len);
+                        if ((*uri)->port == NULL) return HTP_ERROR;
+                    }
+                }
+            } else {
+                // Not IPv6 address.
+
+                m = memchr(hostname_start, ':', hostname_len);
+                if (m != NULL) {
+                    size_t port_len = hostname_len - (m - hostname_start) - 1;
+                    hostname_len = hostname_len - port_len - 1;
+
+                    // Port string
+                    (*uri)->port = bstr_dup_mem(m + 1, port_len);
+                    if ((*uri)->port == NULL) return HTP_ERROR;
+                }
+
+                // Hostname
+                (*uri)->hostname = bstr_dup_mem(hostname_start, hostname_len);
+                if ((*uri)->hostname == NULL) return HTP_ERROR;
             }
-
-            // Hostname
-            (*uri)->hostname = bstr_dup_mem(hostname_start, hostname_len);
         }
 
     // Path
@@ -702,6 +752,7 @@ int htp_parse_uri(bstr *input, htp_uri_t **uri) {
 
     // Path
     (*uri)->path = bstr_dup_mem(data + start, pos - start);
+    if ((*uri)->path == NULL) return HTP_ERROR;
 
     if (pos == len) return HTP_OK;
 
@@ -716,6 +767,7 @@ int htp_parse_uri(bstr *input, htp_uri_t **uri) {
 
         // Query string
         (*uri)->query = bstr_dup_mem(data + start, pos - start);
+        if ((*uri)->query == NULL) return HTP_ERROR;
 
         if (pos == len) return HTP_OK;
     }
@@ -727,6 +779,7 @@ int htp_parse_uri(bstr *input, htp_uri_t **uri) {
 
         // Fragment; ends with the end of the input
         (*uri)->fragment = bstr_dup_mem(data + start, len - start);
+        if ((*uri)->fragment == NULL) return HTP_ERROR;
     }
 
     return HTP_OK;
@@ -1615,11 +1668,13 @@ int htp_normalize_parsed_uri(htp_connp_t *connp, htp_uri_t *incomplete, htp_uri_
             normalized->port_number = -1;
             connp->in_tx->flags |= HTP_HOSTU_INVALID;
         }
+    } else {
+        normalized->port_number = -1;
     }
 
     // Path.
     if (incomplete->path != NULL) {
-        // Make a copy of the path, on which we can work on.
+        // Make a copy of the path, so that we can work on it.
         normalized->path = bstr_dup(incomplete->path);
         if (normalized->path == NULL) return HTP_ERROR;
 
@@ -1627,12 +1682,12 @@ int htp_normalize_parsed_uri(htp_connp_t *connp, htp_uri_t *incomplete, htp_uri_
         // compress separators and convert backslashes.
         htp_decode_path_inplace(connp->cfg, connp->in_tx, normalized->path);
 
-        // Handle UTF-8 in path.
+        // Handle UTF-8 in the path.
         if (connp->cfg->decoder_cfgs[HTP_DECODER_URL_PATH].utf8_convert_bestfit) {
             // Decode Unicode characters into a single-byte stream, using best-fit mapping.
             htp_utf8_decode_path_inplace(connp->cfg, connp->in_tx, normalized->path);
         } else {
-            // Only validate path as a UTF-8 stream.
+            // No decoding, but try to validate the path as a UTF-8 stream.
             htp_utf8_validate_path(connp->in_tx, normalized->path);
         }
 
@@ -1641,11 +1696,10 @@ int htp_normalize_parsed_uri(htp_connp_t *connp, htp_uri_t *incomplete, htp_uri_
     }
 
     // Query string.
-    if (incomplete->query != NULL) {
-        // We cannot URL-decode the query string here; it needs to be
-        // parsed into individual key-value pairs first.
+    if (incomplete->query != NULL) {        
         normalized->query = bstr_dup(incomplete->query);
         if (normalized->query == NULL) return HTP_ERROR;
+        // No URL-decoding can be done without loss of information.
     }
 
     // Fragment.
@@ -2387,4 +2441,28 @@ int htp_validate_hostname(bstr *hostname) {
     }
 
     return 1;
+}
+
+void htp_uri_free(htp_uri_t *uri) {
+    if (uri == NULL) return;
+
+    bstr_free(uri->scheme);
+    bstr_free(uri->username);
+    bstr_free(uri->password);
+    bstr_free(uri->hostname);
+    bstr_free(uri->port);
+    bstr_free(uri->path);
+    bstr_free(uri->query);
+    bstr_free(uri->fragment);
+
+    free(uri);
+}
+
+htp_uri_t *htp_uri_alloc() {
+    htp_uri_t *u = calloc(1, sizeof(htp_uri_t));
+    if (u == NULL) return NULL;
+    
+    u->port_number = -1;
+
+    return u;
 }

@@ -48,6 +48,7 @@ extern "C" {
 #include "htp_core.h"
 
 #include "bstr.h"
+#include "htp_base64.h"
 #include "htp_config.h"
 #include "htp_connection_parser.h"
 #include "htp_decompressors.h"
@@ -57,6 +58,7 @@ extern "C" {
 #include "htp_table.h"
 #include "htp_transaction.h"
 #include "htp_urlencoded.h"
+#include "htp_utf8_decoder.h"
 
 /**
  * Represents a single TCP connection.
@@ -228,16 +230,7 @@ struct htp_tx_t {
     unsigned int request_ignored_lines;
 
     /** The first line of this request. */
-    bstr *request_line;
-
-    /** The first line of this request including ws+line terminator(s). */
-    bstr *request_line_raw;
-
-    /** How many NUL bytes are there in the request line? */
-    int request_line_nul;
-
-    /** The offset of the first NUL byte. */
-    int request_line_nul_offset;
+    bstr *request_line;      
 
     /** Request method. */
     bstr *request_method;
@@ -245,17 +238,15 @@ struct htp_tx_t {
     /** Request method, as number. Available only if we were able to recognize the request method. */
     enum htp_method_t request_method_number;
 
-    /** Request URI, raw, as given to us on the request line. */
-    bstr *request_uri;
-
     /**
-     * Normalized request URI as a single string. The availability of this
-     * field depends on configuration. Use htp_config_set_generate_request_uri_normalized()
-     * to ask for the field to be generated.
+     * Request URI, raw, as given to us on the request line. This field can take different forms,
+     * for example authority for CONNECT methods, absolute URIs for proxy requests, and the query
+     * string when one is provided. Use htp_tx_t::parsed_uri if you need to access to specific
+     * URI elements.
      */
-    bstr *request_uri_normalized;
+    bstr *request_uri;   
 
-    /** Request protocol, as text. */
+    /** Request protocol, as text. Can be NULL if no protocol was specified. */
     bstr *request_protocol;
 
     /**
@@ -264,25 +255,28 @@ struct htp_tx_t {
      */
     int request_protocol_number;
 
-    /** Is this request using HTTP/0.9? */
+    /**
+     * Is this request using HTTP/0.9? We need a separate field for this purpose because
+     * the protocol version alone is not sufficient to determine if HTTP/0.9 is used. For
+     * example, if you submit "GET / HTTP/0.9" to Apache, it will not treat the request
+     * as HTTP/0.9.
+     */
     int is_protocol_0_9;
 
     /**
-     * This structure holds a parsed request_uri, with the missing information
-     * added (e.g., adding port number from the TCP information) and the fields
-     * normalized. This structure should be used to make decisions about a request.
-     * To inspect raw data, either use request_uri, or parsed_uri_incomplete.
+     * This structure holds the individual components parsed out of the request URI, with
+     * appropriate normalization and transformation applied, per configuration. No information
+     * is added. To inspect raw data, use htp_tx_t::request_uri or htp_tx_t::parsed_uri_raw.
      */
     htp_uri_t *parsed_uri;
 
     /**
-     * This structure holds the individual components parsed out of the request URI. No
-     * attempt is made to normalize or decode the contents or replace the missing pieces with
-     * defaults. The purpose of this field is to allow you to look at the data as it
-     * was supplied. Use parsed_uri when you need to act on data. Note that the port_number
-     * number is always -1 (parsing not attempted).
+     * This structure holds the individual components parsed out of the request URI, but
+     * without any modification. The purpose of this field is to allow you to look at the data as it
+     * was supplied on the request line. Fields can be NULL, depending on what data was supplied.
+     * The port_number field is always -1.
      */
-    htp_uri_t *parsed_uri_incomplete;
+    htp_uri_t *parsed_uri_raw;
     
     /* HTTP 1.1 RFC
      * 
@@ -390,6 +384,20 @@ struct htp_tx_t {
 
     /** Authentication password. Available only when htp_tx_t::request_auth_type is HTP_AUTH_BASIC. */
     bstr *request_auth_password;
+
+    /**
+     * Request hostname. Per the RFC, the hostname will be taken from the Host header
+     * when available. If the host information is also available in the URI, it is used
+     * instead of whatever might be in the Host header. Can be NULL. This field does
+     * not contain port information.
+     */
+    bstr *request_hostname;
+
+    /**
+     * Request port number, if presented. The rules for htp_tx_t::request_host apply. Set to
+     * -1 by default.
+     */
+    int request_port_number;
 
 
     // Response fields
@@ -533,6 +541,13 @@ struct htp_tx_data_t {
 
     /** Buffer length. */
     size_t len;
+
+    /**
+     * Indicator if this chunk of data is the last in the series. Currently
+     * used only by REQUEST_HEADER_DATA, REQUEST_TRAILER_DATA, RESPONSE_HEADER_DATA,
+     * and RESPONSE_TRAILER_DATA callbacks.
+     */
+    int is_last;
 };
 
 /**
@@ -575,6 +590,20 @@ struct htp_uri_t {
      * setting, but it's not impossible to see it. */
     bstr *fragment;
 };
+
+/**
+ * Frees all data contained in the uri, and then the uri itself.
+ * 
+ * @param[in] uri
+ */
+void htp_uri_free(htp_uri_t *uri);
+
+/**
+ * Allocates and initializes a new htp_uri_t structure.
+ *
+ * @return New structure, or NULL on memory allocation failure.
+ */
+htp_uri_t *htp_uri_alloc(void);
 
 /**
  * Creates a new log entry and stores it with the connection. The file and line

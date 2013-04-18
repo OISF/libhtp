@@ -31,15 +31,12 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#include "htp_list_private.h"
-
-#include <stdio.h>
-#include <stdlib.h>
-
 /**
  * @file
  * @author Ivan Ristic <ivanr@webkreator.com>
  */
+
+#include "htp_private.h"
 
 // Array-backed list
 

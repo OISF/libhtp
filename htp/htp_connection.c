@@ -36,7 +36,7 @@
  * @author Ivan Ristic <ivanr@webkreator.com>
  */
 
-#include "htp.h"
+#include "htp_private.h"
 
 htp_conn_t *htp_conn_create(void) {
     htp_conn_t *conn = calloc(1, sizeof (htp_conn_t));

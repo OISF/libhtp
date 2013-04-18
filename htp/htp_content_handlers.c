@@ -36,8 +36,6 @@
  * @author Ivan Ristic <ivanr@webkreator.com>
  */
 
-#include "htp.h"
-#include "htp_multipart_private.h"
 #include "htp_private.h"
 
 /**
@@ -132,7 +130,7 @@ htp_status_t htp_ch_urlencoded_callback_request_headers(htp_connp_t *connp) {
  * @return HTP_OK if query string was parsed, HTP_DECLINED if there was no query
  *         string, and HTP_ERROR on failure.
  */
-htp_status_t htp_ch_urlencoded_callback_request_line(htp_connp_t *connp, unsigned char *raw_data, size_t raw_len) {
+htp_status_t htp_ch_urlencoded_callback_request_line(htp_connp_t *connp) {
     htp_tx_t *tx = connp->in_tx;
 
     if ((tx->parsed_uri->query == NULL) || (bstr_len(tx->parsed_uri->query) == 0)) {

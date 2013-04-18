@@ -36,11 +36,7 @@
  * @author Ivan Ristic <ivanr@webkreator.com>
  */
 
-#include <stdlib.h>
-
-#include "htp.h"
 #include "htp_private.h"
-#include "htp_transaction.h"
 
 #define OUT_TEST_NEXT_BYTE_OR_RETURN(X) \
 if ((X)->out_current_read_offset >= (X)->out_current_len) { \
@@ -84,6 +80,99 @@ if ((X)->out_current_read_offset < (X)->out_current_len) { \
 }
 
 /**
+ * Sends outstanding connection data to the currently active data receiver hook.
+ *
+ * @param[in] connp
+ * @param[in] is_last
+ * @return HTP_OK, or a value returned from a callback.
+ */
+static htp_status_t htp_connp_res_receiver_send_data(htp_connp_t *connp, int is_last) {
+    if (connp->out_data_receiver_hook == NULL) return HTP_OK;
+
+    htp_tx_data_t d;
+    d.tx = connp->out_tx;
+    d.data = connp->out_current_data + connp->out_current_receiver_offset;
+    d.len = connp->out_current_read_offset - connp->out_current_receiver_offset;
+    d.is_last = is_last;
+
+    htp_status_t rc = htp_hook_run_all(connp->out_data_receiver_hook, &d);
+    if (rc != HTP_OK) return rc;
+
+    connp->out_current_receiver_offset = connp->out_current_read_offset;
+
+    return HTP_OK;
+}
+
+/**
+ * Finalizes an existing data receiver hook by sending any outstanding data to it. The
+ * hook is then removed so that it receives no more data.
+ *
+ * @param[in] connp
+ * @return HTP_OK, or a value returned from a callback.
+ */
+htp_status_t htp_connp_res_receiver_finalize_clear(htp_connp_t *connp) {
+    if (connp->out_data_receiver_hook == NULL) return HTP_OK;
+
+    htp_status_t rc = htp_connp_res_receiver_send_data(connp, 1 /* last */);
+
+    connp->out_data_receiver_hook = NULL;
+
+    return rc;
+}
+
+/**
+ * Configures the data receiver hook. If there is a previous hook, it will be finalized and cleared.
+ *
+ * @param[in] connp
+ * @param[in] data_receiver_hook
+ * @return HTP_OK, or a value returned from a callback.
+ */
+static htp_status_t htp_connp_res_receiver_set(htp_connp_t *connp, htp_hook_t *data_receiver_hook) {
+    htp_connp_res_receiver_finalize_clear(connp);
+
+    connp->out_data_receiver_hook = data_receiver_hook;
+    connp->out_current_receiver_offset = connp->out_current_read_offset;
+
+    return HTP_OK;
+}
+
+/**
+ * Handles request parser state changes. At the moment, this function is used only
+ * to configure data receivers, which are sent raw connection data.
+ *
+ * @param[in] connp
+ * @return HTP_OK, or a value returned from a callback.
+ */
+static htp_status_t htp_res_handle_state_change(htp_connp_t *connp) {
+    if (connp->out_state_previous == connp->out_state) return HTP_OK;
+
+    if (connp->out_state == htp_connp_RES_HEADERS) {
+        htp_status_t rc = HTP_OK;
+
+        switch (connp->out_tx->progress) {
+            case HTP_RESPONSE_HEADERS:
+                rc = htp_connp_res_receiver_set(connp, connp->out_tx->cfg->hook_response_header_data);
+                break;
+
+            case HTP_RESPONSE_TRAILER:
+                rc = htp_connp_res_receiver_set(connp, connp->out_tx->cfg->hook_response_trailer_data);
+                break;
+
+            default:
+                break;
+        }
+
+        if (rc != HTP_OK) return rc;
+    }
+
+    // Same comment as in htp_req_handle_state_change().
+
+    connp->out_state_previous = connp->out_state;
+
+    return HTP_OK;
+}
+
+/**
  * If there is any data left in the outbound data chunk, this function will preserve
  * it for consumption later. The maximum amount accepted for buffering is controlled
  * by htp_config_t::field_limit_hard.
@@ -92,6 +181,8 @@ if ((X)->out_current_read_offset < (X)->out_current_len) { \
  * @return HTP_OK, or HTP_ERROR on fatal failure.
  */
 static htp_status_t htp_connp_res_buffer(htp_connp_t *connp) {
+    if (connp->out_current_data == NULL) return HTP_OK;
+    
     unsigned char *data = connp->out_current_data + connp->out_current_consume_offset;
     size_t len = connp->out_current_read_offset - connp->out_current_consume_offset;
 
@@ -533,8 +624,8 @@ htp_status_t htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
  */
 htp_status_t htp_connp_RES_HEADERS(htp_connp_t *connp) {
     for (;;) {
-        OUT_COPY_BYTE_OR_RETURN(connp);       
-        
+        OUT_COPY_BYTE_OR_RETURN(connp);
+
         // Have we reached the end of the line?
         if (connp->out_next_byte == LF) {
             unsigned char *data;
@@ -556,8 +647,8 @@ htp_status_t htp_connp_RES_HEADERS(htp_connp_t *connp) {
                     bstr_free(connp->out_header);
                     connp->out_header = NULL;
                 }
-                
-                htp_connp_res_clear_buffer(connp);               
+
+                htp_connp_res_clear_buffer(connp);
 
                 // We've seen all response headers.
                 if (connp->out_tx->progress == HTP_RESPONSE_HEADERS) {
@@ -568,8 +659,12 @@ htp_status_t htp_connp_RES_HEADERS(htp_connp_t *connp) {
                 } else {
                     // Response trailer.
 
+                    // Finalize sending raw trailer data.
+                    htp_status_t rc = htp_connp_res_receiver_finalize_clear(connp);
+                    if (rc != HTP_OK) return rc;
+
                     // Run hook response_TRAILER.
-                    int rc = htp_hook_run_all(connp->cfg->hook_response_trailer, connp);
+                    rc = htp_hook_run_all(connp->cfg->hook_response_trailer, connp);
                     if (rc != HTP_OK) return rc;
 
                     // The next step is to finalize this response.
@@ -667,13 +762,13 @@ htp_status_t htp_connp_RES_LINE(htp_connp_t *connp) {
 
                 return HTP_OK;
             }
-           
+
             // Deallocate previous response line allocations, which we would have on a 100 response.
 
             if (connp->out_tx->response_line != NULL) {
                 bstr_free(connp->out_tx->response_line);
                 connp->out_tx->response_line = NULL;
-            }           
+            }
 
             if (connp->out_tx->response_protocol != NULL) {
                 bstr_free(connp->out_tx->response_protocol);
@@ -695,7 +790,7 @@ htp_status_t htp_connp_RES_LINE(htp_connp_t *connp) {
             int chomp_result = htp_chomp(data, &len);
 
             connp->out_tx->response_line = bstr_dup_mem(data, len);
-            if (connp->out_tx->response_line == NULL) return HTP_ERROR;            
+            if (connp->out_tx->response_line == NULL) return HTP_ERROR;
 
             if (connp->cfg->parse_response_line(connp) != HTP_OK) return HTP_ERROR;
 
@@ -705,10 +800,10 @@ htp_status_t htp_connp_RES_LINE(htp_connp_t *connp) {
 
             if (htp_treat_response_line_as_body(connp->out_tx)) {
                 connp->out_tx->response_content_encoding_processing = HTP_COMPRESSION_NONE;
-                
+
                 int rc = htp_tx_res_process_body_data(connp->out_tx, data, len + chomp_result);
                 if (rc != HTP_OK) return rc;
-               
+
                 // Continue to process response body. Because we don't have
                 // any headers to parse, we assume the body continues until
                 // the end of the stream.
@@ -716,13 +811,13 @@ htp_status_t htp_connp_RES_LINE(htp_connp_t *connp) {
                 connp->out_tx->progress = HTP_RESPONSE_BODY;
                 connp->out_state = htp_connp_RES_BODY_IDENTITY_STREAM_CLOSE;
                 connp->out_body_data_left = -1;
-                
+
                 return HTP_OK;
             }
-           
+
             int rc = htp_tx_state_response_line(connp->out_tx);
             if (rc != HTP_OK) return rc;
-            
+
             htp_connp_res_clear_buffer(connp);
 
             // Move on to the next phase.
@@ -741,42 +836,7 @@ size_t htp_connp_res_data_consumed(htp_connp_t *connp) {
 }
 
 htp_status_t htp_connp_RES_FINALIZE(htp_connp_t *connp) {
-    int rc = htp_tx_state_response_complete(connp->out_tx);
-    if (rc != HTP_OK) return rc;
-
-    // Check if the inbound parser is waiting on us. If it is, that means that
-    // there might be request data that the inbound parser hasn't consumed yet.
-    // If we don't stop parsing we might encounter a response without a request,
-    // which is why we want to return straight away before processing any data.
-    //
-    // This situation will occur any time the parser needs to see the server
-    // respond to a particular situation before it can decide how to proceed. For
-    // example, when a CONNECT is sent, different paths are used when it is accepted
-    // and when it is not accepted.
-    if ((connp->in_status == HTP_STREAM_DATA_OTHER) && (connp->in_tx == connp->out_tx)) {
-        return HTP_DATA_OTHER;
-    }
-
-    // Do we have a signal to yield to inbound processing at
-    // the end of the next transaction?
-    if (connp->out_data_other_at_tx_end) {
-        // We do. Let's yield then.
-        connp->out_data_other_at_tx_end = 0;
-        return HTP_DATA_OTHER;
-    }
-
-    // In streaming processing, we destroy the transaction
-    // because it will not be needed any more.
-    if (connp->cfg->tx_auto_destroy) {
-        htp_tx_destroy(connp->out_tx);
-    }
-
-    // Disconnect from the transaction
-    connp->out_tx = NULL;
-
-    connp->out_state = htp_connp_RES_IDLE;
-
-    return HTP_OK;
+    return htp_tx_state_response_complete_ex(connp->out_tx, 0 /* not hybrid mode */);
 }
 
 /**
@@ -845,7 +905,7 @@ int htp_connp_res_data(htp_connp_t *connp, const htp_time_t *timestamp, const vo
     // only if the stream has been closed. We do not allow zero-sized
     // chunks in the API, but we use it internally to force the parsers
     // to finalize parsing.
-    if ((len == 0) && (connp->out_status != HTP_STREAM_CLOSED)) {
+    if (((data == NULL)||(len == 0)) && (connp->out_status != HTP_STREAM_CLOSED)) {
         htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Zero-length data chunks are not allowed");
 
         #ifdef HTP_DEBUG
@@ -865,6 +925,7 @@ int htp_connp_res_data(htp_connp_t *connp, const htp_time_t *timestamp, const vo
     connp->out_current_len = len;
     connp->out_current_read_offset = 0;
     connp->out_current_consume_offset = 0;
+    connp->out_current_receiver_offset = 0;
 
     htp_conn_track_outbound_data(connp->conn, len, timestamp);
 
@@ -902,9 +963,15 @@ int htp_connp_res_data(htp_connp_t *connp, const htp_time_t *timestamp, const vo
 
                 return HTP_STREAM_TUNNEL;
             }
-        } else {
+
+            rc = htp_res_handle_state_change(connp);
+        }
+
+        if (rc != HTP_OK) {
             // Do we need more data?
             if ((rc == HTP_DATA) || (rc == HTP_DATA_BUFFER)) {
+                htp_connp_res_receiver_send_data(connp, 0 /* not last */);
+
                 if (rc == HTP_DATA_BUFFER) {
                     htp_connp_res_buffer(connp);
                 }
@@ -958,13 +1025,15 @@ int htp_connp_res_data(htp_connp_t *connp, const htp_time_t *timestamp, const vo
             fprintf(stderr, "htp_connp_res_data: returning HTP_STREAM_ERROR\n");
             #endif
 
-            // Remember that we've had an error. Errors are
-            // not possible to recover from.
+            // Permanent stream error.
             connp->out_status = HTP_STREAM_ERROR;
 
             return HTP_STREAM_ERROR;
         }
     }
+
+    // Permanent stream error.
+    connp->out_status = HTP_STREAM_ERROR;
 
     return HTP_STREAM_ERROR;
 }

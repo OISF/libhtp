@@ -36,9 +36,7 @@
  * @author Ivan Ristic <ivanr@webkreator.com>
  */
 
-#include <ctype.h>
-
-#include "htp.h"
+#include "htp_private.h"
 
 /**
  * This is a proof-of-concept processor that processes parameter names in

@@ -54,7 +54,7 @@ typedef struct htp_urlen_param_t htp_urlen_param_t;
 // The MIME type that triggers the parser. Must be lowercase.
 #define HTP_URLENCODED_MIME_TYPE        "application/x-www-form-urlencoded"
 
-#include "htp_private.h"
+#include "htp.h"
 
 /**
  * This is the main URLENCODED parser structure. It is used to store

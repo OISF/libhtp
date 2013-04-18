@@ -105,6 +105,13 @@ struct htp_connp_t {
      */
     int64_t in_current_consume_offset;
 
+    /**
+     * Marks the starting point of raw data within the inbound data chunk. Raw
+     * data (e.g., complete headers) is sent to appropriate callbacks (e.g.,
+     * REQUEST_HEADER_DATA).
+     */
+    int64_t in_current_receiver_offset;
+
     /** How many data chunks does the inbound connection stream consist of? */
     size_t in_chunk_count;
 
@@ -158,6 +165,12 @@ struct htp_connp_t {
     /** Current request parser state. */
     int (*in_state)(htp_connp_t *);
 
+    /** Previous request parser state. Used to detect state changes. */
+    int (*in_state_previous)(htp_connp_t *);
+
+    /** The hook that should be receiving raw connection data. */
+    htp_hook_t *in_data_receiver_hook;    
+
     // Response parser fields
 
     /**
@@ -184,6 +197,13 @@ struct htp_connp_t {
      * in the states where reading data is not the same as consumption.
      */
     int64_t out_current_consume_offset;
+
+    /**
+     * Marks the starting point of raw data within the outbound data chunk. Raw
+     * data (e.g., complete headers) is sent to appropriate callbacks (e.g.,
+     * RESPONSE_HEADER_DATA).
+     */
+    int64_t out_current_receiver_offset;
 
     /** The offset, in the entire connection stream, of the next response byte. */
     int64_t out_stream_offset;
@@ -224,6 +244,12 @@ struct htp_connp_t {
     /** Current response parser state. */
     int (*out_state)(htp_connp_t *);
 
+    /** Previous response parser state. */
+    int (*out_state_previous)(htp_connp_t *);
+
+    /** The hook that should be receiving raw connection data. */
+    htp_hook_t *out_data_receiver_hook;
+
     /** Response decompressor used to decompress response body data. */
     htp_decompressor_t *out_decompressor;
 
@@ -231,6 +257,12 @@ struct htp_connp_t {
     htp_file_t *put_file;
 };
 
+/**
+ * This function is most likely not used and/or not needed.
+ * 
+ * @param[in] connp
+ */
+void htp_connp_in_reset(htp_connp_t *connp);
 
 #ifdef	__cplusplus
 }

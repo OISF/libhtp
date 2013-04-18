@@ -48,7 +48,6 @@ typedef struct htp_callback_t htp_callback_t;
 typedef int (*htp_callback_fn_t) (void *);
 
 #include "htp.h"
-#include "htp_list.h"
 
 struct htp_hook_t {
     htp_list_array_t *callbacks;

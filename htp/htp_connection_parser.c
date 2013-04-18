@@ -36,7 +36,6 @@
  * @author Ivan Ristic <ivanr@webkreator.com>
  */
 
-#include "htp.h"
 #include "htp_private.h"
 
 void htp_connp_clear_error(htp_connp_t *connp) {
@@ -71,18 +70,12 @@ htp_connp_t *htp_connp_create(htp_cfg_t *cfg) {
         return NULL;
     }
 
-    connp->in_status = HTP_OK;
-
     // Request parsing
-
-    //connp->in_header_line_index = -1;
     connp->in_state = htp_connp_REQ_IDLE;
+    connp->in_status = HTP_STREAM_NEW;
 
     // Response parsing
-
-    connp->out_state = htp_connp_RES_IDLE;
-
-    connp->in_status = HTP_STREAM_NEW;
+    connp->out_state = htp_connp_RES_IDLE; 
     connp->out_status = HTP_STREAM_NEW;
 
     return connp;
@@ -110,8 +103,20 @@ void htp_connp_destroy_all(htp_connp_t *connp) {
     htp_connp_destroy(connp);
 }
 
+htp_conn_t *htp_connp_get_connection(const htp_connp_t *connp) {
+    return connp->conn;
+}
+
+htp_tx_t *htp_connp_get_in_tx(const htp_connp_t *connp) {
+    return connp->in_tx;
+}
+
 htp_log_t *htp_connp_get_last_error(const htp_connp_t *connp) {
     return connp->last_error;
+}
+
+htp_tx_t *htp_connp_get_out_tx(const htp_connp_t *connp) {
+    return connp->out_tx;
 }
 
 void *htp_connp_get_user_data(const htp_connp_t *connp) {
@@ -121,8 +126,6 @@ void *htp_connp_get_user_data(const htp_connp_t *connp) {
 void htp_connp_in_reset(htp_connp_t *connp) {
     connp->in_content_length = -1;
     connp->in_body_data_left = -1;
-    //connp->in_header_line_index = -1;
-    //connp->in_header_line_counter = 0;
     connp->in_chunk_request_index = connp->in_chunk_count;
 }
 
@@ -157,7 +160,9 @@ htp_tx_t *htp_connp_tx_create(htp_connp_t *connp) {
     if (tx == NULL) return NULL;
 
     connp->in_tx = tx;
+
     htp_list_add(connp->conn->transactions, tx);
+
     htp_connp_in_reset(connp);
 
     return tx;

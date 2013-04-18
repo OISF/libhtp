@@ -1,18 +1,7 @@
 >>>
-POST / HTTP/1.1
-Transfer-Encoding: chunked
-Content-Type: application/x-www-form-urlencoded
+GET http://www.example.com:XXX/?p=%20 HTTP/1.0
+Host: www.example.com
 User-Agent: Mozilla
-Cookie: 1
-
-b
-p=012345678
-1
-9
-0
-Cookie:
->>>
- 2
 
 
 <<<

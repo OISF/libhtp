@@ -39,13 +39,8 @@
  */
 
 #include <iostream>
-
 #include <gtest/gtest.h>
-
-#include <htp/htp.h>
-#include <htp/htp_list.h>
-#include <htp/htp_utf8_decoder.h>
-#include <htp/htp_base64.h>
+#include <htp/htp_private.h>
 
 TEST(Utf8, SingleByte) {
     uint32_t state = HTP_UTF8_ACCEPT;
@@ -391,7 +386,7 @@ TEST(UtilTest, ParseHostPort1) {
 }
 
 TEST(UtilTest, ParseHostPort2) {
-    bstr *i = bstr_dup_c(" www.example.com. ");
+    bstr *i = bstr_dup_c(" www.example.com ");
     bstr *e = bstr_dup_c("www.example.com");
     bstr *host = NULL;
     int port;
@@ -410,7 +405,7 @@ TEST(UtilTest, ParseHostPort2) {
 }
 
 TEST(UtilTest, ParseHostPort3) {
-    bstr *i = bstr_dup_c(" www.example.com.:8001 ");
+    bstr *i = bstr_dup_c(" www.example.com:8001 ");
     bstr *e = bstr_dup_c("www.example.com");
     bstr *host = NULL;
     int port;
@@ -429,7 +424,7 @@ TEST(UtilTest, ParseHostPort3) {
 }
 
 TEST(UtilTest, ParseHostPort4) {
-    bstr *i = bstr_dup_c(" www.example.com. :  8001 ");
+    bstr *i = bstr_dup_c(" www.example.com :  8001 ");
     bstr *e = bstr_dup_c("www.example.com");
     bstr *host = NULL;
     int port;
@@ -448,7 +443,7 @@ TEST(UtilTest, ParseHostPort4) {
 }
 
 TEST(UtilTest, ParseHostPort5) {
-    bstr *i = bstr_dup_c("www.example.com..");
+    bstr *i = bstr_dup_c("www.example.com.");
     bstr *e = bstr_dup_c("www.example.com.");
     bstr *host = NULL;
     int port;
@@ -467,7 +462,7 @@ TEST(UtilTest, ParseHostPort5) {
 }
 
 TEST(UtilTest, ParseHostPort6) {
-    bstr *i = bstr_dup_c("www.example.com..:8001");
+    bstr *i = bstr_dup_c("www.example.com.:8001");
     bstr *e = bstr_dup_c("www.example.com.");
     bstr *host = NULL;
     int port;
@@ -558,6 +553,79 @@ TEST(UtilTest, ParseHostPort10) {
 
     bstr_free(host);
     bstr_free(e);
+    bstr_free(i);
+}
+
+TEST(UtilTest, ParseHostPort11) {
+    bstr *i = bstr_dup_c("[::1]:8080");
+    bstr *e = bstr_dup_c("[::1]");
+    bstr *host = NULL;
+    int port;
+    int invalid = 0;
+
+    ASSERT_EQ(HTP_OK, htp_parse_hostport(i, &host, &port, &invalid));   
+
+    ASSERT_TRUE(host != NULL);
+    ASSERT_TRUE(bstr_cmp(e, host) == 0);
+    ASSERT_EQ(8080, port);
+    ASSERT_EQ(0, invalid);
+
+    bstr_free(host);
+    bstr_free(e);
+    bstr_free(i);
+}
+
+TEST(UtilTest, ParseHostPort12) {
+    bstr *i = bstr_dup_c("[::1]:");
+    bstr *e = bstr_dup_c("[::1]");
+    bstr *host = NULL;
+    int port;
+    int invalid = 0;
+
+    ASSERT_EQ(HTP_OK, htp_parse_hostport(i, &host, &port, &invalid));   
+
+    ASSERT_TRUE(host != NULL);
+    ASSERT_TRUE(bstr_cmp(e, host) == 0);
+    ASSERT_EQ(-1, port);
+    ASSERT_EQ(1, invalid);
+
+    bstr_free(host);
+    bstr_free(e);
+    bstr_free(i);
+}
+
+TEST(UtilTest, ParseHostPort13) {
+    bstr *i = bstr_dup_c("[::1]x");
+    bstr *e = bstr_dup_c("[::1]");
+    bstr *host = NULL;
+    int port;
+    int invalid = 0;
+
+    ASSERT_EQ(HTP_OK, htp_parse_hostport(i, &host, &port, &invalid));   
+
+    ASSERT_TRUE(host != NULL);
+    ASSERT_TRUE(bstr_cmp(e, host) == 0);
+    ASSERT_EQ(-1, port);
+    ASSERT_EQ(1, invalid);
+
+    bstr_free(host);
+    bstr_free(e);
+    bstr_free(i);
+}
+
+TEST(UtilTest, ParseHostPort14) {
+    bstr *i = bstr_dup_c("[::1");
+    bstr *host = NULL;
+    int port;
+    int invalid = 0;
+
+    ASSERT_EQ(HTP_OK, htp_parse_hostport(i, &host, &port, &invalid));   
+
+    ASSERT_TRUE(host == NULL);
+    ASSERT_EQ(-1, port);
+    ASSERT_EQ(1, invalid);
+
+    bstr_free(host);
     bstr_free(i);
 }
 

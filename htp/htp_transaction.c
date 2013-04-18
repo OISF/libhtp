@@ -37,7 +37,6 @@
  */
 
 #include "htp_private.h"
-#include "htp_transaction.h"
 
 static bstr *copy_or_wrap_mem(const void *data, size_t len, enum htp_alloc_strategy_t alloc) {
     if (alloc == HTP_ALLOC_REUSE) {
@@ -56,20 +55,17 @@ htp_tx_t *htp_tx_create(htp_connp_t *connp) {
     tx->cfg = connp->cfg;
     tx->is_config_shared = HTP_CONFIG_SHARED;
 
-    tx->request_protocol_number = HTP_PROTOCOL_UNKNOWN;    
+    tx->request_protocol_number = HTP_PROTOCOL_UNKNOWN;
     tx->request_headers = htp_table_create(32);
     tx->request_params = htp_table_create(32);
-    tx->request_line_nul_offset = -1;
     tx->request_content_length = -1;
 
-    tx->parsed_uri = calloc(1, sizeof (htp_uri_t));
-    tx->parsed_uri->port_number = -1;
-    tx->parsed_uri_incomplete = calloc(1, sizeof (htp_uri_t));
+    tx->parsed_uri_raw = htp_uri_alloc();
 
     tx->response_status = NULL;
     tx->response_status_number = HTP_STATUS_UNKNOWN;
     tx->response_protocol_number = HTP_PROTOCOL_UNKNOWN;
-    
+
     tx->response_headers = htp_table_create(32);
     tx->response_content_length = -1;
 
@@ -77,36 +73,16 @@ htp_tx_t *htp_tx_create(htp_connp_t *connp) {
 }
 
 void htp_tx_destroy(htp_tx_t *tx) {
-    bstr_free(tx->request_line);    
+    // Request.
+
+    bstr_free(tx->request_line);
+
     bstr_free(tx->request_method);
     bstr_free(tx->request_uri);
-    bstr_free(tx->request_uri_normalized);
     bstr_free(tx->request_protocol);
 
-    if (tx->parsed_uri != NULL) {
-        bstr_free(tx->parsed_uri->scheme);
-        bstr_free(tx->parsed_uri->username);
-        bstr_free(tx->parsed_uri->password);
-        bstr_free(tx->parsed_uri->hostname);
-        bstr_free(tx->parsed_uri->port);
-        bstr_free(tx->parsed_uri->path);
-        bstr_free(tx->parsed_uri->query);
-        bstr_free(tx->parsed_uri->fragment);
-
-        free(tx->parsed_uri);
-    }
-
-    if (tx->parsed_uri_incomplete != NULL) {
-        bstr_free(tx->parsed_uri_incomplete->scheme);
-        bstr_free(tx->parsed_uri_incomplete->username);
-        bstr_free(tx->parsed_uri_incomplete->password);
-        bstr_free(tx->parsed_uri_incomplete->hostname);
-        bstr_free(tx->parsed_uri_incomplete->port);
-        bstr_free(tx->parsed_uri_incomplete->path);
-        bstr_free(tx->parsed_uri_incomplete->query);
-        bstr_free(tx->parsed_uri_incomplete->fragment);
-        free(tx->parsed_uri_incomplete);
-    }   
+    htp_uri_free(tx->parsed_uri_raw);
+    htp_uri_free(tx->parsed_uri);
 
     // Destroy request_headers.
     if (tx->request_headers != NULL) {
@@ -119,9 +95,18 @@ void htp_tx_destroy(htp_tx_t *tx) {
         }
 
         htp_table_destroy(tx->request_headers);
-    }   
+    }
 
-    bstr_free(tx->response_line);    
+    bstr_free(tx->request_content_type);
+
+    if (tx->request_hostname != NULL) {
+        bstr_free(tx->request_hostname);
+    }
+
+    // Response.
+
+    bstr_free(tx->response_line);
+
     bstr_free(tx->response_protocol);
     bstr_free(tx->response_status);
     bstr_free(tx->response_message);
@@ -151,7 +136,7 @@ void htp_tx_destroy(htp_tx_t *tx) {
         }
     }
 
-    bstr_free(tx->request_content_type);
+
     bstr_free(tx->response_content_type);
 
     // Parsers
@@ -303,15 +288,6 @@ htp_status_t htp_tx_req_set_uri(htp_tx_t *tx, const char *uri, size_t uri_len, e
     return HTP_OK;
 }
 
-htp_status_t htp_tx_req_set_query_string(htp_tx_t *tx, const char *qs, size_t qs_len, enum htp_alloc_strategy_t alloc) {
-    if ((tx->parsed_uri == NULL) || (qs == NULL)) return HTP_ERROR;
-
-    tx->parsed_uri->query = copy_or_wrap_mem(qs, qs_len, alloc);
-    if (tx->parsed_uri->query == NULL) return HTP_ERROR;
-
-    return HTP_OK;
-}
-
 htp_status_t htp_tx_req_set_protocol(htp_tx_t *tx, const char *protocol, size_t protocol_len, enum htp_alloc_strategy_t alloc) {
     if (protocol == NULL) return HTP_ERROR;
 
@@ -333,7 +309,7 @@ void htp_tx_req_set_protocol_0_9(htp_tx_t *tx, int is_protocol_0_9) {
     }
 }
 
-static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {    
+static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {
     // Determine if we have a request body, and how it is packaged.
     htp_header_t *cl = htp_table_get_c(tx->request_headers, "content-length");
     htp_header_t *te = htp_table_get_c(tx->request_headers, "transfer-encoding");
@@ -405,7 +381,16 @@ static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {
         return HTP_OK;
     }
 
-    // Host resolution
+    // Use the hostname from the URI, when available.   
+
+    if (tx->parsed_uri->hostname != NULL) {
+        tx->request_hostname = bstr_dup(tx->parsed_uri->hostname);
+    }
+
+    tx->request_port_number = tx->parsed_uri->port_number;
+
+    // Examine the Host header.
+
     htp_header_t *h = htp_table_get_c(tx->request_headers, "host");
     if (h == NULL) {
         // No host information in the headers.
@@ -421,20 +406,19 @@ static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {
 
         bstr *hostname;
         int port;
-       
+
         if (htp_parse_header_hostport(h->value, &hostname, &port, &(tx->flags)) != HTP_OK) return HTP_ERROR;
 
         // Is there host information in the URI?
-        if (tx->parsed_uri->hostname == NULL) {
+        if (tx->request_hostname == NULL) {
             // There is no host information in the URI. Place the
             // hostname from the headers into the parsed_uri structure.
-            tx->parsed_uri->hostname = hostname;
-            tx->parsed_uri->port_number = port;
+            tx->request_hostname = hostname;
+            tx->request_port_number = port;
         } else {
-            if ((bstr_cmp_nocase(hostname, tx->parsed_uri->hostname) != 0) || (port != tx->parsed_uri->port_number)) {
-                // The host information is different in the
-                // headers and the URI. The HTTP RFC states that
-                // we should ignore the header copy.
+            if ((bstr_cmp_nocase(hostname, tx->request_hostname) != 0) || (port != tx->request_port_number)) {
+                // The host information is different in the headers and the URI. The
+                // HTTP RFC states that we should ignore the header copy.
                 tx->flags |= HTP_HOST_AMBIGUOUS;
                 htp_log(tx->connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Host information ambiguous");
             }
@@ -459,8 +443,12 @@ static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {
         htp_parse_authorization(tx->connp);
     }
 
+    // Finalize sending raw header data.
+    htp_status_t rc = htp_connp_req_receiver_finalize_clear(tx->connp);
+    if (rc != HTP_OK) return rc;
+
     // Run hook REQUEST_HEADERS.
-    int rc = htp_hook_run_all(tx->connp->cfg->hook_request_headers, tx->connp);
+    rc = htp_hook_run_all(tx->connp->cfg->hook_request_headers, tx->connp);
     if (rc != HTP_OK) return rc;
 
     return HTP_OK;
@@ -506,8 +494,27 @@ htp_status_t htp_tx_req_set_headers_clear(htp_tx_t *tx) {
     return HTP_OK;
 }
 
+htp_status_t htp_tx_req_set_line(htp_tx_t *tx, const char *line, size_t line_len, enum htp_alloc_strategy_t alloc) {
+    if ((line == NULL) || (line_len == 0)) return HTP_ERROR;
+
+    tx->request_line = copy_or_wrap_mem(line, line_len, alloc);
+    if (tx->request_line == NULL) return HTP_ERROR;
+
+    if (tx->connp->cfg->parse_request_line(tx->connp) != HTP_OK) return HTP_ERROR;
+
+    return HTP_OK;
+}
+
+void htp_tx_req_set_parsed_uri(htp_tx_t *tx, htp_uri_t *parsed_uri) {
+    if (tx->parsed_uri != NULL) {
+        htp_uri_free(tx->parsed_uri);
+    }
+
+    tx->parsed_uri = parsed_uri;
+}
+
 htp_status_t htp_tx_res_set_status_line(htp_tx_t *tx, const char *line, size_t line_len, enum htp_alloc_strategy_t alloc) {
-    if (line == NULL) return HTP_ERROR;
+    if ((line == NULL) || (line_len == 0)) return HTP_ERROR;
 
     tx->response_line = copy_or_wrap_mem(line, line_len, alloc);
     if (tx->response_line == NULL) return HTP_ERROR;
@@ -556,8 +563,7 @@ htp_status_t htp_tx_state_response_line(htp_tx_t *tx) {
     if ((tx->response_protocol_number == HTP_PROTOCOL_INVALID)
             || (tx->response_status_number == HTP_STATUS_INVALID)
             || (tx->response_status_number < HTP_VALID_STATUS_MIN)
-            || (tx->response_status_number > HTP_VALID_STATUS_MAX))
-    {
+            || (tx->response_status_number > HTP_VALID_STATUS_MAX)) {
         htp_log(tx->connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Invalid response line.");
         tx->flags |= HTP_STATUS_LINE_INVALID;
     }
@@ -685,12 +691,12 @@ htp_status_t htp_tx_res_process_body_data(htp_tx_t *tx, const void *data, size_t
 htp_status_t htp_tx_state_request_complete(htp_tx_t *tx) {
     // Finalize request body.
     if (htp_tx_req_has_body(tx)) {
-        int rc = htp_tx_req_process_body_data(tx, NULL, 0);
+        htp_status_t rc = htp_tx_req_process_body_data(tx, NULL, 0);
         if (rc != HTP_OK) return rc;
     }
 
     // Run hook REQUEST_COMPLETE.
-    int rc = htp_hook_run_all(tx->connp->cfg->hook_request_complete, tx->connp);
+    htp_status_t rc = htp_hook_run_all(tx->connp->cfg->hook_request_complete, tx->connp);
     if (rc != HTP_OK) return rc;
 
     // Clean-up.
@@ -700,13 +706,21 @@ htp_status_t htp_tx_state_request_complete(htp_tx_t *tx) {
         tx->connp->put_file = NULL;
     }
 
-    // Update the transaction status, but only if it did already
-    // move on. This may happen when we're processing a CONNECT
+    // Update the transaction status, but only if it not move
+    // on already. This may happen when we're processing a CONNECT
     // request and need to wait for the response to determine how
     // to continue to treat the rest of the TCP stream.
     if (tx->progress < HTP_REQUEST_COMPLETE) {
         tx->progress = HTP_REQUEST_COMPLETE;
     }
+
+    if (tx->is_protocol_0_9) {
+        tx->connp->in_state = htp_connp_REQ_IGNORE_DATA_AFTER_HTTP_0_9;
+    } else {
+        tx->connp->in_state = htp_connp_REQ_IDLE;
+    }
+
+    tx->connp->in_tx = NULL;
 
     return HTP_OK;
 }
@@ -737,7 +751,11 @@ htp_status_t htp_tx_state_request_headers(htp_tx_t *tx) {
         // Request trailers.
 
         // Run hook HTP_REQUEST_TRAILER.
-        int rc = htp_hook_run_all(tx->connp->cfg->hook_request_trailer, tx->connp);
+        htp_status_t rc = htp_hook_run_all(tx->connp->cfg->hook_request_trailer, tx->connp);
+        if (rc != HTP_OK) return rc;
+
+        // Finalize sending raw header data.
+        rc = htp_connp_req_receiver_finalize_clear(tx->connp);
         if (rc != HTP_OK) return rc;
 
         // Completed parsing this request; finalize it now.
@@ -745,7 +763,7 @@ htp_status_t htp_tx_state_request_headers(htp_tx_t *tx) {
     } else if (tx->progress >= HTP_REQUEST_LINE) {
         // Request headers.
 
-        int rc = htp_tx_process_request_headers(tx);
+        htp_status_t rc = htp_tx_process_request_headers(tx);
         if (rc != HTP_OK) return rc;
 
         tx->connp->in_state = htp_connp_REQ_CONNECT_CHECK;
@@ -759,77 +777,59 @@ htp_status_t htp_tx_state_request_headers(htp_tx_t *tx) {
 }
 
 htp_status_t htp_tx_state_request_line(htp_tx_t *tx) {
-    htp_connp_t *connp = tx->connp;
+    // Determine how to process the request URI.
 
-    if (connp->in_tx->request_method_number == HTP_M_CONNECT) {
+    if (tx->request_method_number == HTP_M_CONNECT) {
         // When CONNECT is used, the request URI contains an authority string.
-        if (htp_parse_uri_hostport(connp, connp->in_tx->request_uri, connp->in_tx->parsed_uri_incomplete) != HTP_OK) {            
+        if (htp_parse_uri_hostport(tx->connp, tx->request_uri, tx->parsed_uri_raw) != HTP_OK) {
             return HTP_ERROR;
         }
     } else {
-        // Parse the request URI.
-        if (htp_parse_uri(connp->in_tx->request_uri, &(connp->in_tx->parsed_uri_incomplete)) != HTP_OK) {            
+        // Parse the request URI into htp_tx_t::parsed_uri_raw.
+        if (htp_parse_uri(tx->request_uri, &(tx->parsed_uri_raw)) != HTP_OK) {
             return HTP_ERROR;
-        }
-
-        // Keep the original URI components, but create a copy which we can normalize and use internally.
-        if (htp_normalize_parsed_uri(connp, connp->in_tx->parsed_uri_incomplete, connp->in_tx->parsed_uri) != HTP_OK) {            
-            return HTP_ERROR;
-        }
-
-        // Run hook REQUEST_URI_NORMALIZE.
-        int rc = htp_hook_run_all(connp->cfg->hook_request_uri_normalize, connp);
-        if (rc != HTP_OK) return rc;
-
-        // Now is a good time to generate request_uri_normalized, before we finalize
-        // parsed_uri (and lose the information which parts were provided in the request and
-        // which parts we added).
-        if (connp->cfg->generate_request_uri_normalized) {
-            connp->in_tx->request_uri_normalized = htp_unparse_uri_noencode(connp->in_tx->parsed_uri);
-            if (connp->in_tx->request_uri_normalized == NULL) return HTP_ERROR;
-
-            #ifdef HTP_DEBUG
-            fprint_raw_data(stderr, "request_uri_normalized",
-                    bstr_ptr(connp->in_tx->request_uri_normalized),
-                    bstr_len(connp->in_tx->request_uri_normalized));
-            #endif
-        }
-
-        // Finalize parsed_uri.
-
-        // Scheme.
-        if (connp->in_tx->parsed_uri->scheme != NULL) {
-            if (bstr_cmp_c(connp->in_tx->parsed_uri->scheme, "http") != 0) {
-                // TODO Invalid scheme.
-            }
-        } else {
-            connp->in_tx->parsed_uri->scheme = bstr_dup_c("http");
-            if (connp->in_tx->parsed_uri->scheme == NULL) {
-                return HTP_ERROR;
-            }
-        }
-
-        // Path.
-        if (connp->in_tx->parsed_uri->path == NULL) {
-            connp->in_tx->parsed_uri->path = bstr_dup_c("/");
-            if (connp->in_tx->parsed_uri->path == NULL) {
-                return HTP_ERROR;
-            }
         }
     }
 
+    // Build htp_tx_t::parsed_uri, but only if it was not explicitly set already.
+    if (tx->parsed_uri == NULL) {
+        tx->parsed_uri = htp_uri_alloc();
+        if (tx->parsed_uri == NULL) return HTP_ERROR;
+
+        // Keep the original URI components, but create a copy which we can normalize and use internally.
+        if (htp_normalize_parsed_uri(tx->connp, tx->parsed_uri_raw, tx->parsed_uri) != HTP_OK) {
+            return HTP_ERROR;
+        }
+    }
+
+    // Check parsed_uri hostname.
+    if (tx->parsed_uri->hostname != NULL) {
+        if (htp_validate_hostname(tx->parsed_uri->hostname) == 0) {
+            tx->flags |= HTP_HOSTU_INVALID;
+        }
+    }
+
+    // Run hook REQUEST_URI_NORMALIZE.
+    htp_status_t rc = htp_hook_run_all(tx->connp->cfg->hook_request_uri_normalize, tx->connp);
+    if (rc != HTP_OK) return rc;
+
+
     // Run hook REQUEST_LINE.
-    int rc = htp_hook_run_all(connp->cfg->hook_request_line, connp);
+    rc = htp_hook_run_all(tx->connp->cfg->hook_request_line, tx->connp);
     if (rc != HTP_OK) return rc;
 
     // Move on to the next phase.
-    connp->in_state = htp_connp_REQ_PROTOCOL;
+    tx->connp->in_state = htp_connp_REQ_PROTOCOL;
 
     return HTP_OK;
 }
 
 htp_status_t htp_tx_state_response_complete(htp_tx_t *tx) {
-    if (tx->connp->out_tx->progress != HTP_RESPONSE_COMPLETE) {
+    return htp_tx_state_response_complete_ex(tx, 1 /* hybrid mode */);
+}
+
+htp_status_t htp_tx_state_response_complete_ex(htp_tx_t *tx, int hybrid_mode) {
+    if (tx->progress != HTP_RESPONSE_COMPLETE) {
         tx->progress = HTP_RESPONSE_COMPLETE;
 
         // Run the last RESPONSE_BODY_DATA HOOK, but only if there was a response body present.
@@ -838,8 +838,47 @@ htp_status_t htp_tx_state_response_complete(htp_tx_t *tx) {
         }
 
         // Run hook RESPONSE_COMPLETE.
-        return htp_hook_run_all(tx->connp->cfg->hook_response_complete, tx->connp);
+        htp_status_t rc = htp_hook_run_all(tx->connp->cfg->hook_response_complete, tx->connp);
+        if (rc != HTP_OK) return rc;
     }
+
+    if (!hybrid_mode) {
+        // Check if the inbound parser is waiting on us. If it is, that means that
+        // there might be request data that the inbound parser hasn't consumed yet.
+        // If we don't stop parsing we might encounter a response without a request,
+        // which is why we want to return straight away before processing any data.
+        //
+        // This situation will occur any time the parser needs to see the server
+        // respond to a particular situation before it can decide how to proceed. For
+        // example, when a CONNECT is sent, different paths are used when it is accepted
+        // and when it is not accepted.
+        //
+        // It is not enough to check only in_status here. Because of pipelining, it's possible
+        // that many inbound transactions have been processed, and that the parser is
+        // waiting on a response that we have not seen yet.
+        if ((tx->connp->in_status == HTP_STREAM_DATA_OTHER) && (tx->connp->in_tx == tx->connp->out_tx)) {
+            return HTP_DATA_OTHER;
+        }
+
+        // Do we have a signal to yield to inbound processing at
+        // the end of the next transaction?
+        if (tx->connp->out_data_other_at_tx_end) {
+            // We do. Let's yield then.
+            tx->connp->out_data_other_at_tx_end = 0;
+            return HTP_DATA_OTHER;
+        }
+
+        // In streaming processing, we destroy the transaction
+        // because it will not be needed any more.
+        if (tx->connp->cfg->tx_auto_destroy) {
+            htp_tx_destroy(tx->connp->out_tx);
+        }
+    }
+
+    // Disconnect from the transaction
+    tx->connp->out_tx = NULL;
+
+    tx->connp->out_state = htp_connp_RES_IDLE;
 
     return HTP_OK;
 }
@@ -865,8 +904,12 @@ htp_status_t htp_tx_state_response_headers(htp_tx_t *tx) {
         tx->response_content_encoding_processing = HTP_COMPRESSION_NONE;
     }
 
+    // Finalize sending raw header data.
+    htp_status_t rc = htp_connp_res_receiver_finalize_clear(tx->connp);
+    if (rc != HTP_OK) return rc;
+
     // Run hook RESPONSE_HEADERS.
-    int rc = htp_hook_run_all(tx->connp->cfg->hook_response_headers, tx->connp);
+    rc = htp_hook_run_all(tx->connp->cfg->hook_response_headers, tx->connp);
     if (rc != HTP_OK) return rc;
 
     // Initialize the decompression engine as necessary. We can deal with three

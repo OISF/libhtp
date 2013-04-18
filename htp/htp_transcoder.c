@@ -36,10 +36,7 @@
  * @author Ivan Ristic <ivanr@webkreator.com>
  */
 
-#include <errno.h>
-
 #include "../config.h"
-#include "htp.h"
 #include "htp_private.h"
 
 /**

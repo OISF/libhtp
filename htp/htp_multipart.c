@@ -36,12 +36,6 @@
  * @author Ivan Ristic <ivanr@webkreator.com>
  */
 
-#include <ctype.h>
-#include <unistd.h>
-
-#include "htp.h"
-#include "htp_multipart.h"
-#include "htp_multipart_private.h"
 #include "htp_private.h"
 
 /**

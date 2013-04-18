@@ -37,7 +37,6 @@
  */
 
 #include "bstr.h"
-#include "bstr_builder.h"
 #include "htp_list.h"
 
 htp_status_t bstr_builder_appendn(bstr_builder_t *bb, bstr *b) {

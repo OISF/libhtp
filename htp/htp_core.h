@@ -231,6 +231,8 @@ enum htp_file_source_t {
 #define HTP_URLEN_OVERLONG_U               0x10000000
 #define HTP_URLEN_HALF_FULL_RANGE          0x20000000 /* Range U+FF00 - U+FFEF detected. */
 
+#define HTP_HOST_INVALID ( HTP_HOSTU_INVALID | HTP_HOSTH_INVALID )
+
 // Logging-related constants.
 #define HTP_LOG_MARK                 __FILE__,__LINE__
 

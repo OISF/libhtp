@@ -240,6 +240,18 @@ htp_status_t htp_tx_req_set_header(htp_tx_t *tx, const char *name, size_t name_l
 htp_status_t htp_tx_req_set_headers_clear(htp_tx_t *tx);
 
 /**
+ * Set request line. When used, this function should always be called first,
+ * with more specific functions following. Must not contain line terminators.
+ *
+ * @param[in] tx
+ * @param[in] line
+ * @param[in] line_len 
+ * @param[in] alloc
+ * @return HTP_OK on success, HTP_ERROR on failure.
+ */
+htp_status_t htp_tx_req_set_line(htp_tx_t *tx, const char *line, size_t line_len, enum htp_alloc_strategy_t alloc);
+
+/**
  * Set transaction request method. This function will enable you to keep
  * track of the text representation of the method.
  *
@@ -261,6 +273,18 @@ htp_status_t htp_tx_req_set_method(htp_tx_t *tx, const char *method, size_t meth
  * @param[in] method_number
  */
 void htp_tx_req_set_method_number(htp_tx_t *tx, enum htp_method_t method_number);
+
+/**
+ * Set parsed request URI. You don't need to use this function if you are already providing
+ * the request line or request URI. But if your container already has this data available,
+ * feeding it to LibHTP will minimize any potential data differences. This function assumes
+ * management of the data provided in parsed_uri. This function will not change htp_tx_t::parsed_uri_raw
+ * (which may have data in it from the parsing of the request URI).
+ *
+ * @param[in] tx
+ * @param[in] parsed_uri
+ */
+void htp_tx_req_set_parsed_uri(htp_tx_t *tx, htp_uri_t *parsed_uri);
 
 /**
  * Forces HTTP/0.9 as the transaction protocol. This method exists to ensure
@@ -303,21 +327,9 @@ htp_status_t htp_tx_req_set_protocol(htp_tx_t *tx, const char *protocol, size_t 
 void htp_tx_req_set_protocol_number(htp_tx_t *tx, int protocol_number);
 
 /**
- * Sets transaction query string. If there are any query string processors
- * configured, they will be called to parse the provided data (although that
- * may not happen until the transaction state is changed to REQUEST_LINE).
- *
- * @param[in] tx
- * @param[in] qs
- * @param[in] qs_len
- * @param[in] alloc
- * @return HTP_OK on success, HTP_ERROR on failure.
- */
-htp_status_t htp_tx_req_set_query_string(htp_tx_t *tx, const char *qs, size_t qs_len, enum htp_alloc_strategy_t alloc);
-
-/**
- * Set transaction request URI. The value provided here must not include any
- * query string data. Use a separate call to htp_txh_req_set_query_string() for that.
+ * Set transaction request URI. The value provided here will be stored in htp_tx_t::request_uri
+ * and subsequently parsed. If htp_tx_req_set_line() was previously used, the uri provided
+ * when calling this function will overwrite any previously parsed value.
  *
  * @param[in] tx
  * @param[in] uri

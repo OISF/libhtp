@@ -36,9 +36,7 @@
  * @author Ivan Ristic <ivanr@webkreator.com>
  */
 
-#include <stdlib.h>
-
-#include "htp_urlencoded.h"
+#include "htp_private.h"
 
 /**
  * This method is invoked whenever a piece of data, belonging to a single field (name or value)

@@ -43,12 +43,28 @@
 extern "C" {
 #endif
 
+#if defined(__cplusplus) && !defined(__STDC_FORMAT_MACROS)
+/* C99 requires that inttypes.h only exposes PRI* macros
+ * for C++ implementations if this is defined: */
+#define __STDC_FORMAT_MACROS
+#endif
+
+#include <ctype.h>
+#include <errno.h>
 #include <iconv.h>
+#include <inttypes.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 
 #include "htp.h"
 #include "htp_config_private.h"
-#include "htp_connection_private.h"
 #include "htp_connection_parser_private.h"
+#include "htp_connection_private.h"
+#include "htp_list_private.h"
+#include "htp_multipart_private.h"
+#include "htp_table_private.h"
 
 #ifndef CR
 #define CR '\r'
@@ -105,6 +121,11 @@ int htp_process_request_header_apache_2_2(htp_connp_t *, unsigned char *data, si
 int htp_parse_response_line_generic(htp_connp_t *connp);
 int htp_parse_response_header_generic(htp_connp_t *connp, htp_header_t *h, unsigned char *data, size_t len);
 int htp_process_response_header_generic(htp_connp_t *connp, unsigned char *data, size_t len);
+
+
+// Private transaction functions
+
+htp_status_t htp_tx_state_response_complete_ex(htp_tx_t *tx, int hybrid_mode);
 
 
 // Utility functions
@@ -173,7 +194,7 @@ int htp_res_run_hook_body_data(htp_connp_t *connp, htp_tx_data_t *d);
 
 htp_status_t htp_ch_urlencoded_callback_request_body_data(htp_tx_data_t *d);
 htp_status_t htp_ch_urlencoded_callback_request_headers(htp_connp_t *connp);
-htp_status_t htp_ch_urlencoded_callback_request_line(htp_connp_t *connp, unsigned char *raw_data, size_t raw_len);
+htp_status_t htp_ch_urlencoded_callback_request_line(htp_connp_t *connp);
 htp_status_t htp_ch_multipart_callback_request_body_data(htp_tx_data_t *d);
 htp_status_t htp_ch_multipart_callback_request_headers(htp_connp_t *connp);
 
@@ -194,8 +215,8 @@ htp_header_t *htp_connp_header_parse(htp_connp_t *, unsigned char *, size_t);
 
 htp_status_t htp_parse_ct_header(bstr *header, bstr **ct);
 
-bstr *htp_tx_generate_request_headers_raw(htp_tx_t *tx);
-bstr *htp_tx_generate_response_headers_raw(htp_tx_t *tx);
+htp_status_t htp_connp_req_receiver_finalize_clear(htp_connp_t *connp);
+htp_status_t htp_connp_res_receiver_finalize_clear(htp_connp_t *connp);
 
 #ifdef	__cplusplus
 }

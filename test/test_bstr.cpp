@@ -39,11 +39,8 @@
  */
 
 #include <iostream>
-
 #include <gtest/gtest.h>
-
-#include <htp/bstr.h>
-#include <htp/bstr_builder.h>
+#include <htp/htp_private.h>
 
 TEST(BstrTest, Alloc) {
     bstr *p1;
