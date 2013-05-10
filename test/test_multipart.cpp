@@ -1855,9 +1855,7 @@ TEST_F(Multipart, InvalidContentDispositionSyntax) {
         ASSERT_TRUE(body->flags & HTP_MULTIPART_CD_SYNTAX_INVALID);
         ASSERT_TRUE(body->flags & HTP_MULTIPART_CD_INVALID);
 
-        bstr_free(h->value);
-        bstr_free(h->name);
-        free(h);       
+        htp_mpart_part_destroy(part, 0);
         htp_mpartp_destroy(mpartp);
         mpartp = NULL;
     }

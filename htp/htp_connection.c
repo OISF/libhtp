@@ -77,7 +77,7 @@ void htp_conn_destroy(htp_conn_t *conn) {
         for (size_t i = 0, n = htp_list_size(conn->transactions); i < n; i++) {
             htp_tx_t *tx = htp_list_get(conn->transactions, i);
             if (tx != NULL) {
-                htp_tx_destroy(tx);
+                htp_tx_destroy_incomplete(tx);
             }
         }
 

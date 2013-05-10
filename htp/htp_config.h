@@ -187,7 +187,7 @@ void htp_config_register_multipart_parser(htp_cfg_t *cfg);
  * @param[in] cfg
  * @param[in] callback_fn
  */
-void htp_config_register_request_start(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
+void htp_config_register_request_start(htp_cfg_t *cfg, int (*callback_fn)(htp_tx_t *));
 
 /**
  * Registers a REQUEST_BODY_DATA callback.
@@ -203,7 +203,7 @@ void htp_config_register_request_body_data(htp_cfg_t *cfg, int (*callback_fn)(ht
  * @param[in] cfg
  * @param[in] callback_fn
  */
-void htp_config_register_request_complete(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
+void htp_config_register_request_complete(htp_cfg_t *cfg, int (*callback_fn)(htp_tx_t *));
 
 /**
  * Registers a REQUEST_FILE_DATA callback.
@@ -227,7 +227,7 @@ void htp_config_register_request_header_data(htp_cfg_t *cfg, int (*callback_fn)(
  * @param[in] cfg
  * @param[in] callback_fn
  */
-void htp_config_register_request_headers(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
+void htp_config_register_request_headers(htp_cfg_t *cfg, int (*callback_fn)(htp_tx_t *));
 
 /**
  * Registers a REQUEST_LINE callback.
@@ -235,7 +235,7 @@ void htp_config_register_request_headers(htp_cfg_t *cfg, int (*callback_fn)(htp_
  * @param[in] cfg
  * @param[in] callback_fn
  */
-void htp_config_register_request_line(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
+void htp_config_register_request_line(htp_cfg_t *cfg, int (*callback_fn)(htp_tx_t *));
 
 /**
  * Registers a REQUEST_URI_NORMALIZE callback.
@@ -243,7 +243,7 @@ void htp_config_register_request_line(htp_cfg_t *cfg, int (*callback_fn)(htp_con
  * @param[in] cfg
  * @param[in] callback_fn
  */
-void htp_config_register_request_uri_normalize(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
+void htp_config_register_request_uri_normalize(htp_cfg_t *cfg, int (*callback_fn)(htp_tx_t *));
 
 /**
  * Registers a HTP_REQUEST_TRAILER callback.
@@ -251,7 +251,7 @@ void htp_config_register_request_uri_normalize(htp_cfg_t *cfg, int (*callback_fn
  * @param[in] cfg
  * @param[in] callback_fn
  */
-void htp_config_register_request_trailer(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
+void htp_config_register_request_trailer(htp_cfg_t *cfg, int (*callback_fn)(htp_tx_t *));
 
 /**
  * Registers a REQUEST_TRAILER_DATA callback.
@@ -275,7 +275,7 @@ void htp_config_register_response_body_data(htp_cfg_t *cfg, int (*callback_fn)(h
  * @param[in] cfg
  * @param[in] callback_fn
  */
-void htp_config_register_response_complete(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
+void htp_config_register_response_complete(htp_cfg_t *cfg, int (*callback_fn)(htp_tx_t *));
 
 /**
  * Registers a RESPONSE_HEADER_DATA callback.
@@ -291,7 +291,7 @@ void htp_config_register_response_header_data(htp_cfg_t *cfg, int (*callback_fn)
  * @param[in] cfg
  * @param[in] callback_fn
  */
-void htp_config_register_response_headers(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
+void htp_config_register_response_headers(htp_cfg_t *cfg, int (*callback_fn)(htp_tx_t *));
 
 /**
  * Registers a RESPONSE_LINE callback.
@@ -299,7 +299,7 @@ void htp_config_register_response_headers(htp_cfg_t *cfg, int (*callback_fn)(htp
  * @param[in] cfg
  * @param[in] callback_fn
  */
-void htp_config_register_response_line(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
+void htp_config_register_response_line(htp_cfg_t *cfg, int (*callback_fn)(htp_tx_t *));
 
 /**
  * Registers a RESPONSE_START callback.
@@ -307,7 +307,7 @@ void htp_config_register_response_line(htp_cfg_t *cfg, int (*callback_fn)(htp_co
  * @param[in] cfg
  * @param[in] callback_fn
  */
-void htp_config_register_response_start(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
+void htp_config_register_response_start(htp_cfg_t *cfg, int (*callback_fn)(htp_tx_t *));
 
 /**
  * Registers a RESPONSE_TRAILER callback.
@@ -315,7 +315,7 @@ void htp_config_register_response_start(htp_cfg_t *cfg, int (*callback_fn)(htp_c
  * @param[in] cfg
  * @param[in] callback_fn
  */
-void htp_config_register_response_trailer(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
+void htp_config_register_response_trailer(htp_cfg_t *cfg, int (*callback_fn)(htp_tx_t *));
 
 /**
  * Registers a RESPONSE_TRAILER_DATA callback.
@@ -324,6 +324,14 @@ void htp_config_register_response_trailer(htp_cfg_t *cfg, int (*callback_fn)(htp
  * @param[in] callback_fn
  */
 void htp_config_register_response_trailer_data(htp_cfg_t *cfg, int (*callback_fn)(htp_tx_data_t *d));
+
+/**
+ * Registers a TRANSACTION_COMPLETE callback.
+ *
+ * @param[in] cfg
+ * @param[in] callback_fn
+ */
+void htp_config_register_transaction_complete(htp_cfg_t *cfg, int (*callback_fn)(htp_tx_t *));
 
 /**
  * Adds the built-in Urlencoded parser to the configuration. The parser will

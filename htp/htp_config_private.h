@@ -194,15 +194,20 @@ struct htp_cfg_t {
     // Hooks
 
     /**
-     * Transaction start hook, invoked when the parser receives the first
-     * byte of a new transaction.
+     * Request start hook, invoked when the parser receives the first byte of a new
+     * request. Because in HTTP a transaction always starts with a request, this hook
+     * doubles as a transaction start hook.
      */
     htp_hook_t *hook_request_start;
 
-    /** Request line hook, invoked after a request line has been parsed. */
+    /**
+     * Request line hook, invoked after a request line has been parsed.
+     */
     htp_hook_t *hook_request_line;
 
-    /** Request URI normalization hook, for overriding default normalization of URI. */
+    /**
+     * Request URI normalization hook, for overriding default normalization of URI.
+     */
     htp_hook_t *hook_request_uri_normalize;
 
     /**
@@ -213,7 +218,9 @@ struct htp_cfg_t {
      */
     htp_hook_t *hook_request_header_data;
 
-    /** Request headers hook, invoked after all request headers are seen. */
+    /**
+     * Request headers hook, invoked after all request headers are seen.
+     */
     htp_hook_t *hook_request_headers;
 
     /**
@@ -244,7 +251,9 @@ struct htp_cfg_t {
      */
     htp_hook_t *hook_request_trailer;
 
-    /** Request hook, invoked after a complete request is seen. */
+    /**
+     * Request hook, invoked after a complete request is seen.
+     */
     htp_hook_t *hook_request_complete;
 
     /**
@@ -253,7 +262,9 @@ struct htp_cfg_t {
      */
     htp_hook_t *hook_response_start;
 
-    /** Response line hook, invoked after a response line has been parsed. */
+    /**
+     * Response line hook, invoked after a response line has been parsed.
+     */
     htp_hook_t *hook_response_line;
 
     /**
@@ -264,7 +275,9 @@ struct htp_cfg_t {
      */
     htp_hook_t *hook_response_header_data;
 
-    /** Response headers book, invoked after all response headers have been seen. */
+    /**
+     * Response headers book, invoked after all response headers have been seen.
+     */
     htp_hook_t *hook_response_headers;
 
     /**
@@ -291,18 +304,27 @@ struct htp_cfg_t {
     htp_hook_t *hook_response_trailer;
 
     /**
-     * Response hook, invoked after a response has been seen. There isn't a separate
-     * transaction hook, use this hook to do something whenever a transaction is
-     * complete.
+     * Response hook, invoked after a response has been seen. Because sometimes servers
+     * respond before receiving complete requests, a response_complete callback may be
+     * invoked prior to a request_complete callback.
      */
     htp_hook_t *hook_response_complete;
+
+    /**
+     * Transaction complete hook, which is invoked once the entire transaction is
+     * considered complete (request and response are both complete). This is always
+     * the last hook to be invoked.
+     */
+    htp_hook_t *hook_transaction_complete;
 
     /**
      * Log hook, invoked every time the library wants to log.
      */
     htp_hook_t *hook_log;
 
-    /** Opaque user data associated with this configuration structure. */
+    /**
+     * Opaque user data associated with this configuration structure.
+     */
     void *user_data;
 };
 

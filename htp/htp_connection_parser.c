@@ -83,6 +83,14 @@ htp_connp_t *htp_connp_create(htp_cfg_t *cfg) {
 
 void htp_connp_destroy(htp_connp_t *connp) {
     if (connp == NULL) return;
+    
+    if (connp->in_buf != NULL) {
+        free(connp->in_buf);
+    }
+
+    if (connp->out_buf != NULL) {
+        free(connp->out_buf);
+    }
         
     if (connp->out_decompressor != NULL) {
         connp->out_decompressor->destroy(connp->out_decompressor);
@@ -166,4 +174,22 @@ htp_tx_t *htp_connp_tx_create(htp_connp_t *connp) {
     htp_connp_in_reset(connp);
 
     return tx;
+}
+
+/**
+ * Removes references to the supplied transaction.
+ *
+ * @param[in] connp
+ * @param[in] tx
+ */
+void htp_connp_tx_remove(htp_connp_t *connp, htp_tx_t *tx) {
+    if (connp == NULL) return;
+
+    if (connp->in_tx == tx) {
+        connp->in_tx = NULL;
+    }
+
+    if (connp->out_tx == tx) {
+        connp->out_tx = NULL;
+    }
 }

@@ -210,7 +210,7 @@ enum htp_file_source_t {
 #define HTP_FIELD_RAW_NUL                  0x00000080
 #define HTP_REQUEST_SMUGGLING              0x00000100
 #define HTP_INVALID_FOLDING                0x00000200
-#define HTP_INVALID_CHUNKING               0x00000400
+#define HTP_REQUEST_INVALID_T_E            0x00000400
 #define HTP_MULTI_PACKET_HEAD              0x00000800
 #define HTP_HOST_MISSING                   0x00001000
 #define HTP_HOST_AMBIGUOUS                 0x00002000
@@ -230,6 +230,8 @@ enum htp_file_source_t {
 #define HTP_URLEN_INVALID_ENCODING         0x08000000
 #define HTP_URLEN_OVERLONG_U               0x10000000
 #define HTP_URLEN_HALF_FULL_RANGE          0x20000000 /* Range U+FF00 - U+FFEF detected. */
+#define HTP_REQUEST_INVALID                0x40000000
+#define HTP_REQUEST_INVALID_C_L            0x80000000
 
 #define HTP_HOST_INVALID ( HTP_HOSTU_INVALID | HTP_HOSTH_INVALID )
 

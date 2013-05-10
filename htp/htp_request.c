@@ -149,7 +149,7 @@ static htp_status_t htp_req_handle_state_change(htp_connp_t *connp) {
     if (connp->in_state == htp_connp_REQ_HEADERS) {
         htp_status_t rc = HTP_OK;
 
-        switch (connp->in_tx->progress) {
+        switch (connp->in_tx->request_progress) {
             case HTP_REQUEST_HEADERS:
                 rc = htp_connp_req_receiver_set(connp, connp->in_tx->cfg->hook_request_header_data);
                 break;
@@ -159,6 +159,7 @@ static htp_status_t htp_req_handle_state_change(htp_connp_t *connp) {
                 break;
 
             default:
+                // Do nothing; receivers are currently used only for header blocks.
                 break;
         }
 
@@ -269,7 +270,7 @@ static void htp_connp_req_clear_buffer(htp_connp_t *connp) {
 }
 
 /**
- * Performs check for a CONNECT transaction to decide whether inbound
+ * Performs a check for a CONNECT transaction to decide whether inbound
  * parsing needs to be suspended.
  *
  * @param[in] connp
@@ -283,9 +284,14 @@ htp_status_t htp_connp_REQ_CONNECT_CHECK(htp_connp_t *connp) {
     // response in order to determine if the tunneling request
     // was a success.
     if (connp->in_tx->request_method_number == HTP_M_CONNECT) {
+        // Because we will be waiting on the response, complete as much
+        // of the request straight away. This is because, if there's no more
+        // inbound data we may not be called again, and the request may end
+        // up never being finalized.
+        htp_tx_state_request_complete_partial(connp->in_tx);
+
         connp->in_state = htp_connp_REQ_CONNECT_WAIT_RESPONSE;
-        connp->in_status = HTP_STREAM_DATA_OTHER;
-        connp->in_tx->progress = HTP_REQUEST_COMPLETE;
+        connp->in_status = HTP_STREAM_DATA_OTHER;       
 
         return HTP_DATA_OTHER;
     }
@@ -308,7 +314,7 @@ htp_status_t htp_connp_REQ_CONNECT_CHECK(htp_connp_t *connp) {
  */
 htp_status_t htp_connp_REQ_CONNECT_WAIT_RESPONSE(htp_connp_t *connp) {
     // Check that we saw the response line of the current inbound transaction.
-    if (connp->in_tx->progress <= HTP_RESPONSE_LINE) {
+    if (connp->in_tx->response_progress <= HTP_RESPONSE_LINE) {
         return HTP_DATA_OTHER;
     }
 
@@ -433,7 +439,7 @@ htp_status_t htp_connp_REQ_BODY_CHUNKED_LENGTH(htp_connp_t *connp) {
             } else if (connp->in_chunked_length == 0) {
                 // End of data
                 connp->in_state = htp_connp_REQ_HEADERS;
-                connp->in_tx->progress = HTP_REQUEST_TRAILER;
+                connp->in_tx->request_progress = HTP_REQUEST_TRAILER;
             } else {
                 // Invalid chunk length.
                 htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Request chunk encoding: Invalid chunk length");
@@ -499,7 +505,7 @@ htp_status_t htp_connp_REQ_BODY_DETERMINE(htp_connp_t *connp) {
 
         case HTP_CODING_CHUNKED:
             connp->in_state = htp_connp_REQ_BODY_CHUNKED_LENGTH;
-            connp->in_tx->progress = HTP_REQUEST_BODY;
+            connp->in_tx->request_progress = HTP_REQUEST_BODY;
             break;
 
         case HTP_CODING_IDENTITY:
@@ -508,11 +514,12 @@ htp_status_t htp_connp_REQ_BODY_DETERMINE(htp_connp_t *connp) {
 
             if (connp->in_content_length != 0) {
                 connp->in_state = htp_connp_REQ_BODY_IDENTITY;
-                connp->in_tx->progress = HTP_REQUEST_BODY;
+                connp->in_tx->request_progress = HTP_REQUEST_BODY;
             } else {
                 connp->in_tx->connp->in_state = htp_connp_REQ_FINALIZE;
             }
             break;
+            
         case HTP_CODING_NO_BODY:
             // This request does not have a body, which
             // means that we're done with it
@@ -632,7 +639,7 @@ htp_status_t htp_connp_REQ_PROTOCOL(htp_connp_t *connp) {
     if (connp->in_tx->is_protocol_0_9 == 0) {
         // Switch to request header parsing.
         connp->in_state = htp_connp_REQ_HEADERS;
-        connp->in_tx->progress = HTP_REQUEST_HEADERS;
+        connp->in_tx->request_progress = HTP_REQUEST_HEADERS;
     } else {
         // We're done with this request.
         connp->in_state = htp_connp_REQ_FINALIZE;
@@ -697,7 +704,7 @@ htp_status_t htp_connp_REQ_LINE(htp_connp_t *connp) {
     return HTP_ERROR;
 }
 
-htp_status_t htp_connp_REQ_FINALIZE(htp_connp_t *connp) {
+htp_status_t htp_connp_REQ_FINALIZE(htp_connp_t *connp) {    
     return htp_tx_state_request_complete(connp->in_tx);
 }
 
@@ -827,7 +834,7 @@ int htp_connp_req_data(htp_connp_t *connp, const htp_time_t *timestamp, const vo
         #ifdef HTP_DEBUG
         fprintf(stderr, "htp_connp_req_data: in state=%s, progress=%s\n",
                 htp_connp_in_state_as_string(connp),
-                htp_tx_progress_as_string(connp->in_tx));
+                htp_tx_request_progress_as_string(connp->in_tx));
         #endif
 
         // Return if there's been an error or if we've run out of data. We are relying

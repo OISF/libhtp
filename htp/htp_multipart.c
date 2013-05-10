@@ -77,8 +77,9 @@ static void htp_mpart_decode_quoted_cd_value_inplace(bstr *b) {
 
     while (pos < len) {
         // Ignore \ when before \ or ".
-        if ((*s == '\\')&&(pos + 1 < len)&&((*(s+1) == '"')||(*(s+1) == '\\'))) {
+        if ((*s == '\\')&&(pos + 1 < len)&&((*(s + 1) == '"')||(*(s + 1) == '\\'))) {
             s++;
+            pos++;
         }
 
         *d++ = *s++;
@@ -476,11 +477,9 @@ void htp_mpart_part_destroy(htp_multipart_part_t *part, int gave_up_data) {
         bstr_free(part->value);
     }
 
-    // Content-Type is currently only an alias for the
-    // value stored in the headers structure.
+    bstr_free(part->content_type);
 
     if (part->headers != NULL) {
-        // Destroy request_headers
         htp_header_t *h = NULL;
         for (size_t i = 0, n = htp_table_size(part->headers); i < n; i++) {
             h = htp_table_get_index(part->headers, i, NULL);
@@ -907,8 +906,9 @@ void htp_mpartp_destroy(htp_mpartp_t *parser) {
     }
 
     bstr_builder_destroy(parser->boundary_pieces);
-    bstr_builder_destroy(parser->part_data_pieces);
     bstr_builder_destroy(parser->part_header_pieces);
+    bstr_free(parser->pending_header_line);
+    bstr_builder_destroy(parser->part_data_pieces);
 
     // Free the parts.
     if (parser->multipart.parts != NULL) {
@@ -1475,6 +1475,12 @@ htp_status_t htp_mpartp_find_boundary(bstr *content_type, bstr **boundary, uint6
         }
 
         pos++;
+    }
+
+    if (pos >= len) {
+        // No value after the equals sign.
+        *flags |= HTP_MULTIPART_HBOUNDARY_INVALID;
+        return HTP_DECLINED;
     }
 
     if (data[pos] == '"') {

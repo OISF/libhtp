@@ -183,7 +183,8 @@ void fprint_raw_data_ex(FILE *stream, const char *name, const void *data, size_t
 
 char *htp_connp_in_state_as_string(htp_connp_t *connp);
 char *htp_connp_out_state_as_string(htp_connp_t *connp);
-char *htp_tx_progress_as_string(htp_tx_t *tx);
+char *htp_tx_request_progress_as_string(htp_tx_t *tx);
+char *htp_tx_response_progress_as_string(htp_tx_t *tx);
 
 bstr *htp_unparse_uri_noencode(htp_uri_t *uri);
 
@@ -193,10 +194,10 @@ int htp_req_run_hook_body_data(htp_connp_t *connp, htp_tx_data_t *d);
 int htp_res_run_hook_body_data(htp_connp_t *connp, htp_tx_data_t *d);
 
 htp_status_t htp_ch_urlencoded_callback_request_body_data(htp_tx_data_t *d);
-htp_status_t htp_ch_urlencoded_callback_request_headers(htp_connp_t *connp);
-htp_status_t htp_ch_urlencoded_callback_request_line(htp_connp_t *connp);
+htp_status_t htp_ch_urlencoded_callback_request_headers(htp_tx_t *tx);
+htp_status_t htp_ch_urlencoded_callback_request_line(htp_tx_t *tx);
 htp_status_t htp_ch_multipart_callback_request_body_data(htp_tx_data_t *d);
-htp_status_t htp_ch_multipart_callback_request_headers(htp_connp_t *connp);
+htp_status_t htp_ch_multipart_callback_request_headers(htp_tx_t *tx);
 
 htp_status_t htp_php_parameter_processor(htp_param_t *p);
 
@@ -217,6 +218,16 @@ htp_status_t htp_parse_ct_header(bstr *header, bstr **ct);
 
 htp_status_t htp_connp_req_receiver_finalize_clear(htp_connp_t *connp);
 htp_status_t htp_connp_res_receiver_finalize_clear(htp_connp_t *connp);
+
+htp_status_t htp_tx_finalize(htp_tx_t *tx);
+
+int htp_tx_is_complete(htp_tx_t *tx);
+
+htp_status_t htp_tx_state_request_complete_partial(htp_tx_t *tx);
+
+void htp_connp_tx_remove(htp_connp_t *connp, htp_tx_t *tx);
+
+void htp_tx_destroy_incomplete(htp_tx_t *tx);
 
 #ifdef	__cplusplus
 }

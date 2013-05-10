@@ -95,9 +95,7 @@ htp_status_t htp_ch_urlencoded_callback_request_body_data(htp_tx_data_t *d) {
  * @return HTP_OK if a new parser has been setup, HTP_DECLINED if the MIME type
  *         is not appropriate for this parser, and HTP_ERROR on failure.
  */
-htp_status_t htp_ch_urlencoded_callback_request_headers(htp_connp_t *connp) {
-    htp_tx_t *tx = connp->in_tx;
-
+htp_status_t htp_ch_urlencoded_callback_request_headers(htp_tx_t *tx) {
     // Check the request content type to see if it matches our MIME type.
     if ((tx->request_content_type == NULL) || (!bstr_begins_with_c(tx->request_content_type, HTP_URLENCODED_MIME_TYPE))) {
         #ifdef HTP_DEBUG
@@ -130,9 +128,8 @@ htp_status_t htp_ch_urlencoded_callback_request_headers(htp_connp_t *connp) {
  * @return HTP_OK if query string was parsed, HTP_DECLINED if there was no query
  *         string, and HTP_ERROR on failure.
  */
-htp_status_t htp_ch_urlencoded_callback_request_line(htp_connp_t *connp) {
-    htp_tx_t *tx = connp->in_tx;
-
+htp_status_t htp_ch_urlencoded_callback_request_line(htp_tx_t *tx) {
+    // Proceed only if there's something for us to parse.
     if ((tx->parsed_uri->query == NULL) || (bstr_len(tx->parsed_uri->query) == 0)) {
         return HTP_DECLINED;
     }
@@ -236,9 +233,7 @@ htp_status_t htp_ch_multipart_callback_request_body_data(htp_tx_data_t *d) {
  * @return HTP_OK if a new parser has been setup, HTP_DECLINED if the MIME type
  *         is not appropriate for this parser, and HTP_ERROR on failure.
  */
-htp_status_t htp_ch_multipart_callback_request_headers(htp_connp_t *connp) {
-    htp_tx_t *tx = connp->in_tx;
-
+htp_status_t htp_ch_multipart_callback_request_headers(htp_tx_t *tx) {
     #ifdef HTP_DEBUG
     fprintf(stderr, "htp_ch_multipart_callback_request_headers: Need to determine if multipart body is present\n");
     #endif
@@ -277,7 +272,7 @@ htp_status_t htp_ch_multipart_callback_request_headers(htp_connp_t *connp) {
     if (boundary == NULL) return HTP_ERROR;
 
     // Create a Multipart parser instance.
-    tx->request_mpartp = htp_mpartp_create(connp->cfg, boundary, flags);
+    tx->request_mpartp = htp_mpartp_create(tx->connp->cfg, boundary, flags);
     if (tx->request_mpartp == NULL) {
         bstr_free(boundary);
         return HTP_ERROR;
@@ -286,7 +281,7 @@ htp_status_t htp_ch_multipart_callback_request_headers(htp_connp_t *connp) {
     // Configure file extraction.
     if (tx->cfg->extract_request_files) {
         tx->request_mpartp->extract_files = 1;
-        tx->request_mpartp->extract_dir = connp->cfg->tmpdir;
+        tx->request_mpartp->extract_dir = tx->connp->cfg->tmpdir;
     }
 
     // Register a request body data callback.

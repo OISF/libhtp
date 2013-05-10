@@ -311,10 +311,10 @@ int bstr_rchr(const bstr *b, int c) {
     const unsigned char *data = bstr_ptr(b);
     size_t len = bstr_len(b);
 
-    int i = len;
-    while (i >= 0) {
-        if (data[i] == c) {
-            return i;
+    size_t i = len;
+    while (i > 0) {
+        if (data[i - 1] == c) {
+            return i - 1;
         }
 
         i--;

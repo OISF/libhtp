@@ -72,18 +72,22 @@ enum htp_alloc_strategy_t {
  * have been completed. For example, the state REQUEST_LINE indicates that
  * the request line has been seen.
  */
-enum htp_tx_progress_t {
-    HTP_REQUEST_START = 0,
+enum htp_tx_req_progress_t {
+    HTP_REQUEST_NOT_STARTED = 0,
     HTP_REQUEST_LINE = 1,
     HTP_REQUEST_HEADERS = 2,
     HTP_REQUEST_BODY = 3,
     HTP_REQUEST_TRAILER = 4,
-    HTP_REQUEST_COMPLETE = 5,
-    HTP_RESPONSE_LINE = 6,
-    HTP_RESPONSE_HEADERS = 7,
-    HTP_RESPONSE_BODY = 8,
-    HTP_RESPONSE_TRAILER = 9,
-    HTP_RESPONSE_COMPLETE = 10
+    HTP_REQUEST_COMPLETE = 5    
+};
+
+enum htp_tx_res_progress_t {
+    HTP_RESPONSE_NOT_STARTED = 0,
+    HTP_RESPONSE_LINE = 1,
+    HTP_RESPONSE_HEADERS = 2,
+    HTP_RESPONSE_BODY = 3,
+    HTP_RESPONSE_TRAILER = 4,
+    HTP_RESPONSE_COMPLETE = 5
 };
 
 #define HTP_CONFIG_PRIVATE      0
@@ -102,7 +106,7 @@ htp_tx_t *htp_tx_create(htp_connp_t *connp);
  *
  * @param[in] tx
  */
-void htp_tx_destroy(htp_tx_t *tx);
+htp_status_t htp_tx_destroy(htp_tx_t *tx);
 
 /**
  * Determines if the transaction used a shared configuration structure. See the

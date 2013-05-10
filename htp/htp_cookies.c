@@ -84,7 +84,7 @@ int htp_parse_single_cookie_v0(htp_connp_t *connp, unsigned char *data, size_t l
  * @param[in] connp
  * @return HTP_OK on success, HTP_ERROR on error
  */
-int htp_parse_cookies_v0(htp_connp_t *connp) {
+htp_status_t htp_parse_cookies_v0(htp_connp_t *connp) {
     htp_header_t *cookie_header = htp_table_get_c(connp->in_tx->request_headers, "cookie");
     if (cookie_header == NULL) return HTP_OK;
 

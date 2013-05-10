@@ -149,7 +149,7 @@ static htp_status_t htp_res_handle_state_change(htp_connp_t *connp) {
     if (connp->out_state == htp_connp_RES_HEADERS) {
         htp_status_t rc = HTP_OK;
 
-        switch (connp->out_tx->progress) {
+        switch (connp->out_tx->response_progress) {
             case HTP_RESPONSE_HEADERS:
                 rc = htp_connp_res_receiver_set(connp, connp->out_tx->cfg->hook_response_header_data);
                 break;
@@ -159,6 +159,7 @@ static htp_status_t htp_res_handle_state_change(htp_connp_t *connp) {
                 break;
 
             default:
+                // Do nothing; receivers are currently used only for header blocks.
                 break;
         }
 
@@ -362,7 +363,7 @@ htp_status_t htp_connp_RES_BODY_CHUNKED_LENGTH(htp_connp_t *connp) {
             } else if (connp->out_chunked_length == 0) {
                 // End of data
                 connp->out_state = htp_connp_RES_HEADERS;
-                connp->out_tx->progress = HTP_RESPONSE_TRAILER;
+                connp->out_tx->response_progress = HTP_RESPONSE_TRAILER;
             } else {
                 // Invalid chunk length
                 htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
@@ -495,7 +496,7 @@ htp_status_t htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
 
         // Expecting to see another response line next.
         connp->out_state = htp_connp_RES_LINE;
-        connp->out_tx->progress = HTP_RESPONSE_LINE;
+        connp->out_tx->response_progress = HTP_RESPONSE_LINE;
         connp->out_tx->seen_100continue++;
 
         return HTP_OK;
@@ -552,7 +553,7 @@ htp_status_t htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
             }
 
             connp->out_state = htp_connp_RES_BODY_CHUNKED_LENGTH;
-            connp->out_tx->progress = HTP_RESPONSE_BODY;
+            connp->out_tx->response_progress = HTP_RESPONSE_BODY;
         }// 3. If a Content-Length header field (section 14.14) is present, its
             //   value in bytes represents the length of the message-body.
         else if (cl != NULL) {
@@ -576,7 +577,7 @@ htp_status_t htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
 
                 if (connp->out_content_length != 0) {
                     connp->out_state = htp_connp_RES_BODY_IDENTITY_CL_KNOWN;
-                    connp->out_tx->progress = HTP_RESPONSE_BODY;
+                    connp->out_tx->response_progress = HTP_RESPONSE_BODY;
                 } else {
                     connp->out_state = htp_connp_RES_FINALIZE;
                 }
@@ -602,7 +603,7 @@ htp_status_t htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
             //   would leave no possibility for the server to send back a response.)
             connp->out_state = htp_connp_RES_BODY_IDENTITY_STREAM_CLOSE;
             connp->out_tx->response_transfer_coding = HTP_CODING_IDENTITY;
-            connp->out_tx->progress = HTP_RESPONSE_BODY;
+            connp->out_tx->response_progress = HTP_RESPONSE_BODY;
             connp->out_body_data_left = -1;
         }
     }
@@ -651,7 +652,7 @@ htp_status_t htp_connp_RES_HEADERS(htp_connp_t *connp) {
                 htp_connp_res_clear_buffer(connp);
 
                 // We've seen all response headers.
-                if (connp->out_tx->progress == HTP_RESPONSE_HEADERS) {
+                if (connp->out_tx->response_progress == HTP_RESPONSE_HEADERS) {
                     // Response headers.
 
                     // The next step is to determine if this response has a body.
@@ -664,7 +665,7 @@ htp_status_t htp_connp_RES_HEADERS(htp_connp_t *connp) {
                     if (rc != HTP_OK) return rc;
 
                     // Run hook response_TRAILER.
-                    rc = htp_hook_run_all(connp->cfg->hook_response_trailer, connp);
+                    rc = htp_hook_run_all(connp->cfg->hook_response_trailer, connp->out_tx);
                     if (rc != HTP_OK) return rc;
 
                     // The next step is to finalize this response.
@@ -808,7 +809,7 @@ htp_status_t htp_connp_RES_LINE(htp_connp_t *connp) {
                 // any headers to parse, we assume the body continues until
                 // the end of the stream.
                 connp->out_tx->response_transfer_coding = HTP_CODING_IDENTITY;
-                connp->out_tx->progress = HTP_RESPONSE_BODY;
+                connp->out_tx->response_progress = HTP_RESPONSE_BODY;
                 connp->out_state = htp_connp_RES_BODY_IDENTITY_STREAM_CLOSE;
                 connp->out_body_data_left = -1;
 
@@ -822,7 +823,7 @@ htp_status_t htp_connp_RES_LINE(htp_connp_t *connp) {
 
             // Move on to the next phase.
             connp->out_state = htp_connp_RES_HEADERS;
-            connp->out_tx->progress = HTP_RESPONSE_HEADERS;
+            connp->out_tx->response_progress = HTP_RESPONSE_HEADERS;
 
             return HTP_OK;
         }
@@ -947,7 +948,7 @@ int htp_connp_res_data(htp_connp_t *connp, const htp_time_t *timestamp, const vo
         #ifdef HTP_DEBUG
         fprintf(stderr, "htp_connp_res_data: out state=%s, progress=%s\n",
                 htp_connp_out_state_as_string(connp),
-                htp_tx_progress_as_string(connp->out_tx));
+                htp_tx_response_progress_as_string(connp->out_tx));
         #endif
 
         // Return if there's been an error

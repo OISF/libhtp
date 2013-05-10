@@ -785,7 +785,7 @@ void Init_htp( void )
   rb_define_const( mHTP, "HTP_FIELD_NUL_BYTE", INT2FIX( HTP_FIELD_RAW_NUL ) );
   rb_define_const( mHTP, "HTP_REQUEST_SMUGGLING", INT2FIX( HTP_REQUEST_SMUGGLING ) );
   rb_define_const( mHTP, "HTP_INVALID_FOLDING", INT2FIX( HTP_INVALID_FOLDING ) );
-  rb_define_const( mHTP, "HTP_INVALID_CHUNKING", INT2FIX( HTP_INVALID_CHUNKING ) );
+  rb_define_const( mHTP, "HTP_INVALID_CHUNKING", INT2FIX( HTP_REQUEST_INVALID_T_E ) );
   rb_define_const( mHTP, "HTP_MULTI_PACKET_HEAD", INT2FIX( HTP_MULTI_PACKET_HEAD ) );
   rb_define_const( mHTP, "HTP_HOST_MISSING", INT2FIX( HTP_HOST_MISSING ) );
   rb_define_const( mHTP, "HTP_AMBIGUOUS_HOST", INT2FIX( HTP_HOST_AMBIGUOUS ) );
@@ -815,7 +815,7 @@ void Init_htp( void )
   rb_define_const( mHTP, "NONE", INT2FIX( HTP_AUTH_NONE ) );
   rb_define_const( mHTP, "IDENTITY", INT2FIX( HTP_CODING_IDENTITY ) );
   rb_define_const( mHTP, "CHUNKED", INT2FIX( HTP_CODING_CHUNKED ) );
-  rb_define_const( mHTP, "TX_PROGRESS_NEW", INT2FIX( HTP_REQUEST_START ) );
+  rb_define_const( mHTP, "TX_PROGRESS_NEW", INT2FIX( HTP_REQUEST_NOT_STARTED ) );
   rb_define_const( mHTP, "TX_PROGRESS_REQ_LINE", INT2FIX( HTP_REQUEST_LINE ) );
   rb_define_const( mHTP, "TX_PROGRESS_REQ_HEADERS", INT2FIX( HTP_REQUEST_HEADERS ) );
   rb_define_const( mHTP, "TX_PROGRESS_REQ_BODY", INT2FIX( HTP_REQUEST_BODY ) );

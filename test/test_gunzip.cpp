@@ -102,7 +102,11 @@ protected:
 
         // Decompress
 
-        return decompressor->decompress(decompressor, &d);
+        htp_status_t rc = decompressor->decompress(decompressor, &d);
+
+        free((void *)d.data);
+
+        return rc;
     }
 
     virtual void SetUp() {

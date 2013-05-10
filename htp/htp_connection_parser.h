@@ -97,8 +97,7 @@ htp_conn_t *htp_connp_get_connection(const htp_connp_t *connp);
 /**
  * Retrieves the pointer to the active inbound transaction. In connection
  * parsing mode there can be many open transactions, and up to 2 active
- * transactions at any one time. This is due to HTTP pipelining. This
- * function should only be used in a request callback.
+ * transactions at any one time. This is due to HTTP pipelining. Can be NULL.
  *
  * @param[in] connp
  * @return Active inbound transaction, or NULL if there isn't one.
@@ -119,8 +118,7 @@ htp_log_t *htp_connp_get_last_error(const htp_connp_t *connp);
 /**
  * Retrieves the pointer to the active outbound transaction. In connection
  * parsing mode there can be many open transactions, and up to 2 active
- * transactions at any one time. This is due to HTTP pipelining. This function
- * should be only be used in a response callback.
+ * transactions at any one time. This is due to HTTP pipelining. Can be NULL.
  *
  * @param[in] connp
  * @return Active outbound transaction, or NULL if there isn't one.
