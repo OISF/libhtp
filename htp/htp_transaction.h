@@ -96,7 +96,7 @@ enum htp_tx_res_progress_t {
 /**
  * Creates a new transaction structure.
  *
- * @param[in] connp
+ * @param[in] connp Connection parser pointer. Must not be NULL.
  * @return The newly created transaction, or NULL on memory allocation failure.
  */
 htp_tx_t *htp_tx_create(htp_connp_t *connp);
@@ -104,7 +104,7 @@ htp_tx_t *htp_tx_create(htp_connp_t *connp);
 /**
  * Destroys the supplied transaction.
  *
- * @param[in] tx
+ * @param[in] tx Transaction pointer. Must not be NULL.
  */
 htp_status_t htp_tx_destroy(htp_tx_t *tx);
 
@@ -113,47 +113,32 @@ htp_status_t htp_tx_destroy(htp_tx_t *tx);
  * documentation for htp_tx_set_config() for more information why you might want
  * to know that.
  *
- * @param[in] tx
+ * @param[in] tx Transaction pointer. Must not be NULL.
  * @return HTP_CFG_SHARED or HTP_CFG_PRIVATE.
  */
 int htp_tx_get_is_config_shared(const htp_tx_t *tx);
 
 /**
- * Get a bstr that contains the raw response headers. This method will always
- * return an up-to-date buffer, containing the last known headers. Thus, if
- * it is called once after RESPONSE_HEADERS phase it will return one buffer, but
- * it may return a different buffer if called after HTP_RESPONSE_TRAILERS phase (but
- * only if the response actually contains trailer headers). Do not retain the
- * bstr pointer, as the buffer may change. If there are no changes to the
- * response header structure, only one buffer will be constructed and used. (Multiple
- * invocations of this method will not cause multiple buffers to be created.)
- *
- * @param[in] tx
- * @return
- */
-bstr *htp_tx_get_response_headers_raw(htp_tx_t *tx);
-
-/**
  * Returns the user data associated with this transaction.
  *
- * @param[in] tx
- * @return A pointer to user data or NULL
+ * @param[in] tx Transaction pointer. Must not be NULL.
+ * @return A pointer to user data or NULL.
  */
 void *htp_tx_get_user_data(const htp_tx_t *tx);
 
 /**
  * Registers a callback that will be invoked to process the transaction's request body data.
  *
- * @param[in] tx
- * @param[in] callback_fn
+ * @param[in] tx Transaction pointer. Must not be NULL.
+ * @param[in] callback_fn Callback function pointer. Must not be NULL.
  */
 void htp_tx_register_request_body_data(htp_tx_t *tx, int (*callback_fn)(htp_tx_data_t *));
 
 /**
  * Registers a callback that will be invoked to process the transaction's response body data.
  *
- * @param[in] tx
- * @param[in] callback_fn
+ * @param[in] tx Transaction pointer. Must not be NULL.
+ * @param[in] callback_fn Callback function pointer. Must not be NULL.
  */
 void htp_tx_register_response_body_data(htp_tx_t *tx, int (*callback_fn)(htp_tx_data_t *));
 
@@ -161,8 +146,8 @@ void htp_tx_register_response_body_data(htp_tx_t *tx, int (*callback_fn)(htp_tx_
  * Adds one parameter to the request. THis function will take over the
  * responsibility for the provided htp_param_t structure.
  * 
- * @param tx
- * @param param
+ * @param[in] tx Transaction pointer. Must not be NULL.
+ * @param[in] param Parameter pointer. Must not be NULL.
  * @return HTP_OK on success, HTP_ERROR on failure.
  */
 htp_status_t htp_tx_req_add_param(htp_tx_t *tx, htp_param_t *param);
@@ -170,9 +155,9 @@ htp_status_t htp_tx_req_add_param(htp_tx_t *tx, htp_param_t *param);
 /**
  * Returns the first request parameter that matches the given name, using case-insensitive matching.
  *
- * @param[in] tx
- * @param[in] name
- * @param[in] name_len
+ * @param[in] tx Transaction pointer. Must not be NULL.
+ * @param[in] name Name data pointer. Must not be NULL.
+ * @param[in] name_len Name data length.
  * @return htp_param_t instance, or NULL if parameter not found.
  */
 htp_param_t *htp_tx_req_get_param(htp_tx_t *tx, const char *name, size_t name_len);
@@ -181,10 +166,10 @@ htp_param_t *htp_tx_req_get_param(htp_tx_t *tx, const char *name, size_t name_le
  * Returns the first request parameter from the given source that matches the given name,
  * using case-insensitive matching.
  * 
- * @param[in] tx
- * @param[in] source
- * @param[in] name
- * @param[in] name_len
+ * @param[in] tx Transaction pointer. Must not be NULL.
+ * @param[in] source Parameter source (where in request the parameter was located).
+ * @param[in] name Name data pointer. Must not be NULL.
+ * @param[in] name_len Name data length.
  * @return htp_param_t instance, or NULL if parameter not found.
  */
 htp_param_t *htp_tx_req_get_param_ex(htp_tx_t *tx, enum htp_data_source_t source, const char *name, size_t name_len);
@@ -192,7 +177,7 @@ htp_param_t *htp_tx_req_get_param_ex(htp_tx_t *tx, enum htp_data_source_t source
 /**
  * Determine if the request has a body.
  *
- * @param[in] tx
+ * @param[in] tx Transaction pointer. Must not be NULL.
  * @return 1 if there is a body, 0 otherwise.
  */
 int htp_tx_req_has_body(const htp_tx_t *tx);
@@ -206,9 +191,9 @@ int htp_tx_req_has_body(const htp_tx_t *tx);
  * afterwards. The protocol parsing code makes no copies of the data,
  * but some parsers might.
  *
- * @param[in] tx
- * @param[in] data
- * @param[in] len
+ * @param[in] tx Transaction pointer. Must not be NULL.
+ * @param[in] data Data pointer. Must not be NULL.
+ * @param[in] len Data length.
  * @return HTP_OK on success, HTP_ERROR on failure.
  */
 htp_status_t htp_tx_req_process_body_data(htp_tx_t *tx, const void *data, size_t len);
@@ -218,12 +203,12 @@ htp_status_t htp_tx_req_process_body_data(htp_tx_t *tx, const void *data, size_t
  * each available header, and in the order in which headers were
  * seen in the request.
  * 
- * @param[in] tx
- * @param[in] name
- * @param[in] name_len
- * @param[in] value
- * @param[in] value_len
- * @param[in] alloc
+ * @param[in] tx Transaction pointer. Must not be NULL.
+ * @param[in] name Name data pointer. Must not be NULL.
+ * @param[in] name_len Name data length.
+ * @param[in] value Value data pointer. Must not be NULL.
+ * @param[in] value_len Value data length.
+ * @param[in] alloc Desired allocation strategy.
  * @return HTP_OK on success, HTP_ERROR on failure.
  */
 htp_status_t htp_tx_req_set_header(htp_tx_t *tx, const char *name, size_t name_len,
@@ -238,7 +223,7 @@ htp_status_t htp_tx_req_set_header(htp_tx_t *tx, const char *name, size_t name_l
  * mix of regular and trailing headers), clear all headers, and then set
  * them all again.
  * 
- * @param[in] tx
+ * @param[in] tx Transaction pointer. Must not be NULL.
  * @return HTP_OK on success, HTP_ERROR on failure.
  */
 htp_status_t htp_tx_req_set_headers_clear(htp_tx_t *tx);
@@ -247,10 +232,10 @@ htp_status_t htp_tx_req_set_headers_clear(htp_tx_t *tx);
  * Set request line. When used, this function should always be called first,
  * with more specific functions following. Must not contain line terminators.
  *
- * @param[in] tx
- * @param[in] line
- * @param[in] line_len 
- * @param[in] alloc
+ * @param[in] tx Transaction pointer. Must not be NULL.
+ * @param[in] line Line data pointer. Must not be NULL.
+ * @param[in] line_len Line data length.
+ * @param[in] alloc Desired allocation strategy.
  * @return HTP_OK on success, HTP_ERROR on failure.
  */
 htp_status_t htp_tx_req_set_line(htp_tx_t *tx, const char *line, size_t line_len, enum htp_alloc_strategy_t alloc);
@@ -259,10 +244,10 @@ htp_status_t htp_tx_req_set_line(htp_tx_t *tx, const char *line, size_t line_len
  * Set transaction request method. This function will enable you to keep
  * track of the text representation of the method.
  *
- * @param[in] tx
- * @param[in] method
- * @param[in] method_len
- * @param[in] alloc
+ * @param[in] tx Transaction pointer. Must not be NULL.
+ * @param[in] method Method data pointer. Must not be NULL.
+ * @param[in] method_len Method data length.
+ * @param[in] alloc Desired allocation strategy.
  * @return HTP_OK on success, HTP_ERROR on failure.
  */
 htp_status_t htp_tx_req_set_method(htp_tx_t *tx, const char *method, size_t method_len, enum htp_alloc_strategy_t alloc);
@@ -273,8 +258,8 @@ htp_status_t htp_tx_req_set_method(htp_tx_t *tx, const char *method, size_t meth
  * is useful with web servers that ignore invalid methods; for example, some
  * web servers will treat them as a GET.
  *
- * @param[in] tx
- * @param[in] method_number
+ * @param[in] tx Transaction pointer. Must not be NULL.
+ * @param[in] method_number Method number.
  */
 void htp_tx_req_set_method_number(htp_tx_t *tx, enum htp_method_t method_number);
 
@@ -285,8 +270,8 @@ void htp_tx_req_set_method_number(htp_tx_t *tx, enum htp_method_t method_number)
  * management of the data provided in parsed_uri. This function will not change htp_tx_t::parsed_uri_raw
  * (which may have data in it from the parsing of the request URI).
  *
- * @param[in] tx
- * @param[in] parsed_uri
+ * @param[in] tx Transaction pointer. Must not be NULL.
+ * @param[in] parsed_uri URI pointer. Must not be NULL.
  */
 void htp_tx_req_set_parsed_uri(htp_tx_t *tx, htp_uri_t *parsed_uri);
 
@@ -295,8 +280,8 @@ void htp_tx_req_set_parsed_uri(htp_tx_t *tx, htp_uri_t *parsed_uri);
  * that both LibHTP and the container treat the transaction as HTTP/0.9, despite
  * potential differences in how the protocol version is determined.
  *
- * @param[in] tx
- * @param[in] is_protocol_0_9
+ * @param[in] tx Transaction pointer. Must not be NULL.
+ * @param[in] is_protocol_0_9 Zero if protocol is not HTTP/0.9, or 1 if it is.
  */
 void htp_tx_req_set_protocol_0_9(htp_tx_t *tx, int is_protocol_0_9);
 
@@ -305,10 +290,10 @@ void htp_tx_req_set_protocol_0_9(htp_tx_t *tx, int is_protocol_0_9);
  * is only stored, not parsed. Use htp_tx_req_set_protocol_number() to set the
  * actual protocol number, as interpreted by the container.
  *
- * @param[in] tx
- * @param[in] protocol
- * @param[in] protocol_len
- * @param[in] alloc
+ * @param[in] tx Transaction pointer. Must not be NULL.
+ * @param[in] protocol Protocol data pointer. Must not be NULL.
+ * @param[in] protocol_len Protocol data length.
+ * @param[in] alloc Desired allocation strategy.
  * @return HTP_OK on success, HTP_ERROR on failure.
  */
 htp_status_t htp_tx_req_set_protocol(htp_tx_t *tx, const char *protocol, size_t protocol_len, enum htp_alloc_strategy_t alloc);
@@ -325,8 +310,8 @@ htp_status_t htp_tx_req_set_protocol(htp_tx_t *tx, const char *protocol, size_t 
  * request line, and not when it is explicitly stated (as "HTTP/0.9"). This behavior is
  * consistent with that of Apache httpd.
  *
- * @param[in] tx
- * @param[in] protocol_number
+ * @param[in] tx Transaction pointer. Must not be NULL.
+ * @param[in] protocol_number Protocol number.
  */
 void htp_tx_req_set_protocol_number(htp_tx_t *tx, int protocol_number);
 
@@ -335,10 +320,10 @@ void htp_tx_req_set_protocol_number(htp_tx_t *tx, int protocol_number);
  * and subsequently parsed. If htp_tx_req_set_line() was previously used, the uri provided
  * when calling this function will overwrite any previously parsed value.
  *
- * @param[in] tx
- * @param[in] uri
- * @param[in] uri_len
- * @param[in] alloc
+ * @param[in] tx Transaction pointer. Must not be NULL.
+ * @param[in] uri URI data pointer. Must not be NULL.
+ * @param[in] uri_len URI data length.
+ * @param[in] alloc Desired allocation strategy.
  * @return HTP_OK on success, HTP_ERROR on failure.
  */
 htp_status_t htp_tx_req_set_uri(htp_tx_t *tx, const char *uri, size_t uri_len, enum htp_alloc_strategy_t alloc);
@@ -356,9 +341,9 @@ htp_status_t htp_tx_req_set_uri(htp_tx_t *tx, const char *uri, size_t uri_len, e
  * to COMPRESSION_NONE (to disable compression), or to one of the supported
  * decompression algorithms.
  *
- * @param[in] tx
- * @param[in] data
- * @param[in] len
+ * @param[in] tx Transaction pointer. Must not be NULL.
+ * @param[in] data Data pointer. Must not be NULL.
+ * @param[in] len Data length.
  * @return HTP_OK on success, HTP_ERROR on failure.
  */
 htp_status_t htp_tx_res_process_body_data(htp_tx_t *tx, const void *data, size_t len);
@@ -368,12 +353,12 @@ htp_status_t htp_tx_res_process_body_data(htp_tx_t *tx, const void *data, size_t
  * each available header, and in the order in which headers were
  * seen in the response.
  *
- * @param[in] tx
- * @param[in] name
- * @param[in] name_len
- * @param[in] value
- * @param[in] value_len
- * @param[in] alloc
+ * @param[in] tx Transaction pointer. Must not be NULL.
+ * @param[in] name Name data pointer. Must not be NULL.
+ * @param[in] name_len Name data length.
+ * @param[in] value Value data pointer. Must not be NULL.
+ * @param[in] value_len Value length.
+ * @param[in] alloc Desired allocation strategy.
  * @return HTP_OK on success, HTP_ERROR on failure.
  */
 htp_status_t htp_tx_res_set_header(htp_tx_t *tx, const char *name, size_t name_len,
@@ -388,16 +373,17 @@ htp_status_t htp_tx_res_set_header(htp_tx_t *tx, const char *name, size_t name_l
  * the headers are set for the second time, they will potentially contain
  * a mixture of standard and trailing headers.
  *
- * @param[in] tx
+ * @param[in] tx Transaction pointer. Must not be NULL.
  * @return HTP_OK on success, HTP_ERROR on failure.
  */
 htp_status_t htp_tx_res_set_headers_clear(htp_tx_t *tx);
 
 /**
- * Set response protocol number.
+ * Set response protocol number. See htp_tx_res_set_protocol_number() for more information
+ * about the correct format of the protocol_parameter parameter.
  *
- * @param[in] tx
- * @param[in] protocol_number
+ * @param[in] tx Transaction pointer. Must not be NULL.
+ * @param[in] protocol_number Protocol number.
  * @return HTP_OK on success, HTP_ERROR on failure.
  */
 void htp_tx_res_set_protocol_number(htp_tx_t *tx, int protocol_number);
@@ -407,10 +393,10 @@ void htp_tx_res_set_protocol_number(htp_tx_t *tx, int protocol_number);
  * the entire line. If you have individual request line pieces, use the other
  * available functions.
  *
- * @param[in] tx
- * @param[in] line
- * @param[in] line_len
- * @param[in] alloc
+ * @param[in] tx Transaction pointer. Must not be NULL.
+ * @param[in] line Line data pointer. Must not be NULL.
+ * @param[in] line_len Line data length.
+ * @param[in] alloc Desired allocation strategy.
  * @return HTP_OK on success, HTP_ERROR on failure.
  */
 htp_status_t htp_tx_res_set_status_line(htp_tx_t *tx, const char *line, size_t line_len, enum htp_alloc_strategy_t alloc);
@@ -418,8 +404,8 @@ htp_status_t htp_tx_res_set_status_line(htp_tx_t *tx, const char *line, size_t l
 /**
  * Set response status code.
  *
- * @param[in] tx
- * @param[in] status_code
+ * @param[in] tx Transaction pointer. Must not be NULL.
+ * @param[in] status_code Response status code.
  * @return HTP_OK on success, HTP_ERROR on failure.
  */
 void htp_tx_res_set_status_code(htp_tx_t *tx, int status_code);
@@ -428,10 +414,10 @@ void htp_tx_res_set_status_code(htp_tx_t *tx, int status_code);
  * Set response status message, which is the part of the response
  * line that comes after the status code.
  *
- * @param[in] tx
- * @param[in] msg
- * @param[in] msg_len
- * @param[in] alloc
+ * @param[in] tx Transaction pointer. Must not be NULL.
+ * @param[in] msg Message data pointer. Must not be NULL.
+ * @param[in] msg_len Message data length.
+ * @param[in] alloc Desired allocation strategy.
  * @return HTP_OK on success, HTP_ERROR on failure.
  */
 htp_status_t htp_tx_res_set_status_message(htp_tx_t *tx, const char *msg, size_t msg_len, enum htp_alloc_strategy_t alloc);
@@ -447,8 +433,8 @@ htp_status_t htp_tx_res_set_status_message(htp_tx_t *tx, const char *msg, size_t
  * configuration object, call this function with the second parameter set to
  * HTP_CFG_PRIVATE, and modify configuration at will.
  *
- * @param[in] tx
- * @param[in] cfg
+ * @param[in] tx Transaction pointer. Must not be NULL.
+ * @param[in] cfg Configuration pointer. Must not be NULL.
  * @param[in] is_cfg_shared HTP_CFG_SHARED or HTP_CFG_PRIVATE
  */
 void htp_tx_set_config(htp_tx_t *tx, htp_cfg_t *cfg, int is_cfg_shared);
@@ -456,15 +442,15 @@ void htp_tx_set_config(htp_tx_t *tx, htp_cfg_t *cfg, int is_cfg_shared);
 /**
  * Associates user data with this transaction.
  *
- * @param[in] tx
- * @param[in] user_data
+ * @param[in] tx Transaction pointer. Must not be NULL.
+ * @param[in] user_data Opaque user data pointer.
  */
 void htp_tx_set_user_data(htp_tx_t *tx, void *user_data);
 
 /**
  * Change transaction state to REQUEST and invoke registered callbacks.
  *
- * @param[in] tx
+ * @param[in] tx Transaction pointer. Must not be NULL.
  * @return HTP_OK on success; HTP_ERROR on error, HTP_STOP if one of the
  *         callbacks does not want to follow the transaction any more.
  */
@@ -474,7 +460,7 @@ htp_status_t htp_tx_state_request_complete(htp_tx_t *tx);
  * Change transaction state to REQUEST_HEADERS and invoke all
  * registered callbacks.
  * 
- * @param[in] tx
+ * @param[in] tx Transaction pointer. Must not be NULL.
  * @return HTP_OK on success; HTP_ERROR on error, HTP_STOP if one of the
  *         callbacks does not want to follow the transaction any more.
  */
@@ -484,7 +470,7 @@ htp_status_t htp_tx_state_request_headers(htp_tx_t *tx);
  * Change transaction state to REQUEST_LINE and invoke all
  * registered callbacks.
  *
- * @param[in] tx
+ * @param[in] tx Transaction pointer. Must not be NULL.
  * @return HTP_OK on success; HTP_ERROR on error, HTP_STOP if one of the
  *         callbacks does not want to follow the transaction any more.
  */
@@ -494,7 +480,7 @@ htp_status_t htp_tx_state_request_line(htp_tx_t *tx);
  * Initialize hybrid parsing mode, change state to TRANSACTION_START,
  * and invoke all registered callbacks.
  * 
- * @param[in] tx
+ * @param[in] tx Transaction pointer. Must not be NULL.
  * @return HTP_OK on success; HTP_ERROR on error, HTP_STOP if one of the
  *         callbacks does not want to follow the transaction any more.
  */
@@ -503,7 +489,7 @@ htp_status_t htp_tx_state_request_start(htp_tx_t *tx);
 /**
  * Change transaction state to RESPONSE and invoke registered callbacks.
  *
- * @param[in] tx
+ * @param[in] tx Transaction pointer. Must not be NULL.
  * @return HTP_OK on success; HTP_ERROR on error, HTP_STOP if one of the
  *         callbacks does not want to follow the transaction any more.
  */
@@ -512,7 +498,7 @@ htp_status_t htp_tx_state_response_complete(htp_tx_t *tx);
 /**
  * Change transaction state to RESPONSE_HEADERS and invoke registered callbacks.
  *
- * @param[in] tx
+ * @param[in] tx Transaction pointer. Must not be NULL.
  * @return HTP_OK on success; HTP_ERROR on error, HTP_STOP if one of the
  *         callbacks does not want to follow the transaction any more.
  */
@@ -521,7 +507,7 @@ htp_status_t htp_tx_state_response_headers(htp_tx_t *tx);
 /**
  * Change transaction state to HTP_RESPONSE_LINE and invoke registered callbacks.
  *
- * @param[in] tx
+ * @param[in] tx Transaction pointer. Must not be NULL.
  * @return HTP_OK on success; HTP_ERROR on error, HTP_STOP if one of the
  *         callbacks does not want to follow the transaction any more.
  */
@@ -530,7 +516,7 @@ htp_status_t htp_tx_state_response_line(htp_tx_t *tx);
 /**
  * Change transaction state to RESPONSE_START and invoke registered callbacks.
  *
- * @param[in] tx
+ * @param[in] tx Transaction pointer. Must not be NULL.
  * @return HTP_OK on success; HTP_ERROR on error, HTP_STOP if one of the
  *         callbacks does not want to follow the transaction any more.
  */

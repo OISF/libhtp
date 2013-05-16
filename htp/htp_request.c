@@ -382,7 +382,7 @@ htp_status_t htp_connp_REQ_BODY_CHUNKED_DATA(htp_connp_t *connp) {
     if (bytes_to_consume == 0) return HTP_DATA;
 
     // Consume data.
-    int rc = htp_tx_req_process_body_data(connp->in_tx, connp->in_current_data + connp->in_current_read_offset, bytes_to_consume);
+    int rc = htp_tx_req_process_body_data_ex(connp->in_tx, connp->in_current_data + connp->in_current_read_offset, bytes_to_consume);
     if (rc != HTP_OK) return rc;
 
     // Adjust counters.
@@ -472,7 +472,7 @@ htp_status_t htp_connp_REQ_BODY_IDENTITY(htp_connp_t *connp) {
     if (bytes_to_consume == 0) return HTP_DATA;
 
     // Consume data.
-    int rc = htp_tx_req_process_body_data(connp->in_tx, connp->in_current_data + connp->in_current_read_offset, bytes_to_consume);
+    int rc = htp_tx_req_process_body_data_ex(connp->in_tx, connp->in_current_data + connp->in_current_read_offset, bytes_to_consume);
     if (rc != HTP_OK) return rc;
 
     // Adjust counters.

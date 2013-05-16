@@ -308,7 +308,7 @@ htp_status_t htp_connp_RES_BODY_CHUNKED_DATA(htp_connp_t *connp) {
     if (bytes_to_consume == 0) return HTP_DATA;
 
     // Consume the data.
-    int rc = htp_tx_res_process_body_data(connp->out_tx, connp->out_current_data + connp->out_current_read_offset, bytes_to_consume);
+    int rc = htp_tx_res_process_body_data_ex(connp->out_tx, connp->out_current_data + connp->out_current_read_offset, bytes_to_consume);
     if (rc != HTP_OK) return rc;
 
     // Adjust the counters.
@@ -397,7 +397,7 @@ htp_status_t htp_connp_RES_BODY_IDENTITY_CL_KNOWN(htp_connp_t *connp) {
     if (bytes_to_consume == 0) return HTP_DATA;    
 
     // Consume the data.
-    int rc = htp_tx_res_process_body_data(connp->out_tx, connp->out_current_data + connp->out_current_read_offset, bytes_to_consume);
+    int rc = htp_tx_res_process_body_data_ex(connp->out_tx, connp->out_current_data + connp->out_current_read_offset, bytes_to_consume);
     if (rc != HTP_OK) return rc;
 
     // Adjust the counters.
@@ -427,7 +427,7 @@ htp_status_t htp_connp_RES_BODY_IDENTITY_STREAM_CLOSE(htp_connp_t *connp) {
     size_t bytes_to_consume = connp->out_current_len - connp->out_current_read_offset;
 
     if (bytes_to_consume != 0) {
-        int rc = htp_tx_res_process_body_data(connp->out_tx, connp->out_current_data + connp->out_current_read_offset, bytes_to_consume);
+        int rc = htp_tx_res_process_body_data_ex(connp->out_tx, connp->out_current_data + connp->out_current_read_offset, bytes_to_consume);
         if (rc != HTP_OK) return rc;
 
         // Adjust the counters.
@@ -802,7 +802,7 @@ htp_status_t htp_connp_RES_LINE(htp_connp_t *connp) {
             if (htp_treat_response_line_as_body(connp->out_tx)) {
                 connp->out_tx->response_content_encoding_processing = HTP_COMPRESSION_NONE;
 
-                int rc = htp_tx_res_process_body_data(connp->out_tx, data, len + chomp_result);
+                int rc = htp_tx_res_process_body_data_ex(connp->out_tx, data, len + chomp_result);
                 if (rc != HTP_OK) return rc;
 
                 // Continue to process response body. Because we don't have

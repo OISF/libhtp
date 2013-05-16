@@ -360,11 +360,14 @@ TEST_F(HybridParsing, GetTest) {
     ASSERT_TRUE(h_server != NULL);
     ASSERT_EQ(0, bstr_cmp_c(h_server->value, "Apache"));
 
-    // Request body data   
+    // Response body data
     htp_tx_res_process_body_data(tx, "<h1>Hello", 9);
     htp_tx_res_process_body_data(tx, " ", 1);
     htp_tx_res_process_body_data(tx, "World!</h1>", 11);
     ASSERT_EQ(1, user_data.response_body_correctly_received);
+
+    // Check that the API is rejecting NULL data.
+    ASSERT_EQ(HTP_ERROR, htp_tx_res_process_body_data(tx, NULL, 1));
 
     // Trailing response headers
     htp_tx_res_set_headers_clear(tx);
@@ -418,8 +421,12 @@ TEST_F(HybridParsing, PostUrlecodedTest) {
 
     // Send request body
     htp_tx_req_process_body_data(tx, "p=1", 3);
+    htp_tx_req_process_body_data(tx, NULL, 0);
     htp_tx_req_process_body_data(tx, "&", 1);
     htp_tx_req_process_body_data(tx, "q=2", 3);
+
+    // Check that the API is rejecting NULL data.
+    ASSERT_EQ(HTP_ERROR, htp_tx_req_process_body_data(tx, NULL, 1));
 
     // Trailing request headers
     htp_tx_req_set_headers_clear(tx);

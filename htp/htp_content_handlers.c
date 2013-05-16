@@ -48,6 +48,9 @@
 htp_status_t htp_ch_urlencoded_callback_request_body_data(htp_tx_data_t *d) {
     htp_tx_t *tx = d->tx;
 
+    // Check that we were not invoked again after the finalization.
+    if (tx->request_urlenp_body->params == NULL) return HTP_ERROR;
+
     if (d->data != NULL) {
         // Process one chunk of data.
         htp_urlenp_parse_partial(tx->request_urlenp_body, d->data, d->len);
@@ -59,7 +62,7 @@ htp_status_t htp_ch_urlencoded_callback_request_body_data(htp_tx_data_t *d) {
         bstr *name = NULL;
         bstr *value = NULL;
 
-        for (int i = 0, n = htp_table_size(tx->request_urlenp_body->params); i < n; i++) {
+        for (size_t i = 0, n = htp_table_size(tx->request_urlenp_body->params); i < n; i++) {
             value = htp_table_get_index(tx->request_urlenp_body->params, i, &name);
 
             htp_param_t *param = calloc(1, sizeof (htp_param_t));
@@ -149,7 +152,7 @@ htp_status_t htp_ch_urlencoded_callback_request_line(htp_tx_t *tx) {
 
     bstr *name = NULL;
     bstr *value = NULL;
-    for (int i = 0, n = htp_table_size(tx->request_urlenp_query->params); i < n; i++) {
+    for (size_t i = 0, n = htp_table_size(tx->request_urlenp_query->params); i < n; i++) {
         value = htp_table_get_index(tx->request_urlenp_query->params, i, &name);
 
         htp_param_t *param = calloc(1, sizeof (htp_param_t));
@@ -188,6 +191,9 @@ htp_status_t htp_ch_urlencoded_callback_request_line(htp_tx_t *tx) {
 htp_status_t htp_ch_multipart_callback_request_body_data(htp_tx_data_t *d) {
     htp_tx_t *tx = d->tx;
 
+    // Check that we were not invoked again after the finalization.
+    if (tx->request_mpartp->gave_up_data == 1) return HTP_ERROR;
+
     if (d->data != NULL) {
         // Process one chunk of data.
         htp_mpartp_parse(tx->request_mpartp, d->data, d->len);
@@ -197,7 +203,7 @@ htp_status_t htp_ch_multipart_callback_request_body_data(htp_tx_data_t *d) {
 
         htp_multipart_t *body = htp_mpartp_get_multipart(tx->request_mpartp);
 
-        for (int i = 0, n = htp_list_size(body->parts); i < n; i++) {
+        for (size_t i = 0, n = htp_list_size(body->parts); i < n; i++) {
             htp_multipart_part_t *part = htp_list_get(body->parts, i);
 
             // Use text parameters.

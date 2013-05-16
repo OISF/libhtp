@@ -229,6 +229,9 @@ void htp_connp_tx_remove(htp_connp_t *connp, htp_tx_t *tx);
 
 void htp_tx_destroy_incomplete(htp_tx_t *tx);
 
+htp_status_t htp_tx_req_process_body_data_ex(htp_tx_t *tx, const void *data, size_t len);
+htp_status_t htp_tx_res_process_body_data_ex(htp_tx_t *tx, const void *data, size_t len);
+
 #ifdef	__cplusplus
 }
 #endif
