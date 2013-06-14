@@ -362,42 +362,44 @@ static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {
     if (te != NULL) {
         // Make sure it contains "chunked" only.
         // TODO The HTTP/1.1 RFC also allows the T-E header to contain "identity", which
-        //      presumably has the same effect as T-E header absence.
+        //      presumably should have the same effect as T-E header absence. However, Apache
+        //      (2.2.22 on Ubuntu 12.04 LTS) instead errors out with "Unknown Transfer-Encoding: identity".
+        //      And it behaves strangely, too, sending a 501 and proceeding to process the request
+        //      (e.g., PHP is run), but without the body. It then closes the connection.
         if (bstr_cmp_c(te->value, "chunked") != 0) {
             // Invalid T-E header value.
+            tx->request_transfer_coding = HTP_CODING_INVALID;
             tx->flags |= HTP_REQUEST_INVALID_T_E;
             tx->flags |= HTP_REQUEST_INVALID;
-        }
-
-        // Chunked encoding is a HTTP/1.1 feature, so check that an earlier protocol
-        // version is not used. The flag will also be set if the protocol could not be parsed.
-        //
-        // TODO IIS 7.0, for example, would ignore the T-E header when it
-        //      it is used with a protocol below HTTP 1.1. This should be a
-        //      personality trait.
-        if (tx->request_protocol_number < HTP_PROTOCOL_1_1) {
-            tx->flags |= HTP_REQUEST_INVALID_T_E;
-        }
-
-        // If the T-E header is present we are going to use it.
-        tx->request_transfer_coding = HTP_CODING_CHUNKED;
-
-        // We are still going to check for the presence of C-L.
-        if (cl != NULL) {
-            // According to the HTTP/1.1 RFC (section 4.4):
+        } else {
+            // Chunked encoding is a HTTP/1.1 feature, so check that an earlier protocol
+            // version is not used. The flag will also be set if the protocol could not be parsed.
             //
-            // "The Content-Length header field MUST NOT be sent
-            //  if these two lengths are different (i.e., if a Transfer-Encoding
-            //  header field is present). If a message is received with both a
-            //  Transfer-Encoding header field and a Content-Length header field,
-            //  the latter MUST be ignored."
-            //
-            tx->flags |= HTP_REQUEST_SMUGGLING;
-        }
-    } else if (cl != NULL) {
-        // We have a request body of known length.
-        tx->request_transfer_coding = HTP_CODING_IDENTITY;
+            // TODO IIS 7.0, for example, would ignore the T-E header when it
+            //      it is used with a protocol below HTTP 1.1. This should be a
+            //      personality trait.
+            if (tx->request_protocol_number < HTP_PROTOCOL_1_1) {
+                tx->flags |= HTP_REQUEST_INVALID_T_E;
+                tx->flags |= HTP_REQUEST_SMUGGLING;
+            }
 
+            // If the T-E header is present we are going to use it.
+            tx->request_transfer_coding = HTP_CODING_CHUNKED;
+
+            // We are still going to check for the presence of C-L.
+            if (cl != NULL) {
+                // According to the HTTP/1.1 RFC (section 4.4):
+                //
+                // "The Content-Length header field MUST NOT be sent
+                //  if these two lengths are different (i.e., if a Transfer-Encoding
+                //  header field is present). If a message is received with both a
+                //  Transfer-Encoding header field and a Content-Length header field,
+                //  the latter MUST be ignored."
+                //
+                tx->flags |= HTP_REQUEST_SMUGGLING;
+            }
+        }
+    } else if (cl != NULL) {        
         // Check for a folded C-L header.
         if (cl->flags & HTP_FIELD_FOLDED) {
             tx->flags |= HTP_REQUEST_SMUGGLING;
@@ -408,18 +410,29 @@ static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {
             tx->flags |= HTP_REQUEST_SMUGGLING;
             // TODO Personality trait to determine which C-L header to parse.
             //      At the moment we're parsing the combination of all instances,
-            //      which is bound to fail.
+            //      which is bound to fail (because it will contain commas).
         }
 
-        // Get body length.
+        // Get the body length.
         tx->request_content_length = htp_parse_content_length(cl->value);
         if (tx->request_content_length < 0) {
+            tx->request_transfer_coding = HTP_CODING_INVALID;
             tx->flags |= HTP_REQUEST_INVALID_C_L;
             tx->flags |= HTP_REQUEST_INVALID;
+        } else {
+            // We have a request body of known length.
+            tx->request_transfer_coding = HTP_CODING_IDENTITY;
         }
     } else {
         // No body.
         tx->request_transfer_coding = HTP_CODING_NO_BODY;
+    }
+
+    // If we could not determine the correct body handling,
+    // consider the request invalid.
+    if (tx->request_transfer_coding == HTP_CODING_UNKNOWN) {
+        tx->request_transfer_coding = HTP_CODING_INVALID;
+        tx->flags |= HTP_REQUEST_INVALID;
     }
 
     // Check for PUT requests, which we need to treat as file uploads.
@@ -500,7 +513,12 @@ static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {
     // Parse authentication information.
     if (tx->connp->cfg->parse_request_auth) {
         rc = htp_parse_authorization(tx->connp);
-        if (rc != HTP_OK) return rc;
+        if (rc == HTP_DECLINED) {
+            // Don't fail the stream if an authorization header is invalid, just set a flag.
+            tx->flags |= HTP_AUTH_INVALID;
+        } else {
+            if (rc != HTP_OK) return rc;
+        }
     }
 
     // Finalize sending raw header data.

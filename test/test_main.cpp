@@ -883,8 +883,8 @@ TEST_F(ConnectionParsing, EarlyResponse) {
 }
 
 TEST_F(ConnectionParsing, InvalidRequest1) {
-    int rc = test_run(home, "36-invalid-request-1.t", cfg, &connp);
-    ASSERT_LT(rc, 0);
+    int rc = test_run(home, "36-invalid-request-1-invalid-c-l.t", cfg, &connp);
+    ASSERT_LT(rc, 0); // Expect error.
 
     htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
     ASSERT_TRUE(tx != NULL);
@@ -898,8 +898,8 @@ TEST_F(ConnectionParsing, InvalidRequest1) {
 }
 
 TEST_F(ConnectionParsing, InvalidRequest2) {
-    int rc = test_run(home, "37-invalid-request-2.t", cfg, &connp);
-    ASSERT_GE(rc, 0);
+    int rc = test_run(home, "37-invalid-request-2-t-e-and-c-l.t", cfg, &connp);
+    ASSERT_GE(rc, 0); // No error, flags only.
 
     htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
     ASSERT_TRUE(tx != NULL);
@@ -912,8 +912,8 @@ TEST_F(ConnectionParsing, InvalidRequest2) {
 }
 
 TEST_F(ConnectionParsing, InvalidRequest3) {
-    int rc = test_run(home, "38-invalid-request-3.t", cfg, &connp);
-    ASSERT_LT(rc, 0);
+    int rc = test_run(home, "38-invalid-request-3-invalid-t-e.t", cfg, &connp);
+    ASSERT_LT(rc, 0); // Expect error.
 
     htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
     ASSERT_TRUE(tx != NULL);
@@ -933,4 +933,138 @@ TEST_F(ConnectionParsing, AutoDestroyCrash) {
     ASSERT_GE(rc, 0);
 
     ASSERT_EQ(4, htp_list_size(connp->conn->transactions));
+}
+
+TEST_F(ConnectionParsing, AuthBasic) {
+    int rc = test_run(home, "40-auth-basic.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+
+    htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+
+    ASSERT_EQ(HTP_REQUEST_COMPLETE, tx->request_progress);
+
+    ASSERT_EQ(HTP_AUTH_BASIC, tx->request_auth_type);
+
+    ASSERT_TRUE(tx->request_auth_username != NULL);
+    ASSERT_EQ(0, bstr_cmp_c(tx->request_auth_username, "ivanr"));
+
+    ASSERT_TRUE(tx->request_auth_password != NULL);
+    ASSERT_EQ(0, bstr_cmp_c(tx->request_auth_password, "secret"));
+}
+
+TEST_F(ConnectionParsing, AuthDigest) {
+    int rc = test_run(home, "41-auth-digest.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+
+    htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+
+    ASSERT_EQ(HTP_REQUEST_COMPLETE, tx->request_progress);
+
+    ASSERT_EQ(HTP_AUTH_DIGEST, tx->request_auth_type);
+
+    ASSERT_TRUE(tx->request_auth_username != NULL);
+    ASSERT_EQ(0, bstr_cmp_c(tx->request_auth_username, "ivanr"));
+
+    ASSERT_TRUE(tx->request_auth_password == NULL);
+}
+
+TEST_F(ConnectionParsing, Http_0_9_MethodOnly) {
+    int rc = test_run(home, "42-http_0_9-method_only.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+
+    htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+
+    ASSERT_EQ(HTP_REQUEST_COMPLETE, tx->request_progress);
+
+    ASSERT_TRUE(tx->request_method != NULL);
+    ASSERT_EQ(0, bstr_cmp_c(tx->request_method, "HELLO"));
+
+    ASSERT_TRUE(tx->request_uri == NULL);
+
+    ASSERT_EQ(1, tx->is_protocol_0_9);
+}
+
+TEST_F(ConnectionParsing, InvalidProtocol) {
+    int rc = test_run(home, "43-invalid-protocol.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+
+    htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+
+    ASSERT_EQ(HTP_REQUEST_COMPLETE, tx->request_progress);   
+
+    ASSERT_EQ(HTP_PROTOCOL_INVALID, tx->request_protocol_number);
+}
+
+TEST_F(ConnectionParsing, AuthBasicInvalid) {
+    int rc = test_run(home, "44-auth-basic-invalid.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+
+    htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+
+    ASSERT_EQ(HTP_REQUEST_COMPLETE, tx->request_progress);
+
+    ASSERT_EQ(HTP_AUTH_BASIC, tx->request_auth_type);
+
+    ASSERT_TRUE(tx->request_auth_username == NULL);
+
+    ASSERT_TRUE(tx->request_auth_password == NULL);
+
+    ASSERT_TRUE(tx->flags & HTP_AUTH_INVALID);
+}
+
+TEST_F(ConnectionParsing, AuthDigestUnquotedUsername) {
+    int rc = test_run(home, "45-auth-digest-unquoted-username.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+
+    htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+
+    ASSERT_EQ(HTP_REQUEST_COMPLETE, tx->request_progress);
+
+    ASSERT_EQ(HTP_AUTH_DIGEST, tx->request_auth_type);
+
+    ASSERT_TRUE(tx->request_auth_username == NULL);
+
+    ASSERT_TRUE(tx->request_auth_password == NULL);
+
+    ASSERT_TRUE(tx->flags & HTP_AUTH_INVALID);
+}
+
+TEST_F(ConnectionParsing, AuthDigestInvalidUsername) {
+    int rc = test_run(home, "46-auth-digest-invalid-username.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+
+    htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+
+    ASSERT_EQ(HTP_REQUEST_COMPLETE, tx->request_progress);
+
+    ASSERT_EQ(HTP_AUTH_DIGEST, tx->request_auth_type);
+
+    ASSERT_TRUE(tx->request_auth_username == NULL);
+
+    ASSERT_TRUE(tx->request_auth_password == NULL);
+
+    ASSERT_TRUE(tx->flags & HTP_AUTH_INVALID);
+}
+
+TEST_F(ConnectionParsing, AuthUnrecognized) {
+    int rc = test_run(home, "47-auth-unrecognized.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+
+    htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+
+    ASSERT_EQ(HTP_REQUEST_COMPLETE, tx->request_progress);
+
+    ASSERT_EQ(HTP_AUTH_UNRECOGNIZED, tx->request_auth_type);
+
+    ASSERT_TRUE(tx->request_auth_username == NULL);
+
+    ASSERT_TRUE(tx->request_auth_password == NULL);   
 }

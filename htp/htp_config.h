@@ -437,14 +437,6 @@ void htp_config_set_field_limits(htp_cfg_t *cfg, size_t soft_limit, size_t hard_
 void htp_config_set_log_level(htp_cfg_t *cfg, enum htp_log_level_t log_level);
 
 /**
- * Whether to generate the request_uri_normalized field.
- *
- * @param[in] cfg
- * @param[in] generate
- */
-void htp_config_set_generate_request_uri_normalized(htp_cfg_t *cfg, int generate);
-
-/**
  * Configures how the server reacts to encoded NUL bytes. Some servers will stop at
  * at NUL, while some will respond with 400 or 404. When the termination option is not
  * used, the NUL byte will remain in the path.

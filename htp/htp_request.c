@@ -908,7 +908,7 @@ int htp_connp_req_data(htp_connp_t *connp, const htp_time_t *timestamp, const vo
             }
 
             #ifdef HTP_DEBUG
-            fprintf(stderr, "htp_connp_res_data: returning HTP_STREAM_ERROR\n");
+            fprintf(stderr, "htp_connp_req_data: returning HTP_STREAM_ERROR\n");
             #endif
 
             // Permanent stream error.

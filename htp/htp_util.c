@@ -605,24 +605,27 @@ htp_status_t htp_parse_header_hostport(bstr *hostport, bstr **hostname, int *por
  * @param[in] uri
  * @return HTP_ERROR on memory allocation failure, HTP_OK otherwise
  */
-int htp_parse_uri(bstr *input, htp_uri_t **uri) {
-    if (input == NULL) return HTP_ERROR;
-
-    unsigned char *data = bstr_ptr(input);
-    size_t len = bstr_len(input);
-    size_t start, pos;
-
+int htp_parse_uri(bstr *input, htp_uri_t **uri) {        
     // Allow a htp_uri_t structure to be provided on input,
     // but allocate a new one if there isn't one
     if (*uri == NULL) {
         *uri = calloc(1, sizeof (htp_uri_t));
         if (*uri == NULL) return HTP_ERROR;
     }
-
-    if (len == 0) {
-        // Empty string
+    
+    if (input == NULL) {
+        // Request does not contain the URI.
         return HTP_OK;
     }
+
+    unsigned char *data = bstr_ptr(input);
+    size_t len = bstr_len(input);
+    size_t start, pos;
+
+    if (len == 0) {
+        // Empty string.
+        return HTP_OK;
+    }   
 
     pos = 0;
 

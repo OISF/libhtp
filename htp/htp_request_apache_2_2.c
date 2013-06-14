@@ -256,28 +256,36 @@ int htp_parse_request_line_apache_2_2(htp_connp_t *connp) {
     // more permitting, so that's what we use here.
     while ((pos < len) && (isspace(data[pos]))) pos++;
 
+    // Is there anything after the request method?
+    if (pos == len) {
+        // No, this looks like a HTTP/0.9 request.
+        tx->is_protocol_0_9 = 1;
+        tx->request_protocol_number = HTP_PROTOCOL_0_9;
+
+        return HTP_OK;
+    }
+
     size_t start = pos;
 
     // The URI ends with the first whitespace.
     while ((pos < len) && (!htp_is_space(data[pos]))) pos++;
-
+    
     tx->request_uri = bstr_dup_mem(data + start, pos - start);
     if (tx->request_uri == NULL) return HTP_ERROR;
-
+   
     #ifdef HTP_DEBUG
     fprint_raw_data(stderr, __FUNCTION__, bstr_ptr(tx->request_uri), bstr_len(tx->request_uri));
     #endif
 
     // Ignore whitespace after URI
-    while ((pos < len) && (htp_is_space(data[pos]))) {
-        pos++;
-    }
+    while ((pos < len) && (htp_is_space(data[pos]))) pos++;
 
     // Is there protocol information available?
     if (pos == len) {
         // No, this looks like a HTTP/0.9 request.
         tx->is_protocol_0_9 = 1;
         tx->request_protocol_number = HTP_PROTOCOL_0_9;
+        
         return HTP_OK;
     }
 

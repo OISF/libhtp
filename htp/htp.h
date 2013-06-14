@@ -242,7 +242,8 @@ struct htp_tx_t {
      * Request URI, raw, as given to us on the request line. This field can take different forms,
      * for example authority for CONNECT methods, absolute URIs for proxy requests, and the query
      * string when one is provided. Use htp_tx_t::parsed_uri if you need to access to specific
-     * URI elements.
+     * URI elements. Can be NULL if the request line contains only a request method (which is
+     * an extreme case of HTTP/0.9, but passes in practice.
      */
     bstr *request_uri;   
 
@@ -266,7 +267,9 @@ struct htp_tx_t {
     /**
      * This structure holds the individual components parsed out of the request URI, with
      * appropriate normalization and transformation applied, per configuration. No information
-     * is added. To inspect raw data, use htp_tx_t::request_uri or htp_tx_t::parsed_uri_raw.
+     * is added. In extreme cases when no URI is provided on the request line, all fields
+     * will be NULL. (Well, except for port_number, which will be -1.) To inspect raw data, use
+     * htp_tx_t::request_uri or htp_tx_t::parsed_uri_raw.
      */
     htp_uri_t *parsed_uri;
 
