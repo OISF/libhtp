@@ -44,7 +44,7 @@
  * @param[in] connp
  * @return HTP status
  */
-int htp_parse_response_line_generic(htp_connp_t *connp) {
+htp_status_t htp_parse_response_line_generic(htp_connp_t *connp) {
     htp_tx_t *tx = connp->out_tx;
     unsigned char *data = bstr_ptr(tx->response_line);
     size_t len = bstr_len(tx->response_line);
@@ -62,9 +62,9 @@ int htp_parse_response_line_generic(htp_connp_t *connp) {
     size_t start = pos;
 
     // Find the end of the protocol string.
-    while ((pos < len) && (!htp_is_space(data[pos]))) pos++;
-    
+    while ((pos < len) && (!htp_is_space(data[pos]))) pos++;    
     if (pos - start == 0) return HTP_OK;
+    
     tx->response_protocol = bstr_dup_mem(data + start, pos - start);
     if (tx->response_protocol == NULL) return HTP_ERROR;    
 
@@ -83,8 +83,8 @@ int htp_parse_response_line_generic(htp_connp_t *connp) {
 
     // Find the next whitespace character.
     while ((pos < len) && (!htp_is_space(data[pos]))) pos++;    
-
     if (pos - start == 0) return HTP_OK;
+    
     tx->response_status = bstr_dup_mem(data + start, pos - start);
     if (tx->response_status == NULL) return HTP_ERROR;
 
@@ -99,8 +99,7 @@ int htp_parse_response_line_generic(htp_connp_t *connp) {
     while ((pos < len) && (isspace(data[pos]))) pos++;
     if (pos == len) return HTP_OK;
 
-    // Assume the message stretches until the end of the line.
-    if (len - pos == 0) return HTP_OK;
+    // Assume the message stretches until the end of the line.    
     tx->response_message = bstr_dup_mem(data + pos, len - pos);
     if (tx->response_message == NULL) return HTP_ERROR;    
 
@@ -120,84 +119,84 @@ int htp_parse_response_line_generic(htp_connp_t *connp) {
  * @param[in] len
  * @return HTP status
  */
-int htp_parse_response_header_generic(htp_connp_t *connp, htp_header_t *h, unsigned char *data, size_t len) {
+htp_status_t htp_parse_response_header_generic(htp_connp_t *connp, htp_header_t *h, unsigned char *data, size_t len) {
     size_t name_start, name_end;
     size_t value_start, value_end;
+    size_t prev;
 
-    htp_chomp((unsigned char *) data, &len);
+    htp_chomp(data, &len);
 
     name_start = 0;
 
-    // Look for the colon
+    // Look for the first colon.
     size_t colon_pos = 0;
     while ((colon_pos < len) && (data[colon_pos] != ':')) colon_pos++;
 
     if (colon_pos == len) {
-        // Missing colon
+        // Header line with a missing colon.
+
         h->flags |= HTP_FIELD_UNPARSEABLE;
+        h->flags |= HTP_FIELD_INVALID;
 
         if (!(connp->out_tx->flags & HTP_FIELD_UNPARSEABLE)) {
+            // Only once per transaction.
             connp->out_tx->flags |= HTP_FIELD_UNPARSEABLE;
-            // Only log once per transaction
-            htp_log(connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Response field invalid: colon missing.");
-        }
-
-        return HTP_ERROR;
-    }
-
-    if (colon_pos == 0) {
-        // Empty header name
-        h->flags |= HTP_FIELD_INVALID;
-
-        if (!(connp->out_tx->flags & HTP_FIELD_INVALID)) {
             connp->out_tx->flags |= HTP_FIELD_INVALID;
-            // Only log once per transaction
-            htp_log(connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Response field invalid: empty name.");
+            htp_log(connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Response field invalid: missing colon.");
         }
-    }
+       
+        // Reset the position. We're going to treat this invalid header
+        // as a header with an empty name. That will increase the probability
+        // that the content will be inspected.
+        colon_pos = 0;
+        name_end = 0;
+        value_start = 0;
+    } else {
+        // Header line with a colon.
+        
+        if (colon_pos == 0) {
+            // Empty header name.
 
-    name_end = colon_pos;
+            h->flags |= HTP_FIELD_INVALID;
 
-    // Ignore LWS after field-name
-    size_t prev = name_end;
-    while ((prev > name_start) && (htp_is_lws(data[prev - 1]))) {
-        prev--;
-        name_end--;
-
-        h->flags |= HTP_FIELD_INVALID;
-
-        if (!(connp->out_tx->flags & HTP_FIELD_INVALID)) {
-            connp->out_tx->flags |= HTP_FIELD_INVALID;
-            htp_log(connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Response field invalid: LWS after name.");
+            if (!(connp->out_tx->flags & HTP_FIELD_INVALID)) {
+                // Only once per transaction.
+                connp->out_tx->flags |= HTP_FIELD_INVALID;
+                htp_log(connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Response field invalid: empty name.");
+            }
         }
+
+        name_end = colon_pos;
+
+        // Ignore LWS after field-name.
+        prev = name_end;
+        while ((prev > name_start) && (htp_is_lws(data[prev - 1]))) {
+            prev--;
+            name_end--;
+
+            h->flags |= HTP_FIELD_INVALID;
+
+            if (!(connp->out_tx->flags & HTP_FIELD_INVALID)) {
+                // Only once per transaction.
+                connp->out_tx->flags |= HTP_FIELD_INVALID;
+                htp_log(connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Response field invalid: LWS after name.");
+            }
+        }
+
+        value_start = colon_pos + 1;
     }
 
-    // Value
+    // Header value.   
 
-    value_start = colon_pos;
-
-    // Go over the colon
-    if (value_start < len) {
-        value_start++;
-    }
-
-    // Ignore LWS before field-content
+    // Ignore LWS before field-content.
     while ((value_start < len) && (htp_is_lws(data[value_start]))) {
         value_start++;
     }
 
-    // Look for the end of field-content
-    value_end = value_start;
-    while (value_end < len) value_end++;
-
-    // Ignore LWS after field-content
-    prev = value_end - 1;
-    while ((prev > value_start) && (htp_is_lws(data[prev]))) {
-        prev--;
-        value_end--;
-    }
-
-    // Check that the header name is a token
+    // Look for the end of field-content.
+    value_end = len;    
+    
+    // Check that the header name is a token.
     size_t i = name_start;
     while (i < name_end) {
         if (!htp_is_token(data[i])) {
@@ -214,7 +213,7 @@ int htp_parse_response_header_generic(htp_connp_t *connp, htp_header_t *h, unsig
         i++;
     }
 
-    // Now extract the name and the value
+    // Now extract the name and the value.
     h->name = bstr_dup_mem(data + name_start, name_end - name_start);
     h->value = bstr_dup_mem(data + value_start, value_end - value_start);
     if ((h->name == NULL) || (h->value == NULL)) {
@@ -235,7 +234,7 @@ int htp_parse_response_header_generic(htp_connp_t *connp, htp_header_t *h, unsig
  * @param[in] len
  * @return HTP status
  */
-int htp_process_response_header_generic(htp_connp_t *connp, unsigned char *data, size_t len) {
+htp_status_t htp_process_response_header_generic(htp_connp_t *connp, unsigned char *data, size_t len) {
     // Create a new header structure.
     htp_header_t *h = calloc(1, sizeof (htp_header_t));
     if (h == NULL) return HTP_ERROR;

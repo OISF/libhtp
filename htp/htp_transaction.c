@@ -934,7 +934,7 @@ htp_status_t htp_tx_state_request_line(htp_tx_t *tx) {
         if (tx->parsed_uri == NULL) return HTP_ERROR;
 
         // Keep the original URI components, but create a copy which we can normalize and use internally.
-        if (htp_normalize_parsed_uri(tx->connp, tx->parsed_uri_raw, tx->parsed_uri) != HTP_OK) {
+        if (htp_normalize_parsed_uri(tx, tx->parsed_uri_raw, tx->parsed_uri) != HTP_OK) {
             return HTP_ERROR;
         }
     }

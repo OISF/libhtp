@@ -416,14 +416,12 @@ void htp_config_set_convert_lowercase(htp_cfg_t *cfg, enum htp_decoder_ctx_t ctx
 htp_status_t htp_config_set_extract_request_files(htp_cfg_t *cfg, int extract_files, int limit);
 
 /**
- * Configures field parsing limits, which are used when processing request and response
- * lines, and request and response headers. A warning is created when a field is longer
- * than the soft limit. A fatal error will be raised if a field is longer than the hard
- * limit. The hard limit controls the amount of per-field buffering that takes place when
- * requests and responses are fragmented.
+ * Configures the maximum size of the buffer LibHTP will use when all data is not available
+ * in the current buffer (e.g., a very long header line that might span several packets). This
+ * limit is controlled by the hard_limit parameter. The soft_limit parameter is not implemented.
  * 
  * @param[in] cfg
- * @param[in] soft_limit
+ * @param[in] soft_limit NOT IMPLEMENTED.
  * @param[in] hard_limit
  */
 void htp_config_set_field_limits(htp_cfg_t *cfg, size_t soft_limit, size_t hard_limit);
@@ -526,6 +524,17 @@ void htp_config_set_path_separators_decode(htp_cfg_t *cfg, enum htp_decoder_ctx_
  * @param[in] unwanted
  */
 void htp_config_set_path_separators_encoded_unwanted(htp_cfg_t *cfg, enum htp_decoder_ctx_t ctx, enum htp_unwanted_t unwanted);
+
+/**
+ * Configures whether plus characters are converted to spaces when decoding URL-encoded strings. This
+ * is appropriate to do for parameters, but not for URLs. Only applies to contexts where decoding
+ * is taking place.
+ *
+ * @param[in] cfg
+ * @param[in] ctx
+ * @param[in] enabled
+ */
+void htp_config_set_plusspace_decode(htp_cfg_t *cfg, enum htp_decoder_ctx_t ctx, int enabled);
 
 /**
  * Controls whether compressed response bodies will be automatically decompressed.

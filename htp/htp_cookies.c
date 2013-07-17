@@ -51,19 +51,19 @@ int htp_parse_single_cookie_v0(htp_connp_t *connp, unsigned char *data, size_t l
     
     size_t pos = 0;
 
-    // Look for '='
+    // Look for '='.
     while ((pos < len) && (data[pos] != '=')) pos++;
-    if (pos == 0) return HTP_OK; // Ignore nameless cookies
+    if (pos == 0) return HTP_OK; // Ignore a nameless cookie.
 
     bstr *name = bstr_dup_mem(data, pos);
     if (name == NULL) return HTP_ERROR;
 
     bstr *value = NULL;
     if (pos == len) {
-        // Cookie is empty
+        // The cookie is empty.
         value = bstr_dup_c("");
     } else {
-        // Cookie is not empty
+        // The cookie is not empty.
         value = bstr_dup_mem(data + pos + 1, len - pos - 1);
     }
 
@@ -71,15 +71,14 @@ int htp_parse_single_cookie_v0(htp_connp_t *connp, unsigned char *data, size_t l
         bstr_free(name);
         return HTP_ERROR;
     }
-
-    // Add cookie directly
+    
     htp_table_addn(connp->in_tx->request_cookies, name, value);
 
     return HTP_OK;
 }
 
 /**
- * Parses Cookie request header in v0 format.
+ * Parses the Cookie request header in v0 format.
  *
  * @param[in] connp
  * @return HTP_OK on success, HTP_ERROR on error
@@ -88,7 +87,7 @@ htp_status_t htp_parse_cookies_v0(htp_connp_t *connp) {
     htp_header_t *cookie_header = htp_table_get_c(connp->in_tx->request_headers, "cookie");
     if (cookie_header == NULL) return HTP_OK;
 
-    // Create a new table to store cookies
+    // Create a new table to store cookies.
     connp->in_tx->request_cookies = htp_table_create(4);
     if (connp->in_tx->request_cookies == NULL) return HTP_ERROR;
 
@@ -97,21 +96,21 @@ htp_status_t htp_parse_cookies_v0(htp_connp_t *connp) {
     size_t pos = 0;
 
     while (pos < len) {
-        // Ignore whitespace at the beginning
+        // Ignore whitespace at the beginning.
         while ((pos < len) && (isspace((int)data[pos]))) pos++;
         if (pos == len) return HTP_OK;
 
         size_t start = pos;
 
-        // Find the end of the cookie
+        // Find the end of the cookie.
         while ((pos < len) && (data[pos] != ';')) pos++;
 
         if (htp_parse_single_cookie_v0(connp, data + start, pos - start) != HTP_OK) {
             return HTP_ERROR;
         }
 
-        // Go over the semicolon
-        if (pos != len) pos++;
+        // Go over the semicolon.
+        if (pos < len) pos++;
     }
 
     return HTP_OK;

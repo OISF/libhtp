@@ -104,7 +104,7 @@ static void htp_urlenp_add_field_piece(htp_urlenp_t *urlenp, const unsigned char
                     if (value == NULL) return;
 
                     if (urlenp->decode_url_encoding) {
-                        htp_decode_urlencoded_inplace(urlenp->tx->connp->cfg, urlenp->tx, name);
+                        htp_tx_urldecode_params_inplace(urlenp->tx, name);
                     }
 
                     htp_table_addn(urlenp->params, name, value);
@@ -136,8 +136,8 @@ static void htp_urlenp_add_field_piece(htp_urlenp_t *urlenp, const unsigned char
             }
 
             if (urlenp->decode_url_encoding) {
-                htp_decode_urlencoded_inplace(urlenp->tx->connp->cfg, urlenp->tx, name);
-                htp_decode_urlencoded_inplace(urlenp->tx->connp->cfg, urlenp->tx, value);
+                htp_tx_urldecode_params_inplace(urlenp->tx, name);
+                htp_tx_urldecode_params_inplace(urlenp->tx, value);
             }
 
             htp_table_addn(urlenp->params, name, value);

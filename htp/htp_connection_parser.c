@@ -43,6 +43,8 @@ void htp_connp_clear_error(htp_connp_t *connp) {
 }
 
 void htp_connp_close(htp_connp_t *connp, const htp_time_t *timestamp) {
+    if (connp == NULL) return;
+    
     // Close the underlying connection.
     htp_conn_close(connp->conn, timestamp);
 
@@ -112,26 +114,32 @@ void htp_connp_destroy_all(htp_connp_t *connp) {
 }
 
 htp_conn_t *htp_connp_get_connection(const htp_connp_t *connp) {
+    if (connp == NULL) return NULL;
     return connp->conn;
 }
 
 htp_tx_t *htp_connp_get_in_tx(const htp_connp_t *connp) {
+    if (connp == NULL) return NULL;
     return connp->in_tx;
 }
 
 htp_log_t *htp_connp_get_last_error(const htp_connp_t *connp) {
+    if (connp == NULL) return NULL;
     return connp->last_error;
 }
 
 htp_tx_t *htp_connp_get_out_tx(const htp_connp_t *connp) {
+    if (connp == NULL) return NULL;
     return connp->out_tx;
 }
 
 void *htp_connp_get_user_data(const htp_connp_t *connp) {
+    if (connp == NULL) return NULL;
     return (void *)connp->user_data;
 }
 
 void htp_connp_in_reset(htp_connp_t *connp) {
+    if (connp == NULL) return;
     connp->in_content_length = -1;
     connp->in_body_data_left = -1;
     connp->in_chunk_request_index = connp->in_chunk_count;
@@ -140,6 +148,8 @@ void htp_connp_in_reset(htp_connp_t *connp) {
 void htp_connp_open(htp_connp_t *connp, const char *client_addr, int client_port, const char *server_addr,
         int server_port, htp_time_t *timestamp)
 {
+    if (connp == NULL) return;
+    
     // Check connection parser state first.
     if ((connp->in_status != HTP_STREAM_NEW) || (connp->out_status != HTP_STREAM_NEW)) {
         htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Connection is already open");
@@ -155,11 +165,14 @@ void htp_connp_open(htp_connp_t *connp, const char *client_addr, int client_port
 }
 
 void htp_connp_set_user_data(htp_connp_t *connp, const void *user_data) {
+    if (connp == NULL) return;
     connp->user_data = user_data;
 }
 
-htp_tx_t *htp_connp_tx_create(htp_connp_t *connp) {    
-    // Detect pipelining
+htp_tx_t *htp_connp_tx_create(htp_connp_t *connp) {
+    if (connp == NULL) return NULL;
+    
+    // Detect pipelining.
     if (htp_list_size(connp->conn->transactions) > connp->out_next_tx_index) {
         connp->conn->flags |= HTP_CONN_PIPELINED;
     }

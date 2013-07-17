@@ -1,0 +1,39 @@
+
+0.5.4 (17 July 2013)
+--------------------
+
+- Tagging for a Suricata beta release.
+
+- Added htp_get_version(), which returns the complete library name (e.g., "LibHTP v0.5.4").
+
+- Hard field limit is now treated as specifying the maximum amount of memory LibHTP
+  will use for buffering per stream. Fields (e.g., headers) longer than this limit
+  will be accepted if they are contained within a single buffer submitted to LibHTP (i.e.,
+  if LibHTP does not have to do any buffering in order to process them). Soft limits
+  are currently not creating any warnings. This area will be improved in a future release.
+
+- Invalid headers no longer fail the entire stream. They are now treated as
+  headers without a name.
+
+- htp_conn_remove_tx() now returns HTP_DECLINED (was HTTP_ERROR) if the
+  specified transaction cannot be found.
+
+- htp_list_array_replace() now returns HTP_DECLINED (was HTP_ERROR) if the element at the
+  specified position does not exist.
+
+- New public functions:
+
+  htp_status_t htp_urldecode_inplace(htp_cfg_t *cfg, enum htp_decoder_ctx_t ctx, bstr *input, uint64_t *flags);
+  htp_status_t htp_urldecode_inplace_ex(htp_cfg_t *cfg, enum htp_decoder_ctx_t ctx, bstr *input, uint64_t *flags, int *expected_status_code);
+
+- Improved test coverage (84.1% lines, 91.3% functions).
+
+
+0.5.3 (14 June 2013)
+--------------------
+
+- Fix stream error when valid Basic Authentication information is provided.
+
+- Do not fail the entire stream if the Authorization header is invalid. Raise HTP_AUTH_INVALID instead.
+
+- When a request does not contain the request URI, leave htp_tx_t::request_uri NULL.

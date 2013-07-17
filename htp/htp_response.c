@@ -175,7 +175,7 @@ static htp_status_t htp_res_handle_state_change(htp_connp_t *connp) {
 
 /**
  * If there is any data left in the outbound data chunk, this function will preserve
- * it for consumption later. The maximum amount accepted for buffering is controlled
+ * it for later consumption. The maximum amount accepted for buffering is controlled
  * by htp_config_t::field_limit_hard.
  *
  * @param[in] connp
@@ -189,14 +189,16 @@ static htp_status_t htp_connp_res_buffer(htp_connp_t *connp) {
 
     // Check the hard (buffering) limit.
 
-    size_t newlen = connp->out_buf_size + len;
+    size_t newlen = connp->out_buf_size + len;   
 
+    // When calculating the size of the buffer, take into account the
+    // space we're using for the response header buffer.
     if (connp->out_header != NULL) {
         newlen += bstr_len(connp->out_header);
     }
 
     if (newlen > connp->out_tx->cfg->field_limit_hard) {
-        htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Response field size over the buffer limit: size %zd limit %zd.",
+        htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Response the buffer limit: size %zd limit %zd.",
                 newlen, connp->out_tx->cfg->field_limit_hard);
         return HTP_ERROR;
     }
@@ -241,7 +243,10 @@ static htp_status_t htp_connp_res_consolidate_data(htp_connp_t *connp, unsigned 
     } else {
         // We do have data in the buffer. Add data from the current
         // chunk, and point to the consolidated buffer.
-        htp_connp_res_buffer(connp);
+        if (htp_connp_res_buffer(connp) != HTP_OK) {
+            return HTP_ERROR;
+        }
+
         *data = connp->out_buf;
         *len = connp->out_buf_size;
     }
@@ -308,7 +313,7 @@ htp_status_t htp_connp_RES_BODY_CHUNKED_DATA(htp_connp_t *connp) {
     if (bytes_to_consume == 0) return HTP_DATA;
 
     // Consume the data.
-    int rc = htp_tx_res_process_body_data_ex(connp->out_tx, connp->out_current_data + connp->out_current_read_offset, bytes_to_consume);
+    htp_status_t rc = htp_tx_res_process_body_data_ex(connp->out_tx, connp->out_current_data + connp->out_current_read_offset, bytes_to_consume);
     if (rc != HTP_OK) return rc;
 
     // Adjust the counters.
@@ -341,7 +346,9 @@ htp_status_t htp_connp_RES_BODY_CHUNKED_LENGTH(htp_connp_t *connp) {
             unsigned char *data;
             size_t len;
 
-            htp_connp_res_consolidate_data(connp, &data, &len);
+            if (htp_connp_res_consolidate_data(connp, &data, &len) != HTP_OK) {
+                return HTP_ERROR;
+            }
 
             connp->out_tx->response_message_len += len;
 
@@ -357,8 +364,7 @@ htp_status_t htp_connp_RES_BODY_CHUNKED_LENGTH(htp_connp_t *connp) {
 
             // Handle chunk length
             if (connp->out_chunked_length > 0) {
-                // More data available
-                // TODO Add a check (flag) for excessive chunk length.
+                // More data available                
                 connp->out_state = htp_connp_RES_BODY_CHUNKED_DATA;
             } else if (connp->out_chunked_length == 0) {
                 // End of data
@@ -397,7 +403,7 @@ htp_status_t htp_connp_RES_BODY_IDENTITY_CL_KNOWN(htp_connp_t *connp) {
     if (bytes_to_consume == 0) return HTP_DATA;    
 
     // Consume the data.
-    int rc = htp_tx_res_process_body_data_ex(connp->out_tx, connp->out_current_data + connp->out_current_read_offset, bytes_to_consume);
+    htp_status_t rc = htp_tx_res_process_body_data_ex(connp->out_tx, connp->out_current_data + connp->out_current_read_offset, bytes_to_consume);
     if (rc != HTP_OK) return rc;
 
     // Adjust the counters.
@@ -427,7 +433,7 @@ htp_status_t htp_connp_RES_BODY_IDENTITY_STREAM_CLOSE(htp_connp_t *connp) {
     size_t bytes_to_consume = connp->out_current_len - connp->out_current_read_offset;
 
     if (bytes_to_consume != 0) {
-        int rc = htp_tx_res_process_body_data_ex(connp->out_tx, connp->out_current_data + connp->out_current_read_offset, bytes_to_consume);
+        htp_status_t rc = htp_tx_res_process_body_data_ex(connp->out_tx, connp->out_current_data + connp->out_current_read_offset, bytes_to_consume);
         if (rc != HTP_OK) return rc;
 
         // Adjust the counters.
@@ -459,7 +465,7 @@ htp_status_t htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
         if ((connp->out_tx->response_status_number >= 200)
                 && (connp->out_tx->response_status_number <= 299)) {
             // This is a successful CONNECT stream, which means
-            // we need to switch into tunnelling mode.
+            // we need to switch into tunneling mode.
             connp->in_status = HTP_STREAM_TUNNEL;
             connp->out_status = HTP_STREAM_TUNNEL;
             connp->out_state = htp_connp_RES_FINALIZE;
@@ -476,7 +482,7 @@ htp_status_t htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
         }
     }
 
-    // Check for an interim "100 Continue" response. Ignore it if found, and revert back to RES_FIRST_LINE.
+    // Check for an interim "100 Continue" response. Ignore it if found, and revert back to RES_LINE.
     if (connp->out_tx->response_status_number == 100) {
         if (connp->out_tx->seen_100continue != 0) {
             htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Already seen 100-Continue.");
@@ -485,7 +491,7 @@ htp_status_t htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
 
         // Ignore any response headers seen so far.
         htp_header_t *h = NULL;
-        for (int i = 0, n = htp_table_size(connp->out_tx->response_headers); i < n; i++) {
+        for (size_t i = 0, n = htp_table_size(connp->out_tx->response_headers); i < n; i++) {
             h = htp_table_get_index(connp->out_tx->response_headers, i, NULL);
             bstr_free(h->name);
             bstr_free(h->value);
@@ -578,7 +584,7 @@ htp_status_t htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
                 if (connp->out_content_length != 0) {
                     connp->out_state = htp_connp_RES_BODY_IDENTITY_CL_KNOWN;
                     connp->out_tx->response_progress = HTP_RESPONSE_BODY;
-                } else {
+                } else {                    
                     connp->out_state = htp_connp_RES_FINALIZE;
                 }
             }
@@ -611,7 +617,7 @@ htp_status_t htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
     // NOTE We do not need to check for short-style HTTP/0.9 requests here because
     //      that is done earlier, before response line parsing begins
 
-    int rc = htp_tx_state_response_headers(connp->out_tx);
+    htp_status_t rc = htp_tx_state_response_headers(connp->out_tx);
     if (rc != HTP_OK) return rc;
 
     return HTP_OK;
@@ -632,7 +638,9 @@ htp_status_t htp_connp_RES_HEADERS(htp_connp_t *connp) {
             unsigned char *data;
             size_t len;
 
-            htp_connp_res_consolidate_data(connp, &data, &len);
+            if (htp_connp_res_consolidate_data(connp, &data, &len) != HTP_OK) {
+                return HTP_ERROR;
+            }
 
             #ifdef HTP_DEBUG
             fprint_raw_data(stderr, __FUNCTION__, data, len);
@@ -745,7 +753,9 @@ htp_status_t htp_connp_RES_LINE(htp_connp_t *connp) {
             unsigned char *data;
             size_t len;
 
-            htp_connp_res_consolidate_data(connp, &data, &len);
+            if (htp_connp_res_consolidate_data(connp, &data, &len) != HTP_OK) {
+                return HTP_ERROR;
+            }
 
             #ifdef HTP_DEBUG
             fprint_raw_data(stderr, __FUNCTION__, data, len);
@@ -798,11 +808,11 @@ htp_status_t htp_connp_RES_LINE(htp_connp_t *connp) {
             // If the response line is invalid, determine if it _looks_ like
             // a response line. If it does not look like a line, process the
             // data as a response body because that is what browsers do.
-
+           
             if (htp_treat_response_line_as_body(connp->out_tx)) {
                 connp->out_tx->response_content_encoding_processing = HTP_COMPRESSION_NONE;
 
-                int rc = htp_tx_res_process_body_data_ex(connp->out_tx, data, len + chomp_result);
+                htp_status_t rc = htp_tx_res_process_body_data_ex(connp->out_tx, data, len + chomp_result);
                 if (rc != HTP_OK) return rc;
 
                 // Continue to process response body. Because we don't have
@@ -810,13 +820,13 @@ htp_status_t htp_connp_RES_LINE(htp_connp_t *connp) {
                 // the end of the stream.
                 connp->out_tx->response_transfer_coding = HTP_CODING_IDENTITY;
                 connp->out_tx->response_progress = HTP_RESPONSE_BODY;
-                connp->out_state = htp_connp_RES_BODY_IDENTITY_STREAM_CLOSE;
+                connp->out_state = htp_connp_RES_BODY_IDENTITY_STREAM_CLOSE;               
                 connp->out_body_data_left = -1;
 
                 return HTP_OK;
             }
 
-            int rc = htp_tx_state_response_line(connp->out_tx);
+            htp_status_t rc = htp_tx_state_response_line(connp->out_tx);
             if (rc != HTP_OK) return rc;
 
             htp_connp_res_clear_buffer(connp);
@@ -872,7 +882,7 @@ htp_status_t htp_connp_RES_IDLE(htp_connp_t *connp) {
     connp->out_content_length = -1;
     connp->out_body_data_left = -1;
 
-    int rc = htp_tx_state_response_start(connp->out_tx);
+    htp_status_t rc = htp_tx_state_response_start(connp->out_tx);
     if (rc != HTP_OK) return rc;
 
     return HTP_OK;
@@ -906,7 +916,7 @@ int htp_connp_res_data(htp_connp_t *connp, const htp_time_t *timestamp, const vo
     // only if the stream has been closed. We do not allow zero-sized
     // chunks in the API, but we use it internally to force the parsers
     // to finalize parsing.
-    if (((data == NULL)||(len == 0)) && (connp->out_status != HTP_STREAM_CLOSED)) {
+    if (((data == NULL) || (len == 0)) && (connp->out_status != HTP_STREAM_CLOSED)) {
         htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Zero-length data chunks are not allowed");
 
         #ifdef HTP_DEBUG
@@ -955,7 +965,7 @@ int htp_connp_res_data(htp_connp_t *connp, const htp_time_t *timestamp, const vo
         // or if we've run out of data. We are relying
         // on processors to add error messages, so we'll
         // keep quiet here.
-        int rc = connp->out_state(connp);
+        htp_status_t rc = connp->out_state(connp);
         if (rc == HTP_OK) {
             if (connp->out_status == HTP_STREAM_TUNNEL) {
                 #ifdef HTP_DEBUG
@@ -974,7 +984,10 @@ int htp_connp_res_data(htp_connp_t *connp, const htp_time_t *timestamp, const vo
                 htp_connp_res_receiver_send_data(connp, 0 /* not last */);
 
                 if (rc == HTP_DATA_BUFFER) {
-                    htp_connp_res_buffer(connp);
+                    if (htp_connp_res_buffer(connp) != HTP_OK) {
+                        connp->out_status = HTP_STREAM_ERROR;
+                        return HTP_STREAM_ERROR;
+                    }
                 }
 
                 #ifdef HTP_DEBUG

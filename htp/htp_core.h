@@ -59,10 +59,11 @@ typedef struct htp_tx_t htp_tx_t;
 typedef struct htp_uri_t htp_uri_t;
 typedef struct timeval htp_time_t;
 
-// Free-form version string
-#define HTP_VERSION_STRING          "master"
+// Free-form version strings.
+#define HTP_VERSION_STRING          "0.5.x"
+#define HTP_VERSION_STRING_FULL     "LibHTP v" HTP_VERSION_STRING
 
-// In the form of x.y.z, with two positions for each component; for example, 400 means 0.4.0
+// In the form of x.y.z, with two positions for each component; for example, 400 means 0.4.0.
 #define HTP_VERSION_NUMBER          500
 
 // Below are all htp_status_t return codes used by LibHTP. Enum is not
@@ -215,24 +216,26 @@ enum htp_file_source_t {
 #define HTP_HOST_MISSING                   0x000001000
 #define HTP_HOST_AMBIGUOUS                 0x000002000
 #define HTP_PATH_ENCODED_NUL               0x000004000
-#define HTP_PATH_INVALID_ENCODING          0x000008000
-#define HTP_PATH_INVALID                   0x000010000
-#define HTP_PATH_OVERLONG_U                0x000020000
-#define HTP_PATH_ENCODED_SEPARATOR         0x000040000
-#define HTP_PATH_UTF8_VALID                0x000080000 /* At least one valid UTF-8 character and no invalid ones. */
-#define HTP_PATH_UTF8_INVALID              0x000100000
-#define HTP_PATH_UTF8_OVERLONG             0x000200000
-#define HTP_PATH_HALF_FULL_RANGE           0x000400000 /* Range U+FF00 - U+FFEF detected. */
-#define HTP_STATUS_LINE_INVALID            0x000800000
-#define HTP_HOSTU_INVALID                  0x001000000 /* Host in the URI. */
-#define HTP_HOSTH_INVALID                  0x002000000 /* Host in the Host header. */
-#define HTP_URLEN_ENCODED_NUL              0x004000000
-#define HTP_URLEN_INVALID_ENCODING         0x008000000
-#define HTP_URLEN_OVERLONG_U               0x010000000
-#define HTP_URLEN_HALF_FULL_RANGE          0x020000000 /* Range U+FF00 - U+FFEF detected. */
-#define HTP_REQUEST_INVALID                0x040000000
-#define HTP_REQUEST_INVALID_C_L            0x080000000
-#define HTP_AUTH_INVALID                   0x100000000
+#define HTP_PATH_RAW_NUL                   0x000008000
+#define HTP_PATH_INVALID_ENCODING          0x000010000
+#define HTP_PATH_INVALID                   0x000020000
+#define HTP_PATH_OVERLONG_U                0x000040000
+#define HTP_PATH_ENCODED_SEPARATOR         0x000080000
+#define HTP_PATH_UTF8_VALID                0x000100000 /* At least one valid UTF-8 character and no invalid ones. */
+#define HTP_PATH_UTF8_INVALID              0x000200000
+#define HTP_PATH_UTF8_OVERLONG             0x000400000
+#define HTP_PATH_HALF_FULL_RANGE           0x000800000 /* Range U+FF00 - U+FFEF detected. */
+#define HTP_STATUS_LINE_INVALID            0x001000000
+#define HTP_HOSTU_INVALID                  0x002000000 /* Host in the URI. */
+#define HTP_HOSTH_INVALID                  0x004000000 /* Host in the Host header. */
+#define HTP_URLEN_ENCODED_NUL              0x008000000
+#define HTP_URLEN_INVALID_ENCODING         0x010000000
+#define HTP_URLEN_OVERLONG_U               0x020000000
+#define HTP_URLEN_HALF_FULL_RANGE          0x040000000 /* Range U+FF00 - U+FFEF detected. */
+#define HTP_URLEN_RAW_NUL                  0x080000000
+#define HTP_REQUEST_INVALID                0x100000000
+#define HTP_REQUEST_INVALID_C_L            0x200000000
+#define HTP_AUTH_INVALID                   0x400000000
 
 #define HTP_HOST_INVALID ( HTP_HOSTU_INVALID | HTP_HOSTH_INVALID )
 
@@ -243,6 +246,7 @@ enum htp_file_source_t {
  * Enumerates all log levels.
  */
 enum htp_log_level_t {
+    HTP_LOG_NONE = 0,
     HTP_LOG_ERROR = 1,
     HTP_LOG_WARNING = 2,
     HTP_LOG_NOTICE = 3,

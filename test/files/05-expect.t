@@ -9,6 +9,8 @@ Content-Type: multipart/form-data; boundary=----------------------------07869933
 
 <<<
 HTTP/1.1 100 Continue
+Header1: This
+Header2: That
 
 
 >>>

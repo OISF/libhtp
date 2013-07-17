@@ -39,10 +39,10 @@
 #include "htp_private.h"
 
 static htp_status_t _htp_table_add(htp_table_t *table, const bstr *key, const void *element) {
-    // Add key
+    // Add key.
     if (htp_list_add(table->list, (void *)key) != HTP_OK) return HTP_ERROR;
 
-    // Add element
+    // Add element.
     if (htp_list_add(table->list, (void *)element) != HTP_OK) {
         htp_list_pop(table->list);
         return HTP_ERROR;
@@ -51,7 +51,9 @@ static htp_status_t _htp_table_add(htp_table_t *table, const bstr *key, const vo
     return HTP_OK;
 }
 
-htp_status_t htp_table_add(htp_table_t *table, const bstr *key, const void *element) {    
+htp_status_t htp_table_add(htp_table_t *table, const bstr *key, const void *element) {
+    if ((table == NULL)||(key == NULL)) return HTP_ERROR;
+    
     // Keep track of how keys are allocated, and
     // ensure that all invocations are consistent.
     if (table->alloc_type == HTP_TABLE_KEYS_ALLOC_UKNOWN) {
@@ -79,6 +81,8 @@ htp_status_t htp_table_add(htp_table_t *table, const bstr *key, const void *elem
 }
 
 htp_status_t htp_table_addn(htp_table_t *table, const bstr *key, const void *element) {
+    if ((table == NULL)||(key == NULL)) return HTP_ERROR;
+    
     // Keep track of how keys are allocated, and
     // ensure that all invocations are consistent.
     if (table->alloc_type == HTP_TABLE_KEYS_ALLOC_UKNOWN) {
@@ -98,6 +102,8 @@ htp_status_t htp_table_addn(htp_table_t *table, const bstr *key, const void *ele
 }
 
 htp_status_t htp_table_addk(htp_table_t *table, const bstr *key, const void *element) {
+    if ((table == NULL)||(key == NULL)) return HTP_ERROR;
+    
     // Keep track of how keys are allocated, and
     // ensure that all invocations are consistent.
     if (table->alloc_type == HTP_TABLE_KEYS_ALLOC_UKNOWN) {
@@ -122,7 +128,7 @@ void htp_table_clear(htp_table_t *table) {
     // Free the table keys, but only if we're managing them.
     if ((table->alloc_type == HTP_TABLE_KEYS_COPIED)||(table->alloc_type == HTP_TABLE_KEYS_ADOPTED)) {
         bstr *key = NULL;
-        for (int i = 0, n = htp_list_size(table->list); i < n; i += 2) {
+        for (size_t i = 0, n = htp_list_size(table->list); i < n; i += 2) {
             key = htp_list_get(table->list, i);
             bstr_free(key);
         }
@@ -140,6 +146,8 @@ void htp_table_clear_ex(htp_table_t *table) {
 }
 
 htp_table_t *htp_table_create(size_t size) {
+    if (size == 0) return NULL;
+
     htp_table_t *table = calloc(1, sizeof (htp_table_t));
     if (table == NULL) return NULL;
 
@@ -181,7 +189,7 @@ void *htp_table_get(const htp_table_t *table, const bstr *key) {
 
     // Iterate through the list, comparing
     // keys with the parameter, return data if found.    
-    for (int i = 0, n = htp_list_size(table->list); i < n; i += 2) {
+    for (size_t i = 0, n = htp_list_size(table->list); i < n; i += 2) {
         bstr *key_candidate = htp_list_get(table->list, i);
         void *element = htp_list_get(table->list, i + 1);
         if (bstr_cmp_nocase(key_candidate, key) == 0) {
@@ -197,7 +205,7 @@ void *htp_table_get_c(const htp_table_t *table, const char *ckey) {
 
     // Iterate through the list, comparing
     // keys with the parameter, return data if found.    
-    for (int i = 0, n = htp_list_size(table->list); i < n; i += 2) {
+    for (size_t i = 0, n = htp_list_size(table->list); i < n; i += 2) {
         bstr *key_candidate = htp_list_get(table->list, i);
         void *element = htp_list_get(table->list, i + 1);
         if (bstr_cmp_c_nocase(key_candidate, ckey) == 0) {
@@ -210,6 +218,7 @@ void *htp_table_get_c(const htp_table_t *table, const char *ckey) {
 
 void *htp_table_get_index(const htp_table_t *table, size_t idx, bstr **key) {
     if (table == NULL) return NULL;
+    
     if (idx >= htp_list_size(table->list)) return NULL;
 
     if (key != NULL) {
@@ -224,7 +233,7 @@ void *htp_table_get_mem(const htp_table_t *table, const void *key, size_t key_le
 
     // Iterate through the list, comparing
     // keys with the parameter, return data if found.
-    for (int i = 0, n = htp_list_size(table->list); i < n; i += 2) {
+    for (size_t i = 0, n = htp_list_size(table->list); i < n; i += 2) {
         bstr *key_candidate = htp_list_get(table->list, i);
         void *element = htp_list_get(table->list, i + 1);
         if (bstr_cmp_mem_nocase(key_candidate, key, key_len) == 0) {
@@ -236,5 +245,6 @@ void *htp_table_get_mem(const htp_table_t *table, const void *key, size_t key_le
 }
 
 size_t htp_table_size(const htp_table_t *table) {
+    if (table == NULL) return 0;
     return htp_list_size(table->list) / 2;
 }

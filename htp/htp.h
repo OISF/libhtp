@@ -444,7 +444,7 @@ struct htp_tx_t {
     /** Have we seen the server respond with a 100 response? */
     int seen_100continue;      
 
-    /** Parsed response headers. */
+    /** Parsed response headers. Contains instances of htp_header_t. */
     htp_table_t *response_headers;   
 
     /* HTTP 1.1 RFC
@@ -625,6 +625,42 @@ htp_uri_t *htp_uri_alloc(void);
  */
 void htp_log(htp_connp_t *connp, const char *file, int line, enum htp_log_level_t level, int code, const char *fmt, ...);
     
+/**
+ * Performs in-place decoding of the input string, according to the configuration specified
+ * by cfg and ctx. On output, various flags (HTP_URLEN_*) might be set.
+ *
+ * @param[in] cfg
+ * @param[in] ctx
+ * @param[in] input
+ * @param[out] flags
+ *
+ * @return HTP_OK on success, HTP_ERROR on failure.
+ */
+htp_status_t htp_urldecode_inplace(htp_cfg_t *cfg, enum htp_decoder_ctx_t ctx, bstr *input, uint64_t *flags);
+
+/**
+ * Performs in-place decoding of the input string, according to the configuration specified
+ * by cfg and ctx. On output, various flags (HTP_URLEN_*) might be set. If something in the
+ * input would cause a particular server to respond with an error, the appropriate status
+ * code will be set.
+ *
+ * @param[in] cfg
+ * @param[in] ctx
+ * @param[in] input
+ * @param[out] flags
+ * @param[out] expected_status_code 0 by default, or status code as necessary
+ *
+ * @return HTP_OK on success, HTP_ERROR on failure.
+ */
+htp_status_t htp_urldecode_inplace_ex(htp_cfg_t *cfg, enum htp_decoder_ctx_t ctx, bstr *input, uint64_t *flags, int *expected_status_code);
+
+/**
+ * Returns the LibHTP version string.
+ * 
+ * @return LibHTP version, for example "LibHTP v0.5.x".
+ */
+char *htp_get_version(void);
+
 #ifdef __cplusplus
 }
 #endif

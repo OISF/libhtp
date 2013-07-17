@@ -41,18 +41,21 @@
 // Array-backed list
 
 htp_list_t *htp_list_array_create(size_t size) {
-    // Allocate the list structure
+    // It makes no sense to create a zero-size list.
+    if (size == 0) return NULL;
+    
+    // Allocate the list structure.
     htp_list_array_t *l = calloc(1, sizeof (htp_list_array_t));
     if (l == NULL) return NULL;
 
-    // Allocate the initial batch of elements
+    // Allocate the initial batch of elements.
     l->elements = malloc(size * sizeof (void *));
     if (l->elements == NULL) {
         free(l);
         return NULL;
     }
 
-    // Initialize structure
+    // Initialize the structure.
     l->first = 0;
     l->last = 0;
     l->current_size = 0;
@@ -62,6 +65,8 @@ htp_list_t *htp_list_array_create(size_t size) {
 }
 
 void htp_list_array_clear(htp_list_array_t *l) {
+    if (l == NULL) return;
+    
     // Continue using already allocate memory; just reset the fields.
     l->first = 0;
     l->last = 0;
@@ -70,11 +75,14 @@ void htp_list_array_clear(htp_list_array_t *l) {
 
 void htp_list_array_destroy(htp_list_array_t *l) {
     if (l == NULL) return;
+    
     free(l->elements);
     free(l);
 }
 
 void *htp_list_array_get(const htp_list_array_t *l, size_t idx) {
+    if (l == NULL) return NULL;
+    
     const void *r = NULL;
 
     if (idx + 1 > l->current_size) return NULL;
@@ -94,6 +102,8 @@ void *htp_list_array_get(const htp_list_array_t *l, size_t idx) {
 }
 
 void *htp_list_array_pop(htp_list_array_t *l) {
+    if (l == NULL) return NULL;
+    
     const void *r = NULL;
 
     if (l->current_size == 0) {
@@ -112,6 +122,8 @@ void *htp_list_array_pop(htp_list_array_t *l) {
 }
 
 htp_status_t htp_list_array_push(htp_list_array_t *l, void *e) {
+    if (l == NULL) return HTP_ERROR;
+
     // Check whether we're full
     if (l->current_size >= l->max_size) {
         size_t new_size = l->max_size * 2;
@@ -157,7 +169,9 @@ htp_status_t htp_list_array_push(htp_list_array_t *l, void *e) {
 }
 
 htp_status_t htp_list_array_replace(htp_list_array_t *l, size_t idx, void *e) {
-    if (idx + 1 > l->current_size) return HTP_ERROR;
+    if (l == NULL) return HTP_ERROR;
+    
+    if (idx + 1 > l->current_size) return HTP_DECLINED;
 
     size_t i = l->first;
 
@@ -173,10 +187,14 @@ htp_status_t htp_list_array_replace(htp_list_array_t *l, size_t idx, void *e) {
 }
 
 size_t htp_list_array_size(const htp_list_array_t *l) {
+    if (l == NULL) return HTP_ERROR;
+
     return l->current_size;
 }
 
 void *htp_list_array_shift(htp_list_array_t *l) {
+    if (l == NULL) return NULL;
+    
     void *r = NULL;
 
     if (l->current_size == 0) {

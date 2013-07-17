@@ -166,6 +166,8 @@ htp_cfg_t *htp_config_create(void) {
     htp_config_set_nul_encoded_terminates(cfg, HTP_DECODER_DEFAULTS, 0);
     htp_config_set_u_encoding_decode(cfg, HTP_DECODER_DEFAULTS, 0);
 
+    htp_config_set_plusspace_decode(cfg, HTP_DECODER_URLENCODED, 1);
+
     htp_config_set_server_personality(cfg, HTP_SERVER_MINIMAL);
 
     return cfg;
@@ -758,6 +760,18 @@ void htp_config_set_path_separators_compress(htp_cfg_t *cfg, enum htp_decoder_ct
     if (ctx == HTP_DECODER_DEFAULTS) {
         for (size_t i = 0; i < HTP_DECODER_CONTEXTS_MAX; i++) {
             cfg->decoder_cfgs[i].path_separators_compress = convert_to_0_or_1(enabled);
+        }
+    }
+}
+
+void htp_config_set_plusspace_decode(htp_cfg_t *cfg, enum htp_decoder_ctx_t ctx, int enabled) {
+    if (ctx >= HTP_DECODER_CONTEXTS_MAX) return;
+
+    cfg->decoder_cfgs[ctx].plusspace_decode = convert_to_0_or_1(enabled);
+
+    if (ctx == HTP_DECODER_DEFAULTS) {
+        for (size_t i = 0; i < HTP_DECODER_CONTEXTS_MAX; i++) {
+            cfg->decoder_cfgs[i].plusspace_decode = convert_to_0_or_1(enabled);
         }
     }
 }

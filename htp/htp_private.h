@@ -110,17 +110,17 @@ htp_status_t htp_connp_RES_FINALIZE(htp_connp_t *connp);
 
 // Parsing functions
 
-int htp_parse_request_line_generic(htp_connp_t *connp);
-int htp_parse_request_header_generic(htp_connp_t *connp, htp_header_t *h, unsigned char *data, size_t len);
-int htp_process_request_header_generic(htp_connp_t *, unsigned char *data, size_t len);
+htp_status_t htp_parse_request_line_generic(htp_connp_t *connp);
+htp_status_t htp_parse_request_line_generic_ex(htp_connp_t *connp, int nul_terminates);
+htp_status_t htp_parse_request_header_generic(htp_connp_t *connp, htp_header_t *h, unsigned char *data, size_t len);
+htp_status_t htp_process_request_header_generic(htp_connp_t *, unsigned char *data, size_t len);
 
-int htp_parse_request_header_apache_2_2(htp_connp_t *connp, htp_header_t *h, unsigned char *data, size_t len);
-int htp_parse_request_line_apache_2_2(htp_connp_t *connp);
-int htp_process_request_header_apache_2_2(htp_connp_t *, unsigned char *data, size_t len);
+htp_status_t htp_parse_request_line_apache_2_2(htp_connp_t *connp);
+htp_status_t htp_process_request_header_apache_2_2(htp_connp_t *, unsigned char *data, size_t len);
 
-int htp_parse_response_line_generic(htp_connp_t *connp);
-int htp_parse_response_header_generic(htp_connp_t *connp, htp_header_t *h, unsigned char *data, size_t len);
-int htp_process_response_header_generic(htp_connp_t *connp, unsigned char *data, size_t len);
+htp_status_t htp_parse_response_line_generic(htp_connp_t *connp);
+htp_status_t htp_parse_response_header_generic(htp_connp_t *connp, htp_header_t *h, unsigned char *data, size_t len);
+htp_status_t htp_process_response_header_generic(htp_connp_t *connp, unsigned char *data, size_t len);
 
 
 // Private transaction functions
@@ -153,12 +153,12 @@ htp_status_t htp_parse_hostport(bstr *authority, bstr **hostname, int *port, int
 htp_status_t htp_parse_header_hostport(bstr *authority, bstr **hostname, int *port, uint64_t *flags);
 int htp_validate_hostname(bstr *hostname);
 int htp_parse_uri_hostport(htp_connp_t *connp, bstr *input, htp_uri_t *uri);
-int htp_normalize_parsed_uri(htp_connp_t *connp, htp_uri_t *parsed_uri_incomplete, htp_uri_t *parsed_uri);
+int htp_normalize_parsed_uri(htp_tx_t *tx, htp_uri_t *parsed_uri_incomplete, htp_uri_t *parsed_uri);
 bstr *htp_normalize_hostname_inplace(bstr *input);
 void htp_replace_hostname(htp_connp_t *connp, htp_uri_t *parsed_uri, bstr *hostname);
 int htp_is_uri_unreserved(unsigned char c);
 
-int htp_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path);
+int htp_decode_path_inplace(htp_tx_t *tx, bstr *path);
 
 void htp_uriencoding_normalize_inplace(bstr *s);
 
@@ -208,8 +208,6 @@ int htp_parse_single_cookie_v0(htp_connp_t *connp, unsigned char *data, size_t l
 int htp_parse_cookies_v0(htp_connp_t *connp);
 int htp_parse_authorization(htp_connp_t *connp);
 
-int htp_decode_urlencoded_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *input);
-
 bstr *htp_extract_quoted_string_as_bstr(unsigned char *data, size_t len, size_t *endoffset);
 
 htp_header_t *htp_connp_header_parse(htp_connp_t *, unsigned char *, size_t);
@@ -231,6 +229,9 @@ void htp_tx_destroy_incomplete(htp_tx_t *tx);
 
 htp_status_t htp_tx_req_process_body_data_ex(htp_tx_t *tx, const void *data, size_t len);
 htp_status_t htp_tx_res_process_body_data_ex(htp_tx_t *tx, const void *data, size_t len);
+
+htp_status_t htp_tx_urldecode_uri_inplace(htp_tx_t *tx, bstr *input);
+htp_status_t htp_tx_urldecode_params_inplace(htp_tx_t *tx, bstr *input);
 
 #ifdef	__cplusplus
 }

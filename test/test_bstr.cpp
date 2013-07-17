@@ -279,6 +279,12 @@ TEST(BstrTest, CmpNocaseEx) {
     EXPECT_EQ(-1, bstr_util_cmp_mem_nocase(s2, 5, s1, 6));
 }
 
+TEST(BstrTest, CmpMem) {
+    bstr *s = bstr_dup_c("arfArf");
+    EXPECT_EQ(0, bstr_cmp_mem(s, "arfArf", 6));
+    bstr_free(s);
+}
+
 TEST(BstrTest, ToLowercase) {
     bstr *p1;
     bstr *p2;
@@ -397,6 +403,12 @@ TEST(BstrTest, IndexOf) {
     bstr_free(p3);
     bstr_free(p4);
     bstr_free(haystack);
+}
+
+TEST(BstrTest, MemIndexOf) {
+    EXPECT_EQ(0, bstr_util_mem_index_of_c("ABCDEFGHIJKL\000NOPQRSTUVWXYZ", 20, "ABC"));
+    EXPECT_EQ(-1, bstr_util_mem_index_of_c("ABCDEFGHIJKL\000NOPQRSTUVWXYZ", 20, "ABD"));
+    EXPECT_EQ(-1, bstr_util_mem_index_of_c("ABCDEFGHIJKL\000NOPQRSTUVWXYZ", 20, "CBA"));
 }
 
 TEST(BstrTest, BeginsWith) {
@@ -539,6 +551,12 @@ TEST(BstrTest, UtilMemTrim) {
     bstr_util_mem_trim((unsigned char **)&data, &len);
 
     EXPECT_EQ(0, bstr_util_cmp_mem(data, len, "0123456789", 10));
+}
+
+TEST(BstrTest, Wrap) {
+    bstr *s = bstr_wrap_c("ABC");
+    EXPECT_EQ(0, bstr_cmp_mem(s, "ABC", 3));
+    bstr_free(s);
 }
 
 TEST(BstrBuilder, CreateDestroy) {

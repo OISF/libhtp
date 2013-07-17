@@ -60,7 +60,9 @@ htp_conn_t *htp_conn_create(void) {
 }
 
 void htp_conn_close(htp_conn_t *conn, const htp_time_t *timestamp) {
-    // Update timestamp
+    if (conn == NULL) return;
+
+    // Update timestamp.
     if (timestamp != NULL) {
         memcpy(&(conn->close_timestamp), timestamp, sizeof(htp_time_t));
     }
@@ -86,7 +88,7 @@ void htp_conn_destroy(htp_conn_t *conn) {
     }
 
     if (conn->messages != NULL) {
-        // Destroy individual messages
+        // Destroy individual messages.
         for (size_t i = 0, n = htp_list_size(conn->messages); i < n; i++) {
             htp_log_t *l = htp_list_get(conn->messages, i);
             free((void *) l->msg);
@@ -104,15 +106,15 @@ void htp_conn_destroy(htp_conn_t *conn) {
     if (conn->client_addr != NULL) {
         free(conn->client_addr);
     }
-
-    // Finally, destroy the connection
-    // structure itself.
+    
     free(conn);
 }
 
 htp_status_t htp_conn_open(htp_conn_t *conn, const char *client_addr, int client_port,
         const char *server_addr, int server_port, const htp_time_t *timestamp)
 {
+    if (conn == NULL) return HTP_ERROR;
+
     if (client_addr != NULL) {
         conn->client_addr = strdup(client_addr);
         if (conn->client_addr == NULL) return HTP_ERROR;
@@ -153,13 +155,15 @@ htp_status_t htp_conn_remove_tx(htp_conn_t *conn, const htp_tx_t *tx) {
         }
     }
 
-    return HTP_ERROR;
+    return HTP_DECLINED;
 }
 
 void htp_conn_track_inbound_data(htp_conn_t *conn, size_t len, const htp_time_t *timestamp) {
+    if (conn == NULL) return;
     conn->in_data_counter += len;    
 }
 
 void htp_conn_track_outbound_data(htp_conn_t *conn, size_t len, const htp_time_t *timestamp) {
+    if (conn == NULL) return;
     conn->out_data_counter += len;    
 }
