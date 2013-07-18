@@ -122,6 +122,13 @@ case "$OS" in
                 CPPFLAGS="${CPPFLAGS} -I/usr/local/include"
                 LDFLAGS="${LDFLAGS} -L/usr/local/lib"
         ;;
+        OpenBSD*)
+                AC_MSG_RESULT(OpenBSD)
+                OS_OPENBSD="true"
+                NO_STACK_PROTECTOR="true"
+                CPPFLAGS="${CPPFLAGS} -I/usr/local/include"
+                LDFLAGS="${LDFLAGS} -L/usr/local/lib"
+        ;;
         Linux*)
                 AC_MSG_RESULT(Linux)
                 OS_LINUX="true"
