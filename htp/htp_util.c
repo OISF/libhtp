@@ -566,6 +566,7 @@ int htp_parse_uri_hostport(htp_connp_t *connp, bstr *hostport, htp_uri_t *uri) {
 
     if (invalid) {
         connp->in_tx->flags |= HTP_HOSTU_INVALID;
+        return HTP_OK;
     }
 
     if (htp_validate_hostname(uri->hostname) == 0) {
@@ -592,6 +593,7 @@ htp_status_t htp_parse_header_hostport(bstr *hostport, bstr **hostname, int *por
 
     if (invalid) {
         *flags |= HTP_HOSTH_INVALID;
+        return HTP_OK;
     }
 
     if (htp_validate_hostname(*hostname) == 0) {
