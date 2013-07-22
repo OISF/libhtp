@@ -3,9 +3,9 @@ exec_prefix=@exec_prefix@
 libdir=@libdir@
 includedir=@includedir@
 
-Name: LibHTP
+Name: @PACKAGE_NAME@
 Description: A security-aware HTTP parser, designed for use in IDS/IPS and WAF products.
-Version: 0.5.X
+Version: @PACKAGE_VERSION@
 Libs: -L${libdir} -lhtp
 Cflags: -I${includedir}/htp -I${libdir}/htp/include
 

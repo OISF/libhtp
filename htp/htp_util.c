@@ -568,8 +568,10 @@ int htp_parse_uri_hostport(htp_connp_t *connp, bstr *hostport, htp_uri_t *uri) {
         connp->in_tx->flags |= HTP_HOSTU_INVALID;
     }
 
-    if (htp_validate_hostname(uri->hostname) == 0) {
-        connp->in_tx->flags |= HTP_HOSTU_INVALID;
+    if (uri->hostname != NULL) {
+        if (htp_validate_hostname(uri->hostname) == 0) {
+            connp->in_tx->flags |= HTP_HOSTU_INVALID;
+        }
     }
 
     return HTP_OK;
@@ -594,8 +596,10 @@ htp_status_t htp_parse_header_hostport(bstr *hostport, bstr **hostname, int *por
         *flags |= HTP_HOSTH_INVALID;
     }
 
-    if (htp_validate_hostname(*hostname) == 0) {
-        *flags |= HTP_HOSTH_INVALID;
+    if (*hostname != NULL) {
+        if (htp_validate_hostname(*hostname) == 0) {
+            *flags |= HTP_HOSTH_INVALID;
+        }
     }
 
     return HTP_OK;
@@ -864,7 +868,7 @@ void htp_utf8_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
 
     size_t len = bstr_len(path);
     size_t rpos = 0;
-    size_t wpos = 0;    
+    size_t wpos = 0;
     uint32_t codepoint = 0;
     uint32_t state = HTP_UTF8_ACCEPT;
     uint32_t counter = 0;
@@ -875,12 +879,12 @@ void htp_utf8_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
 
         switch (htp_utf8_decode_allow_overlong(&state, &codepoint, data[rpos])) {
             case HTP_UTF8_ACCEPT:
-                if (counter == 1) {                    
+                if (counter == 1) {
                     // ASCII character, which we just copy.
                     data[wpos++] = (uint8_t) codepoint;
                 } else {
                     // A valid UTF-8 character, which we need to convert.
-                    
+
                     seen_valid = 1;
 
                     // Check for overlong characters and set the flag accordingly.
@@ -919,7 +923,7 @@ void htp_utf8_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
 
             case HTP_UTF8_REJECT:
                 // Invalid UTF-8 character.
-                
+
                 tx->flags |= HTP_PATH_UTF8_INVALID;
 
                 // Is the server expected to respond with 400?
@@ -931,7 +935,7 @@ void htp_utf8_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
                 state = HTP_UTF8_ACCEPT;
 
                 // Output the replacement byte, replacing the invalid byte sequence.
-                data[wpos++] = cfg->decoder_cfgs[HTP_DECODER_URL_PATH].bestfit_replacement_byte;               
+                data[wpos++] = cfg->decoder_cfgs[HTP_DECODER_URL_PATH].bestfit_replacement_byte;
 
                 // Advance over the consumed byte and reset the byte counter.
                 rpos++;
@@ -980,7 +984,7 @@ void htp_utf8_validate_path(htp_tx_t *tx, bstr *path) {
 
                 if (counter > 1) {
                     // A valid UTF-8 character, consisting of 2 or more bytes.
-                    
+
                     seen_valid = 1;
 
                     // Check for overlong characters and set the flag accordingly.
@@ -1420,18 +1424,18 @@ htp_status_t htp_decode_path_inplace(htp_tx_t *tx, bstr *path) {
 }
 
 htp_status_t htp_tx_urldecode_uri_inplace(htp_tx_t *tx, bstr *input) {
-    uint64_t flags;
-    
+    uint64_t flags = 0;
+
     htp_status_t rc = htp_urldecode_inplace_ex(tx->cfg, HTP_DECODER_URL_PATH, input, &flags, &(tx->response_status_expected_number));
 
     if (flags & HTP_URLEN_INVALID_ENCODING) {
         tx->flags |= HTP_PATH_INVALID_ENCODING;
     }
-    
+
     if (flags & HTP_URLEN_ENCODED_NUL) {
         tx->flags |= HTP_PATH_ENCODED_NUL;
     }
-    
+
     if (flags & HTP_URLEN_RAW_NUL) {
         tx->flags |= HTP_PATH_RAW_NUL;
     }
@@ -1616,7 +1620,7 @@ htp_status_t htp_urldecode_inplace_ex(htp_cfg_t *cfg, enum htp_decoder_ctx_t ctx
             data[wpos++] = c;
         } else if (c == '+') {
             // Decoding of the plus character is conditional on the configuration.
-            
+
             if (cfg->decoder_cfgs[ctx].plusspace_decode) {
                 c = 0x20;
             }
@@ -1625,7 +1629,7 @@ htp_status_t htp_urldecode_inplace_ex(htp_cfg_t *cfg, enum htp_decoder_ctx_t ctx
             data[wpos++] = c;
         } else {
             // One non-encoded byte.
-            
+
             // Did we get a raw NUL byte?
             if (c == 0) {
                 if (cfg->decoder_cfgs[ctx].nul_raw_unwanted != HTP_UNWANTED_IGNORE) {
@@ -1928,9 +1932,9 @@ void htp_normalize_uri_path_inplace(bstr *s) {
                 c = -1;
                 rpos += 2;
                 continue;
-            } else if ((rpos < len) && (data[rpos + 1] == '/')) {
+            } else if ((rpos < len) && (data[rpos] == '/')) {
                 c = -1;
-                rpos += 2;
+                rpos += 1;
                 continue;
             }
         }
@@ -1991,10 +1995,8 @@ void htp_normalize_uri_path_inplace(bstr *s) {
         // the next "/" character or the end of the input buffer.
         data[wpos++] = c;
 
-        while ((rpos < len) && (data[rpos] != '/')) {
-            // data[wpos++] = data[rpos++];
-            int c2 = data[rpos++];
-            data[wpos++] = c2;
+        while ((rpos < len) && (data[rpos] != '/') && (wpos < len)) {
+            data[wpos++] = data[rpos++];
         }
 
         c = -1;
@@ -2321,14 +2323,12 @@ int htp_treat_response_line_as_body(htp_tx_t *tx) {
  * @param[in] connp
  * @param[in] d
  */
-int htp_req_run_hook_body_data(htp_connp_t *connp, htp_tx_data_t *d) {
+htp_status_t htp_req_run_hook_body_data(htp_connp_t *connp, htp_tx_data_t *d) {
     // Do not invoke callbacks with an empty data chunk
-    if ((d->data != NULL) && (d->len == 0)) {
-        return HTP_OK;
-    }
+    if ((d->data != NULL) && (d->len == 0)) return HTP_OK;
 
     // Run transaction hooks first
-    int rc = htp_hook_run_all(connp->in_tx->hook_request_body_data, d);
+    htp_status_t rc = htp_hook_run_all(connp->in_tx->hook_request_body_data, d);
     if (rc != HTP_OK) return rc;
 
     // Run configuration hooks second
@@ -2344,11 +2344,11 @@ int htp_req_run_hook_body_data(htp_connp_t *connp, htp_tx_data_t *d) {
         file_data.file = connp->put_file;
         file_data.file->len += d->len;
 
-        htp_hook_run_all(connp->cfg->hook_request_file_data, &file_data);
+        rc = htp_hook_run_all(connp->cfg->hook_request_file_data, &file_data);
         if (rc != HTP_OK) return rc;
     }
 
-    return rc;
+    return HTP_OK;
 }
 
 /**
@@ -2357,14 +2357,12 @@ int htp_req_run_hook_body_data(htp_connp_t *connp, htp_tx_data_t *d) {
  * @param[in] connp
  * @param[in] d
  */
-int htp_res_run_hook_body_data(htp_connp_t *connp, htp_tx_data_t *d) {
-    // Do not invoke callbacks with an empty data chunk
-    if ((d->data != NULL) && (d->len == 0)) {
-        return HTP_OK;
-    }
+htp_status_t htp_res_run_hook_body_data(htp_connp_t *connp, htp_tx_data_t *d) {
+    // Do not invoke callbacks with an empty data chunk.
+    if ((d->data != NULL) && (d->len == 0)) return HTP_OK;
 
     // Run transaction hooks first
-    int rc = htp_hook_run_all(connp->out_tx->hook_response_body_data, d);
+    htp_status_t rc = htp_hook_run_all(connp->out_tx->hook_response_body_data, d);
     if (rc != HTP_OK) return rc;
 
     // Run configuration hooks second
@@ -2374,18 +2372,31 @@ int htp_res_run_hook_body_data(htp_connp_t *connp, htp_tx_data_t *d) {
     return HTP_OK;
 }
 
-bstr *htp_extract_quoted_string_as_bstr(unsigned char *data, size_t len, size_t *endoffset) {
+/**
+ * Parses the provided memory region, extracting the double-quoted string.
+ *
+ * @param[in] data
+ * @param[in] len
+ * @param[out] out
+ * @param[out] endoffset
+ * @return HTP_OK on success, HTP_DECLINED if the input is not well formed, and HTP_ERROR on fatal errors.
+ */
+htp_status_t htp_extract_quoted_string_as_bstr(unsigned char *data, size_t len, bstr **out, size_t *endoffset) {
+    if ((data == NULL) || (out == NULL)) return HTP_ERROR;
+
+    if (len == 0) return HTP_DECLINED;
+
     size_t pos = 0;
-    size_t escaped_chars = 0;
 
-    // Check the first character
-    if (data[pos] != '"') return NULL;
+    // Check that the first character is a double quote.
+    if (data[pos] != '"') return HTP_DECLINED;
 
-    // Step over double quote
+    // Step over the double quote.
     pos++;
-    if (pos == len) return NULL;
+    if (pos == len) return HTP_DECLINED;
 
-    // Calculate length
+    // Calculate the length of the resulting string.
+    size_t escaped_chars = 0;
     while (pos < len) {
         if (data[pos] == '\\') {
             if (pos + 1 < len) {
@@ -2400,19 +2411,20 @@ bstr *htp_extract_quoted_string_as_bstr(unsigned char *data, size_t len, size_t 
         pos++;
     }
 
-    if (pos == len) {
-        return NULL;
-    }
+    // Have we reached the end of input without seeing the terminating double quote?
+    if (pos == len) return HTP_DECLINED;
 
-    // Copy the data and unescape the escaped characters
+    // Copy the data and unescape it as necessary.
     size_t outlen = pos - 1 - escaped_chars;
-    bstr *result = bstr_alloc(outlen);
-    if (result == NULL) return NULL;
-    unsigned char *outptr = bstr_ptr(result);
+    *out = bstr_alloc(outlen);
+    if (*out == NULL) return HTP_ERROR;
+    unsigned char *outptr = bstr_ptr(*out);
     size_t outpos = 0;
 
     pos = 1;
     while ((pos < len) && (outpos < outlen)) {
+        // TODO We are not properly unescaping test here, we're only
+        //      handling escaped double quotes.
         if (data[pos] == '\\') {
             if (pos + 1 < len) {
                 outptr[outpos++] = data[pos + 1];
@@ -2426,13 +2438,13 @@ bstr *htp_extract_quoted_string_as_bstr(unsigned char *data, size_t len, size_t 
         outptr[outpos++] = data[pos++];
     }
 
-    bstr_adjust_len(result, outlen);
+    bstr_adjust_len(*out, outlen);
 
     if (endoffset != NULL) {
         *endoffset = pos;
     }
 
-    return result;
+    return HTP_OK;
 }
 
 htp_status_t htp_parse_ct_header(bstr *header, bstr **ct) {

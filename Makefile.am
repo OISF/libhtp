@@ -1,9 +1,9 @@
 
 ACLOCAL_AMFLAGS= -I m4
 
-SUBDIRS= $(GENERIC_LIBRARY_NAME) test docs
+SUBDIRS= htp test docs
 
-DIST_SUBDIRS = $(GENERIC_LIBRARY_NAME) test docs
+DIST_SUBDIRS = htp test docs
 EXTRA_DIST = LICENSE NOTICE docs/doxygen.conf docs/QUICK_START 
 
 pkgconfigdir = $(libdir)/pkgconfig

@@ -137,3 +137,19 @@
    fun:_ZN7testing8UnitTest3RunEv
    fun:main
 }
+{
+   fprintf
+   Memcheck:Leak
+   fun:malloc
+   fun:__smakebuf
+   fun:__swsetup
+   fun:__vfprintf
+   fun:vfprintf_l
+   fun:fprintf
+   fun:fprint_raw_data_ex
+   fun:_ZN27ConnectionParsing_Util_Test8TestBodyEv
+   fun:_ZN7testing8internal35HandleExceptionsInMethodIfSupportedINS_4TestEvEET0_PT_MS4_FS3_vEPKc
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8TestInfo3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+}

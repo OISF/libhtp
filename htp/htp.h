@@ -45,6 +45,7 @@ extern "C" {
 
 #include <sys/time.h>
 
+#include "htp_version.h"
 #include "htp_core.h"
 
 #include "bstr.h"

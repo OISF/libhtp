@@ -42,6 +42,7 @@ m4
 /nbproject/
 /nbproject/private/
 /stamp-h1
+/test-driver
 /test/.deps/
 /test/.libs/
 /test/Makefile
@@ -51,8 +52,12 @@ m4
 /test/test_hybrid
 /test/test_utils
 /test/test_all
+/test/test_all.log
+/test/test_all.trs
+/test/test-suite.log
 extras/ruby/*.gem
 /docs/Makefile
 /docs/Makefile.in
 /test/test_main
 /test/coverage.info
+/htp/htp_version.h

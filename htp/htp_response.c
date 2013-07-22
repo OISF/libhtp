@@ -745,11 +745,16 @@ htp_status_t htp_connp_RES_HEADERS(htp_connp_t *connp) {
  */
 htp_status_t htp_connp_RES_LINE(htp_connp_t *connp) {
     for (;;) {
-        // Get one byte
-        OUT_COPY_BYTE_OR_RETURN(connp);
+        // Don't try to get more data if the stream is closed. If we do, we'll return, asking for more data.
+        if (connp->out_status != HTP_STREAM_CLOSED) {
+            // Get one byte
+            OUT_COPY_BYTE_OR_RETURN(connp);
+        }
 
-        // Have we reached the end of the line?
-        if (connp->out_next_byte == LF) {
+        // Have we reached the end of the line? We treat stream closure as end of line in
+        // order to handle the case when the first line of the response is actually response body
+        // (and we wish it processed as such).
+        if ((connp->out_next_byte == LF)||(connp->out_status == HTP_STREAM_CLOSED)) {
             unsigned char *data;
             size_t len;
 

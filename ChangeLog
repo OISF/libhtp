@@ -1,4 +1,28 @@
 
+0.5.6 (22 July 2013)
+-------------------
+
+- Fix memory leaks in htp_tx_t::request_auth_username and htp_tx_t::request_auth_password.
+
+- [#43] When processing the response line, treat stream closure as the end of line.
+
+- Fix normalization when the URL begins with "./".
+
+- Do not fail a stream with an incorrectly formed digest username.
+
+- Do not stop processing request headers on PUT requests.
+
+
+0.5.5 (18 July 2013)
+--------------------
+
+- Tagging for a Suricata beta release.
+
+- [#46] Fix the segfault that occurs under certain conditions when an invalid hostname is supplied.
+
+- [#44] Fix libiconv detection on OpenBSD. [Victor Julien]
+
+
 0.5.4 (17 July 2013)
 --------------------
 

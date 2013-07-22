@@ -127,6 +127,8 @@ void htp_tx_destroy_incomplete(htp_tx_t *tx) {
     bstr_free(tx->request_hostname);
     htp_uri_free(tx->parsed_uri_raw);
     htp_uri_free(tx->parsed_uri);
+    bstr_free(tx->request_auth_username);
+    bstr_free(tx->request_auth_password);
 
     // Request_headers.
     if (tx->request_headers != NULL) {
@@ -399,7 +401,7 @@ static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {
                 tx->flags |= HTP_REQUEST_SMUGGLING;
             }
         }
-    } else if (cl != NULL) {        
+    } else if (cl != NULL) {
         // Check for a folded C-L header.
         if (cl->flags & HTP_FIELD_FOLDED) {
             tx->flags |= HTP_REQUEST_SMUGGLING;
@@ -439,14 +441,15 @@ static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {
     if (tx->request_method_number == HTP_M_PUT) {
         if (htp_tx_req_has_body(tx)) {
             // Prepare to treat PUT request body as a file.
+            
             tx->connp->put_file = calloc(1, sizeof (htp_file_t));
             if (tx->connp->put_file == NULL) return HTP_ERROR;
+
+            tx->connp->put_file->fd = -1;
             tx->connp->put_file->source = HTP_FILE_PUT;
         } else {
             // TODO Warn about PUT request without a body.
         }
-
-        return HTP_OK;
     }
 
     // Determine hostname.
@@ -478,22 +481,33 @@ static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {
         rc = htp_parse_header_hostport(h->value, &hostname, &port, &(tx->flags));
         if (rc != HTP_OK) return rc;
 
-        // Is there host information in the URI?
-        if (tx->request_hostname == NULL) {
-            // There is no host information in the URI. Place the
-            // hostname from the headers into the parsed_uri structure.
-            tx->request_hostname = hostname;
-            tx->request_port_number = port;
+        if (hostname != NULL) {
+            // The host information in the headers is valid.
+
+            // Is there host information in the URI?
+            if (tx->request_hostname == NULL) {
+                // There is no host information in the URI. Place the
+                // hostname from the headers into the parsed_uri structure.
+                tx->request_hostname = hostname;
+                tx->request_port_number = port;
+            } else {
+                // The host information appears in the URI and in the headers. It's
+                // OK if both have the same thing, but we want to check for differences.
+                if ((bstr_cmp_nocase(hostname, tx->request_hostname) != 0) || (port != tx->request_port_number)) {
+                    // The host information is different in the headers and the URI. The
+                    // HTTP RFC states that we should ignore the header copy.
+                    tx->flags |= HTP_HOST_AMBIGUOUS;
+                }
+
+                bstr_free(hostname);
+            }
         } else {
-            // The host information appears in the URI and in the headers. It's
-            // OK if both have the same thing, but we want to check for differences.
-            if ((bstr_cmp_nocase(hostname, tx->request_hostname) != 0) || (port != tx->request_port_number)) {
-                // The host information is different in the headers and the URI. The
-                // HTTP RFC states that we should ignore the header copy.
+            // Invalid host information in the headers.
+
+            if (tx->request_hostname != NULL) {
+                // Raise the flag, even though the host information in the headers is invalid.
                 tx->flags |= HTP_HOST_AMBIGUOUS;
             }
-
-            bstr_free(hostname);
         }
     }
 
@@ -1090,9 +1104,9 @@ htp_status_t htp_tx_state_response_headers(htp_tx_t *tx) {
             tx->connp->out_decompressor = NULL;
         }
 
-        tx->connp->out_decompressor = (htp_decompressor_t *) htp_gzip_decompressor_create(tx->connp,
-                tx->response_content_encoding_processing);
+        tx->connp->out_decompressor = htp_gzip_decompressor_create(tx->connp, tx->response_content_encoding_processing);
         if (tx->connp->out_decompressor == NULL) return HTP_ERROR;
+        
         tx->connp->out_decompressor->callback = htp_tx_res_process_body_data_decompressor_callback;
     } else if (tx->response_content_encoding_processing != HTP_COMPRESSION_NONE) {
         return HTP_ERROR;

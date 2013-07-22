@@ -1057,7 +1057,7 @@ TEST_F(ConnectionParsing, AuthDigestUnquotedUsername) {
     ASSERT_TRUE(tx->flags & HTP_AUTH_INVALID);
 }
 
-TEST_F(ConnectionParsing, AuthDigestInvalidUsername) {
+TEST_F(ConnectionParsing, AuthDigestInvalidUsername1) {
     int rc = test_run(home, "46-auth-digest-invalid-username.t", cfg, &connp);
     ASSERT_GE(rc, 0);
 
@@ -1711,6 +1711,71 @@ TEST_F(ConnectionParsing, ResponseFoldedHeaders) {
 
 TEST_F(ConnectionParsing, ResponseNoStatusHeaders) {
     int rc = test_run(home, "78-response-no-status-headers.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+
+    ASSERT_EQ(1, htp_list_size(connp->conn->transactions));
+
+    htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+
+    ASSERT_EQ(HTP_REQUEST_COMPLETE, tx->request_progress);
+    ASSERT_EQ(HTP_RESPONSE_COMPLETE, tx->response_progress);
+}
+
+TEST_F(ConnectionParsing, ConnectInvalidHostport) {
+    int rc = test_run(home, "79-connect-invalid-hostport.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+
+    ASSERT_EQ(2, htp_list_size(connp->conn->transactions));
+}
+
+TEST_F(ConnectionParsing, HostnameInvalid1) {
+    int rc = test_run(home, "80-hostname-invalid-1.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+
+    ASSERT_EQ(1, htp_list_size(connp->conn->transactions));   
+}
+
+TEST_F(ConnectionParsing, HostnameInvalid2) {
+    int rc = test_run(home, "81-hostname-invalid-2.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+
+    ASSERT_EQ(1, htp_list_size(connp->conn->transactions));
+}
+
+TEST_F(ConnectionParsing, Put) {
+    int rc = test_run(home, "82-put.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+
+    ASSERT_EQ(1, htp_list_size(connp->conn->transactions));
+    
+    htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+    
+    ASSERT_TRUE(tx->request_hostname != NULL);
+    ASSERT_EQ(0, bstr_cmp_c(tx->request_hostname, "www.example.com"));
+}
+
+TEST_F(ConnectionParsing, AuthDigestInvalidUsername2) {
+    int rc = test_run(home, "83-auth-digest-invalid-username-2.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+
+    htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+
+    ASSERT_EQ(HTP_REQUEST_COMPLETE, tx->request_progress);
+
+    ASSERT_EQ(HTP_AUTH_DIGEST, tx->request_auth_type);
+
+    ASSERT_TRUE(tx->request_auth_username == NULL);
+
+    ASSERT_TRUE(tx->request_auth_password == NULL);
+
+    ASSERT_TRUE(tx->flags & HTP_AUTH_INVALID);
+}
+
+TEST_F(ConnectionParsing, ResponseNoStatusHeaders2) {
+    int rc = test_run(home, "84-response-no-status-headers-2.t", cfg, &connp);
     ASSERT_GE(rc, 0);
 
     ASSERT_EQ(1, htp_list_size(connp->conn->transactions));
