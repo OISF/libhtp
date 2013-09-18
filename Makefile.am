@@ -1,7 +1,7 @@
 
-ACLOCAL_AMFLAGS= -I m4
+ACLOCAL_AMFLAGS = -I m4
 
-SUBDIRS= htp test docs
+SUBDIRS = htp test docs
 
 DIST_SUBDIRS = htp test docs
 EXTRA_DIST = LICENSE NOTICE docs/doxygen.conf docs/QUICK_START 

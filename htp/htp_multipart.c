@@ -611,6 +611,7 @@ htp_status_t htp_mpart_part_handle_data(htp_multipart_part_t *part, const unsign
             if (bstr_builder_size(part->parser->part_header_pieces) > 0) {
                 bstr_builder_append_mem(part->parser->part_header_pieces, data, len);
                 line = bstr_builder_to_str(part->parser->part_header_pieces);
+                if (line == NULL) return HTP_ERROR;
                 bstr_builder_clear(part->parser->part_header_pieces);
 
                 data = bstr_ptr(line);
@@ -632,12 +633,20 @@ htp_status_t htp_mpart_part_handle_data(htp_multipart_part_t *part, const unsign
                 // Process the pending header, if any.
                 if (part->parser->pending_header_line != NULL) {
                     if (htp_mpartp_parse_header(part, bstr_ptr(part->parser->pending_header_line),
-                            bstr_len(part->parser->pending_header_line)) == HTP_ERROR) return HTP_ERROR;
+                            bstr_len(part->parser->pending_header_line)) == HTP_ERROR)
+                    {
+                        bstr_free(line);
+                        return HTP_ERROR;
+                    }
+
                     bstr_free(part->parser->pending_header_line);
                     part->parser->pending_header_line = NULL;
                 }
 
-                if (htp_mpart_part_process_headers(part) == HTP_ERROR) return HTP_ERROR;
+                if (htp_mpart_part_process_headers(part) == HTP_ERROR) {
+                    bstr_free(line);
+                    return HTP_ERROR;
+                }
 
                 part->parser->current_part_mode = MODE_DATA;
                 bstr_builder_clear(part->parser->part_header_pieces);
@@ -648,12 +657,24 @@ htp_status_t htp_mpart_part_handle_data(htp_multipart_part_t *part, const unsign
 
                     if ((part->parser->extract_files) && (part->parser->file_count < part->parser->extract_limit)) {
                         char buf[255];
+                        
                         strncpy(buf, part->parser->extract_dir, 254);
                         strncat(buf, "/libhtp-multipart-file-XXXXXX", 254 - strlen(buf));
+
                         part->file->tmpname = strdup(buf);
-                        if (part->file->tmpname == NULL) return HTP_ERROR;
+                        if (part->file->tmpname == NULL) {
+                            bstr_free(line);
+                            return HTP_ERROR;
+                        }
+
+                        mode_t previous_mask = umask(S_IXUSR | S_IRWXG | S_IRWXO);
                         part->file->fd = mkstemp(part->file->tmpname);
-                        if (part->file->fd < 0) return HTP_ERROR;
+                        umask(previous_mask);
+
+                        if (part->file->fd < 0) {
+                            bstr_free(line);
+                            return HTP_ERROR;
+                        }
 
                         part->parser->file_count++;
                     }
@@ -689,7 +710,12 @@ htp_status_t htp_mpart_part_handle_data(htp_multipart_part_t *part, const unsign
                     } else {
                         // Process the pending header line.                        
                         if (htp_mpartp_parse_header(part, bstr_ptr(part->parser->pending_header_line),
-                                bstr_len(part->parser->pending_header_line)) == HTP_ERROR) return HTP_ERROR;
+                                bstr_len(part->parser->pending_header_line)) == HTP_ERROR)
+                        {
+                            bstr_free(line);
+                            return HTP_ERROR;
+                        }
+                        
                         bstr_free(part->parser->pending_header_line);
 
                         if (line != NULL) {

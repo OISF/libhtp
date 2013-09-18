@@ -329,7 +329,7 @@ htp_cfg_t *htp_config_copy(htp_cfg_t *cfg) {
     }
 
     if (cfg->hook_transaction_complete != NULL) {
-        copy->hook_transaction_complete = htp_hook_copy(cfg->hook_response_complete);
+        copy->hook_transaction_complete = htp_hook_copy(cfg->hook_transaction_complete);
         if (copy->hook_transaction_complete == NULL) {
             htp_config_destroy(copy);
             return NULL;

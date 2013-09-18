@@ -1,4 +1,17 @@
 
+0.5.7 (18 September 2013)
+-------------------------
+
+- Use umask() with mkstemp() to ensure that temporary files are created with correct
+  permissions. This addresses the potential security problem, but creates another, because
+  umask() is not thread safe. For this and other reasons (see #52), file extraction will be
+  removed in a future release.
+
+- Fix copying hook_response_complete instead of hook_transaction_complete.
+
+- Fix several small memory leaks that occur when memory allocation fails.
+
+
 0.5.6 (22 July 2013)
 -------------------
 

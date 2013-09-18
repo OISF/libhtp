@@ -50,15 +50,10 @@ process should be as simple as:
 If you've retrieved your LibHTP directly from the repository, you will need
 to perform the following steps first:
 
- 1. Retrieve the sources of the version you wish to use
+ 1. Update the version number in VERSION.
 
- 2. Update the version number in htp.pc.in and configure.ac
+ 2. Run autogen.sh, which will update the build system.
 
- 3. Run autogen.sh, which will update the build system
-
- 4. Run doxygen to generate the API documentation
-
- 5. Continue to install as described above
 
 
 DOCUMENTATION

@@ -101,7 +101,10 @@ static void htp_urlenp_add_field_piece(htp_urlenp_t *urlenp, const unsigned char
                     }
 
                     bstr *value = bstr_dup_c("");
-                    if (value == NULL) return;
+                    if (value == NULL) {
+                        bstr_free(name);
+                        return;
+                    }
 
                     if (urlenp->decode_url_encoding) {
                         htp_tx_urldecode_params_inplace(urlenp->tx, name);
@@ -124,15 +127,23 @@ static void htp_urlenp_add_field_piece(htp_urlenp_t *urlenp, const unsigned char
             // Value (with a key remembered from before).
 
             bstr *name = urlenp->_name;
+            urlenp->_name = NULL;
+
             if (name == NULL) {
                 name = bstr_dup_c("");
-                if (name == NULL) return;
+                if (name == NULL) {
+                    bstr_free(field);
+                    return;
+                }
             }
 
             bstr *value = field;
             if (value == NULL) {
                 value = bstr_dup_c("");
-                if (value == NULL) return;
+                if (value == NULL) {
+                    bstr_free(name);
+                    return;
+                }
             }
 
             if (urlenp->decode_url_encoding) {
@@ -140,9 +151,7 @@ static void htp_urlenp_add_field_piece(htp_urlenp_t *urlenp, const unsigned char
                 htp_tx_urldecode_params_inplace(urlenp->tx, value);
             }
 
-            htp_table_addn(urlenp->params, name, value);
-
-            urlenp->_name = NULL;
+            htp_table_addn(urlenp->params, name, value);           
 
             #ifdef HTP_DEBUG
             fprint_raw_data(stderr, "NAME", bstr_ptr(name), bstr_len(name));
@@ -151,7 +160,6 @@ static void htp_urlenp_add_field_piece(htp_urlenp_t *urlenp, const unsigned char
         }        
     } else {
         // The field has not ended. We'll make a copy of of the available data for later.
-
         if ((data != NULL) && (endpos - startpos > 0)) {
             bstr_builder_append_mem(urlenp->_bb, data + startpos, endpos - startpos);
         }

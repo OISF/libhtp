@@ -57,6 +57,8 @@ extern "C" {
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 #include "htp.h"
 #include "htp_config_private.h"
@@ -159,8 +161,6 @@ void htp_replace_hostname(htp_connp_t *connp, htp_uri_t *parsed_uri, bstr *hostn
 int htp_is_uri_unreserved(unsigned char c);
 
 int htp_decode_path_inplace(htp_tx_t *tx, bstr *path);
-
-void htp_uriencoding_normalize_inplace(bstr *s);
 
  int htp_prenormalize_uri_path_inplace(bstr *s, int *flags, int case_insensitive, int backslash, int decode_separators, int remove_consecutive);
 void htp_normalize_uri_path_inplace(bstr *s);

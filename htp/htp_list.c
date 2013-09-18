@@ -43,7 +43,7 @@
 htp_list_t *htp_list_array_create(size_t size) {
     // It makes no sense to create a zero-size list.
     if (size == 0) return NULL;
-    
+
     // Allocate the list structure.
     htp_list_array_t *l = calloc(1, sizeof (htp_list_array_t));
     if (l == NULL) return NULL;
@@ -66,7 +66,7 @@ htp_list_t *htp_list_array_create(size_t size) {
 
 void htp_list_array_clear(htp_list_array_t *l) {
     if (l == NULL) return;
-    
+
     // Continue using already allocate memory; just reset the fields.
     l->first = 0;
     l->last = 0;
@@ -75,14 +75,14 @@ void htp_list_array_clear(htp_list_array_t *l) {
 
 void htp_list_array_destroy(htp_list_array_t *l) {
     if (l == NULL) return;
-    
+
     free(l->elements);
     free(l);
 }
 
 void *htp_list_array_get(const htp_list_array_t *l, size_t idx) {
     if (l == NULL) return NULL;
-    
+
     const void *r = NULL;
 
     if (idx + 1 > l->current_size) return NULL;
@@ -103,7 +103,7 @@ void *htp_list_array_get(const htp_list_array_t *l, size_t idx) {
 
 void *htp_list_array_pop(htp_list_array_t *l) {
     if (l == NULL) return NULL;
-    
+
     const void *r = NULL;
 
     if (l->current_size == 0) {
@@ -140,13 +140,20 @@ htp_status_t htp_list_array_push(htp_list_array_t *l, void *e) {
             // When the first element is not in the first
             // memory slot, we need to rearrange the order
             // of the elements in order to expand the storage area.
-            newblock = malloc(new_size * sizeof (void *));
+            /* coverity[suspicious_sizeof] */
+            newblock = malloc((size_t) (new_size * sizeof (void *)));
             if (newblock == NULL) return HTP_ERROR;
 
             // Copy the beginning of the list to the beginning of the new memory block
-            memcpy((char *) newblock, (char *) l->elements + l->first * sizeof (void *), (l->max_size - l->first) * sizeof (void *));
+            /* coverity[suspicious_sizeof] */
+            memcpy(newblock,
+                    (void *) ((char *) l->elements + l->first * sizeof (void *)),
+                    (size_t) ((l->max_size - l->first) * sizeof (void *)));
+
             // Append the second part of the list to the end
-            memcpy((char *) newblock + (l->max_size - l->first) * sizeof (void *), l->elements, l->first * sizeof (void *));
+            memcpy((void *) ((char *) newblock + (l->max_size - l->first) * sizeof (void *)),
+                    (void *) l->elements,
+                    (size_t) (l->first * sizeof (void *)));
 
             free(l->elements);
         }
@@ -170,7 +177,7 @@ htp_status_t htp_list_array_push(htp_list_array_t *l, void *e) {
 
 htp_status_t htp_list_array_replace(htp_list_array_t *l, size_t idx, void *e) {
     if (l == NULL) return HTP_ERROR;
-    
+
     if (idx + 1 > l->current_size) return HTP_DECLINED;
 
     size_t i = l->first;
@@ -194,7 +201,7 @@ size_t htp_list_array_size(const htp_list_array_t *l) {
 
 void *htp_list_array_shift(htp_list_array_t *l) {
     if (l == NULL) return NULL;
-    
+
     void *r = NULL;
 
     if (l->current_size == 0) {

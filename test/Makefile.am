@@ -1,6 +1,6 @@
 LDADD = $(top_builddir)/htp/.libs/libhtp.a -lz @LIBICONV@ 
 AM_CFLAGS = -g -std=gnu99
-AM_CPPFLAGS = -I$(top_srcdir) -Wno-write-strings
+AM_CPPFLAGS = -I$(top_srcdir) -I$(top_builddir)/htp -Wno-write-strings
 EXTRA_DIST = files
 check_PROGRAMS = test_all
 check_LIBRARIES = libgtest.a

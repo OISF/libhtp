@@ -166,7 +166,14 @@ static htp_status_t htp_res_handle_state_change(htp_connp_t *connp) {
         if (rc != HTP_OK) return rc;
     }
 
-    // Same comment as in htp_req_handle_state_change().
+    // Same comment as in htp_req_handle_state_change(). Below is a copy.
+
+    // Initially, I had the finalization of raw data sending here, but that
+    // caused the last REQUEST_HEADER_DATA hook to be invoked after the
+    // REQUEST_HEADERS hook -- which I thought made no sense. For that reason,
+    // the finalization is now initiated from the request header processing code,
+    // which is less elegant but provides a better user experience. Having some
+    // (or all) hooks to be invoked on state change might work better.
 
     connp->out_state_previous = connp->out_state;
 
