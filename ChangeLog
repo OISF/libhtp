@@ -1,4 +1,12 @@
 
+0.5.8 (21 October 2013)
+-----------------------
+
+- Fixed [#54] Compression and base64 tests failing on some architectures.
+
+- Fixed [#55] Incorrect ambiguous host warning on some CONNECT requests.
+
+
 0.5.7 (18 September 2013)
 -------------------------
 

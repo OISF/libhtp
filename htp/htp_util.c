@@ -475,15 +475,19 @@ static htp_status_t htp_parse_port(unsigned char *data, size_t len, int *port, i
  * @param[in] hostport
  * @param[out] hostname A bstring containing the hostname, or NULL if the hostname is invalid. If this value
  *                      is not NULL, the caller assumes responsibility for memory management.
- * @param[out] port Port number, or -1 if the port is not present or invalid.
+ * @param[out] port Port as text, or NULL if not provided.
+ * @param[out] port_number Port number, or -1 if the port is not present or invalid.
  * @param[out] invalid Set to 1 if any part of the authority is invalid.
  * @return HTP_OK on success, HTP_ERROR on memory allocation failure.
  */
-htp_status_t htp_parse_hostport(bstr *hostport, bstr **hostname, int *port, int *invalid) {
-    if ((hostport == NULL) || (hostname == NULL) || (port == NULL) || (invalid == NULL)) return HTP_ERROR;
+htp_status_t htp_parse_hostport(bstr *hostport, bstr **hostname, bstr **port, int *port_number, int *invalid) {
+    if ((hostport == NULL) || (hostname == NULL) || (port_number == NULL) || (invalid == NULL)) return HTP_ERROR;
 
     *hostname = NULL;
-    *port = -1;
+    if (port != NULL) {
+        *port = NULL;
+    }
+    *port_number = -1;
     *invalid = 0;
 
     unsigned char *data = bstr_ptr(hostport);
@@ -517,7 +521,15 @@ htp_status_t htp_parse_hostport(bstr *hostport, bstr **hostname, int *port, int 
 
         // Handle port.
         if (data[pos] == ':') {
-            return htp_parse_port(data + pos + 1, len - pos - 1, port, invalid);
+            if (port != NULL) {
+                *port = bstr_dup_mem(data + pos + 1, len - pos - 1);
+                if (*port == NULL) {
+                    bstr_free(*hostname);
+                    return HTP_ERROR;
+                }
+            }
+
+            return htp_parse_port(data + pos + 1, len - pos - 1, port_number, invalid);
         } else {
             *invalid = 1;
             return HTP_OK;
@@ -544,7 +556,15 @@ htp_status_t htp_parse_hostport(bstr *hostport, bstr **hostname, int *port, int 
             *hostname = bstr_dup_mem(data, hostend - data);
             if (*hostname == NULL) return HTP_ERROR;
 
-            return htp_parse_port(colon + 1, len - (colon + 1 - data), port, invalid);
+            if (port != NULL) {
+                *port = bstr_dup_mem(colon + 1, len - (colon + 1 - data));
+                if (*port == NULL) {
+                    bstr_free(*hostname);
+                    return HTP_ERROR;
+                }
+            }
+
+            return htp_parse_port(colon + 1, len - (colon + 1 - data), port_number, invalid);
         }
     }
 
@@ -562,7 +582,7 @@ htp_status_t htp_parse_hostport(bstr *hostport, bstr **hostname, int *port, int 
 int htp_parse_uri_hostport(htp_connp_t *connp, bstr *hostport, htp_uri_t *uri) {
     int invalid;
 
-    htp_status_t rc = htp_parse_hostport(hostport, &(uri->hostname), &(uri->port_number), &invalid);
+    htp_status_t rc = htp_parse_hostport(hostport, &(uri->hostname), &(uri->port), &(uri->port_number), &invalid);
     if (rc != HTP_OK) return rc;
 
     if (invalid) {
@@ -584,13 +604,14 @@ int htp_parse_uri_hostport(htp_connp_t *connp, bstr *hostport, htp_uri_t *uri) {
  * @param[in] hostport
  * @param[out] hostname
  * @param[out] port
+ * @param[out] port_number
  * @param[out] flags
  * @return HTP_OK on success or HTP_ERROR error.
  */
-htp_status_t htp_parse_header_hostport(bstr *hostport, bstr **hostname, int *port, uint64_t *flags) {
+htp_status_t htp_parse_header_hostport(bstr *hostport, bstr **hostname, bstr **port, int *port_number, uint64_t *flags) {
     int invalid;
 
-    htp_status_t rc = htp_parse_hostport(hostport, hostname, port, &invalid);
+    htp_status_t rc = htp_parse_hostport(hostport, hostname, port, port_number, &invalid);
     if (rc != HTP_OK) return rc;
 
     if (invalid) {

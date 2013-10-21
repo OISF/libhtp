@@ -67,10 +67,10 @@ enum htp_alloc_strategy_t {
 };
 
 /**
- * Possible states of a progressing transaction. A transaction reaches
- * a particular state when all activities associated with that state
- * have been completed. For example, the state REQUEST_LINE indicates that
- * the request line has been seen.
+ * Possible states of a progressing transaction. Internally, progress will change
+ * to the next state when the processing activities associated with that state
+ * begin. For example, when we start to process request line bytes, the request
+ * state will change from HTP_REQUEST_NOT_STARTED to HTP_REQUEST_LINE.*
  */
 enum htp_tx_req_progress_t {
     HTP_REQUEST_NOT_STARTED = 0,

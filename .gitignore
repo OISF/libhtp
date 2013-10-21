@@ -1,3 +1,5 @@
+.deps
+.dirstamp
 .libs
 *~
 *.exe
@@ -13,6 +15,7 @@
 *.a
 *.pdf
 htp-*.tar.gz
+compile
 .cproject
 /Makefile
 /Makefile.in
@@ -29,7 +32,6 @@ htp-*.tar.gz
 lcov
 /docs/doxygen
 /htp.pc
-/htp/.deps/
 /htp/.libs/
 /htp/Makefile
 /htp/Makefile.in
@@ -43,7 +45,6 @@ m4
 /nbproject/private/
 /stamp-h1
 /test-driver
-/test/.deps/
 /test/.libs/
 /test/Makefile
 /test/Makefile.in

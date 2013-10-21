@@ -58,7 +58,7 @@ typedef struct {
 
 void htp_base64_decoder_init(htp_base64_decoder *state_in);
 
-int htp_base64_decode_single(char value_in);
+int htp_base64_decode_single(signed char value_in);
 
 int htp_base64_decode(htp_base64_decoder *decoder, const void *code_in, int length_in, void *plaintext_out, int length_out);
 

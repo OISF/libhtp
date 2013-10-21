@@ -70,6 +70,11 @@ protected:
     char *home;
 };
 
+TEST_F(ConnectionParsing, AdHoc) {
+    int rc = test_run(home, "00-adhoc.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+}
+
 TEST_F(ConnectionParsing, Get) {
     int rc = test_run(home, "01-get.t", cfg, &connp);
     ASSERT_GE(rc, 0);
@@ -1785,4 +1790,57 @@ TEST_F(ConnectionParsing, ResponseNoStatusHeaders2) {
 
     ASSERT_EQ(HTP_REQUEST_COMPLETE, tx->request_progress);
     ASSERT_EQ(HTP_RESPONSE_COMPLETE, tx->response_progress);
+}
+
+/*
+TEST_F(ConnectionParsing, ZeroByteRequestTimeout) {
+    int rc = test_run(home, "85-zero-byte-request-timeout.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+
+    ASSERT_EQ(1, htp_list_size(connp->conn->transactions));
+
+    htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+
+    ASSERT_EQ(HTP_REQUEST_NOT_STARTED, tx->request_progress);
+    ASSERT_EQ(HTP_RESPONSE_COMPLETE, tx->response_progress);
+}
+*/
+
+TEST_F(ConnectionParsing, PartialRequestTimeout) {
+    int rc = test_run(home, "86-partial-request-timeout.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+
+    ASSERT_EQ(1, htp_list_size(connp->conn->transactions));
+
+    htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+
+    ASSERT_EQ(HTP_REQUEST_LINE, tx->request_progress);
+    ASSERT_EQ(HTP_RESPONSE_COMPLETE, tx->response_progress);
+}
+
+TEST_F(ConnectionParsing, IncorrectHostAmbiguousWarning) {
+    int rc = test_run(home, "87-issue-55-incorrect-host-ambiguous-warning.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+
+    ASSERT_EQ(1, htp_list_size(connp->conn->transactions));
+
+    htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+
+    ASSERT_TRUE(tx->parsed_uri_raw != NULL);
+
+    ASSERT_TRUE(tx->parsed_uri_raw->port != NULL);
+    ASSERT_EQ(0, bstr_cmp_c(tx->parsed_uri_raw->port, "443"));
+
+    ASSERT_TRUE(tx->parsed_uri_raw->hostname != NULL);
+    ASSERT_EQ(0, bstr_cmp_c(tx->parsed_uri_raw->hostname, "www.example.com"));
+    
+    ASSERT_EQ(443, tx->parsed_uri_raw->port_number);
+
+    ASSERT_TRUE(tx->request_hostname != NULL);
+    ASSERT_EQ(0, bstr_cmp_c(tx->request_hostname, "www.example.com"));
+   
+    ASSERT_FALSE(tx->flags & HTP_HOST_AMBIGUOUS);
 }

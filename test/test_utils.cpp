@@ -400,7 +400,7 @@ TEST(UtilTest, ParseHostPort1) {
     int port;
     int flag = 0;
 
-    ASSERT_EQ(HTP_OK, htp_parse_hostport(i, &host, &port, &flag));
+    ASSERT_EQ(HTP_OK, htp_parse_hostport(i, &host, NULL, &port, &flag));
 
     ASSERT_TRUE(bstr_cmp(i, host) == 0);
     ASSERT_EQ(-1, port);
@@ -417,7 +417,7 @@ TEST(UtilTest, ParseHostPort2) {
     int port;
     int flag = 0;
 
-    ASSERT_EQ(HTP_OK, htp_parse_hostport(i, &host, &port, &flag));
+    ASSERT_EQ(HTP_OK, htp_parse_hostport(i, &host, NULL, &port, &flag));
 
     ASSERT_TRUE(host != NULL);
     ASSERT_TRUE(bstr_cmp(e, host) == 0);
@@ -436,7 +436,7 @@ TEST(UtilTest, ParseHostPort3) {
     int port;
     int flag = 0;
 
-    ASSERT_EQ(HTP_OK, htp_parse_hostport(i, &host, &port, &flag));
+    ASSERT_EQ(HTP_OK, htp_parse_hostport(i, &host, NULL, &port, &flag));
 
     ASSERT_TRUE(host != NULL);
     ASSERT_TRUE(bstr_cmp(e, host) == 0);
@@ -455,7 +455,7 @@ TEST(UtilTest, ParseHostPort4) {
     int port;
     int flag = 0;
 
-    ASSERT_EQ(HTP_OK, htp_parse_hostport(i, &host, &port, &flag));
+    ASSERT_EQ(HTP_OK, htp_parse_hostport(i, &host, NULL, &port, &flag));
 
     ASSERT_TRUE(host != NULL);
     ASSERT_TRUE(bstr_cmp(e, host) == 0);
@@ -474,7 +474,7 @@ TEST(UtilTest, ParseHostPort5) {
     int port;
     int flag = 0;
 
-    ASSERT_EQ(HTP_OK, htp_parse_hostport(i, &host, &port, &flag));
+    ASSERT_EQ(HTP_OK, htp_parse_hostport(i, &host, NULL, &port, &flag));
 
     ASSERT_TRUE(host != NULL);
     ASSERT_TRUE(bstr_cmp(e, host) == 0);
@@ -493,7 +493,7 @@ TEST(UtilTest, ParseHostPort6) {
     int port;
     int flag = 0;
 
-    ASSERT_EQ(HTP_OK, htp_parse_hostport(i, &host, &port, &flag));
+    ASSERT_EQ(HTP_OK, htp_parse_hostport(i, &host, NULL, &port, &flag));
 
     ASSERT_TRUE(host != NULL);
     ASSERT_TRUE(bstr_cmp(e, host) == 0);
@@ -512,7 +512,7 @@ TEST(UtilTest, ParseHostPort7) {
     int port;
     int flag = 0;
 
-    ASSERT_EQ(HTP_OK, htp_parse_hostport(i, &host, &port, &flag));
+    ASSERT_EQ(HTP_OK, htp_parse_hostport(i, &host, NULL, &port, &flag));
 
     ASSERT_TRUE(host != NULL);
     ASSERT_TRUE(bstr_cmp(e, host) == 0);
@@ -531,7 +531,7 @@ TEST(UtilTest, ParseHostPort8) {
     int port;
     int flag = 0;
 
-    ASSERT_EQ(HTP_OK, htp_parse_hostport(i, &host, &port, &flag));
+    ASSERT_EQ(HTP_OK, htp_parse_hostport(i, &host, NULL, &port, &flag));
 
     ASSERT_TRUE(host != NULL);
     ASSERT_TRUE(bstr_cmp(e, host) == 0);
@@ -550,7 +550,7 @@ TEST(UtilTest, ParseHostPort9) {
     int port;
     int flag = 0;
 
-    ASSERT_EQ(HTP_OK, htp_parse_hostport(i, &host, &port, &flag));
+    ASSERT_EQ(HTP_OK, htp_parse_hostport(i, &host, NULL, &port, &flag));
 
     ASSERT_TRUE(host != NULL);
     ASSERT_TRUE(bstr_cmp(e, host) == 0);
@@ -569,7 +569,7 @@ TEST(UtilTest, ParseHostPort10) {
     int port;
     int flag = 0;
 
-    ASSERT_EQ(HTP_OK, htp_parse_hostport(i, &host, &port, &flag));
+    ASSERT_EQ(HTP_OK, htp_parse_hostport(i, &host, NULL, &port, &flag));
 
     ASSERT_TRUE(host != NULL);
     ASSERT_TRUE(bstr_cmp(e, host) == 0);
@@ -588,7 +588,7 @@ TEST(UtilTest, ParseHostPort11) {
     int port;
     int invalid = 0;
 
-    ASSERT_EQ(HTP_OK, htp_parse_hostport(i, &host, &port, &invalid));
+    ASSERT_EQ(HTP_OK, htp_parse_hostport(i, &host, NULL, &port, &invalid));
 
     ASSERT_TRUE(host != NULL);
     ASSERT_TRUE(bstr_cmp(e, host) == 0);
@@ -607,7 +607,7 @@ TEST(UtilTest, ParseHostPort12) {
     int port;
     int invalid = 0;
 
-    ASSERT_EQ(HTP_OK, htp_parse_hostport(i, &host, &port, &invalid));
+    ASSERT_EQ(HTP_OK, htp_parse_hostport(i, &host, NULL, &port, &invalid));
 
     ASSERT_TRUE(host != NULL);
     ASSERT_TRUE(bstr_cmp(e, host) == 0);
@@ -626,7 +626,7 @@ TEST(UtilTest, ParseHostPort13) {
     int port;
     int invalid = 0;
 
-    ASSERT_EQ(HTP_OK, htp_parse_hostport(i, &host, &port, &invalid));
+    ASSERT_EQ(HTP_OK, htp_parse_hostport(i, &host, NULL, &port, &invalid));
 
     ASSERT_TRUE(host != NULL);
     ASSERT_TRUE(bstr_cmp(e, host) == 0);
@@ -644,7 +644,7 @@ TEST(UtilTest, ParseHostPort14) {
     int port;
     int invalid = 0;
 
-    ASSERT_EQ(HTP_OK, htp_parse_hostport(i, &host, &port, &invalid));
+    ASSERT_EQ(HTP_OK, htp_parse_hostport(i, &host, NULL, &port, &invalid));
 
     ASSERT_TRUE(host == NULL);
     ASSERT_EQ(-1, port);

@@ -47,12 +47,12 @@
  * @param[in] value_in
  * @return decoded character
  */
-int htp_base64_decode_single(char value_in) {
-    static const char decoding[] = {62, -1, -1, -1, 63, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61,
+int htp_base64_decode_single(signed char value_in) {
+    static const signed char decoding[] = {62, -1, -1, -1, 63, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61,
         -1, -1, -1, -2, -1, -1, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17,
         18, 19, 20, 21, 22, 23, 24, 25, -1, -1, -1, -1, -1, -1, 26, 27, 28, 29, 30, 31, 32, 33, 34,
         35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51};
-    static const char decoding_size = sizeof (decoding);
+    static const signed char decoding_size = sizeof (decoding);
 
     value_in -= 43;
 
@@ -86,7 +86,7 @@ int htp_base64_decode(htp_base64_decoder *decoder, const void *_code_in, int len
     unsigned char *plaintext_out = (unsigned char *)_plaintext_out;
     const unsigned char *codechar = code_in;
     unsigned char *plainchar = plaintext_out;
-    char fragment;
+    signed char fragment;
 
     if (length_out <= 0) return 0;
 

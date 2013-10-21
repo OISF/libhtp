@@ -389,7 +389,17 @@ htp_status_t htp_mpartp_parse_header(htp_multipart_part_t *part, const unsigned 
     if (h == NULL) return HTP_ERROR;
 
     h->name = bstr_dup_mem(data + name_start, name_end - name_start);
+    if (h->name == NULL) {
+        free(h);
+        return HTP_ERROR;
+    }
+
     h->value = bstr_dup_mem(data + value_start, value_end - value_start);
+    if (h->value == NULL) {
+        bstr_free(h->name);
+        free(h);
+        return HTP_ERROR;
+    }
 
     if ((bstr_cmp_c_nocase(h->name, "content-disposition") != 0) && (bstr_cmp_c_nocase(h->name, "content-type") != 0)) {
         part->parser->multipart.flags |= HTP_MULTIPART_PART_HEADER_UNKNOWN;
@@ -422,7 +432,12 @@ htp_status_t htp_mpartp_parse_header(htp_multipart_part_t *part, const unsigned 
         part->parser->multipart.flags |= HTP_MULTIPART_PART_HEADER_REPEATED;
     } else {
         // Add as a new header.
-        htp_table_add(part->headers, h->name, h);
+        if (htp_table_add(part->headers, h->name, h) != HTP_OK) {
+            bstr_free(h->value);
+            bstr_free(h->name);
+            free(h);
+            return HTP_ERROR;
+        }
     }
 
     return HTP_OK;

@@ -478,7 +478,7 @@ static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {
         bstr *hostname;
         int port;
 
-        rc = htp_parse_header_hostport(h->value, &hostname, &port, &(tx->flags));
+        rc = htp_parse_header_hostport(h->value, &hostname, NULL, &port, &(tx->flags));
         if (rc != HTP_OK) return rc;
 
         if (hostname != NULL) {

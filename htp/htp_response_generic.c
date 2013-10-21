@@ -277,7 +277,12 @@ htp_status_t htp_process_response_header_generic(htp_connp_t *connp, unsigned ch
         h_existing->flags |= HTP_FIELD_REPEATED;
     } else {
         // Add as a new header.
-        htp_table_add(connp->out_tx->response_headers, h->name, h);
+        if (htp_table_add(connp->out_tx->response_headers, h->name, h) != HTP_OK) {
+            bstr_free(h->name);
+            bstr_free(h->value);
+            free(h);
+            return HTP_ERROR;
+        }
     }
    
     return HTP_OK;
