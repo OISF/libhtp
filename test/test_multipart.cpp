@@ -927,7 +927,7 @@ TEST_F(Multipart, WithFile) {
     ASSERT_EQ(6, part->file->len);
 }
 
-TEST_F(Multipart, WithFileExternllyStored) {
+TEST_F(Multipart, WithFileExternallyStored) {
     char *parts[] = {
         "--0123456789\r\n"
         "Content-Disposition: form-data; name=\"field1\"\r\n"
@@ -969,7 +969,8 @@ TEST_F(Multipart, WithFileExternllyStored) {
     ASSERT_EQ(6, statbuf.st_size);
 
     char buf[7];
-    read(fd, buf, 6);
+    ssize_t result = read(fd, buf, 6);
+    ASSERT_EQ(6, result);
     buf[6] = '\0';
 
     ASSERT_STREQ("GHIJKL", buf);

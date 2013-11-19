@@ -491,11 +491,16 @@ static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {
                 tx->request_hostname = hostname;
                 tx->request_port_number = port;
             } else {
-                // The host information appears in the URI and in the headers. It's
-                // OK if both have the same thing, but we want to check for differences.
-                if ((bstr_cmp_nocase(hostname, tx->request_hostname) != 0) || (port != tx->request_port_number)) {
-                    // The host information is different in the headers and the URI. The
-                    // HTTP RFC states that we should ignore the header copy.
+                // The host information appears in the URI and in the headers. The
+                // HTTP RFC states that we should ignore the header copy.
+                
+                // Check for different hostnames.
+                if (bstr_cmp_nocase(hostname, tx->request_hostname) != 0) {                    
+                    tx->flags |= HTP_HOST_AMBIGUOUS;
+                }
+
+                // Check for different ports.
+                if (((tx->request_port_number != -1)&&(port != -1))&&(tx->request_port_number != port)) {
                     tx->flags |= HTP_HOST_AMBIGUOUS;
                 }
 

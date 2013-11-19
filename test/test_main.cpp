@@ -463,7 +463,7 @@ TEST_F(ConnectionParsing, AmbiguousHost) {
     int rc = test_run(home, "20-ambiguous-host.t", cfg, &connp);
     ASSERT_GE(rc, 0);
 
-    ASSERT_EQ(4, htp_list_size(connp->conn->transactions));
+    ASSERT_EQ(5, htp_list_size(connp->conn->transactions));
 
     htp_tx_t *tx1 = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
     ASSERT_TRUE(tx1 != NULL);
@@ -492,6 +492,14 @@ TEST_F(ConnectionParsing, AmbiguousHost) {
     ASSERT_TRUE(tx4->request_hostname != NULL);
     ASSERT_EQ(0, bstr_cmp_c(tx4->request_hostname, "www.example.com"));
     ASSERT_EQ(8002, tx4->request_port_number);
+
+    htp_tx_t *tx5 = (htp_tx_t *) htp_list_get(connp->conn->transactions, 4);
+    ASSERT_TRUE(tx5 != NULL);
+    ASSERT_TRUE(htp_tx_is_complete(tx5));
+    ASSERT_FALSE(tx5->flags & HTP_HOST_AMBIGUOUS);
+    ASSERT_TRUE(tx5->request_hostname != NULL);
+    ASSERT_EQ(0, bstr_cmp_c(tx5->request_hostname, "www.example.com"));
+    ASSERT_EQ(80, tx5->request_port_number);
 }
 
 TEST_F(ConnectionParsing, Http_0_9) {
