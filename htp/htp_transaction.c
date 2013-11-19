@@ -435,22 +435,7 @@ static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {
     if (tx->request_transfer_coding == HTP_CODING_UNKNOWN) {
         tx->request_transfer_coding = HTP_CODING_INVALID;
         tx->flags |= HTP_REQUEST_INVALID;
-    }
-
-    // Check for PUT requests, which we need to treat as file uploads.
-    if (tx->request_method_number == HTP_M_PUT) {
-        if (htp_tx_req_has_body(tx)) {
-            // Prepare to treat PUT request body as a file.
-            
-            tx->connp->put_file = calloc(1, sizeof (htp_file_t));
-            if (tx->connp->put_file == NULL) return HTP_ERROR;
-
-            tx->connp->put_file->fd = -1;
-            tx->connp->put_file->source = HTP_FILE_PUT;
-        } else {
-            // TODO Warn about PUT request without a body.
-        }
-    }
+    }   
 
     // Determine hostname.
 
@@ -833,14 +818,7 @@ htp_status_t htp_tx_state_request_complete_partial(htp_tx_t *tx) {
 
     // Run hook REQUEST_COMPLETE.
     htp_status_t rc = htp_hook_run_all(tx->connp->cfg->hook_request_complete, tx);
-    if (rc != HTP_OK) return rc;
-
-    // Clean-up.
-    if (tx->connp->put_file != NULL) {
-        bstr_free(tx->connp->put_file->filename);
-        free(tx->connp->put_file);
-        tx->connp->put_file = NULL;
-    }
+    if (rc != HTP_OK) return rc;   
 
     return HTP_OK;
 }

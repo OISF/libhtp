@@ -1,4 +1,12 @@
 
+0.6.x
+-----
+
+- [#52] Remove the ability to extract uploaded files to the filesystem.
+
+- The hook_request_file_data() callback is no longer requests on PUT requests.
+
+
 0.5.9 (19 November 2013)
 ------------------------
 

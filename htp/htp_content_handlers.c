@@ -282,13 +282,7 @@ htp_status_t htp_ch_multipart_callback_request_headers(htp_tx_t *tx) {
     if (tx->request_mpartp == NULL) {
         bstr_free(boundary);
         return HTP_ERROR;
-    }
-
-    // Configure file extraction.
-    if (tx->cfg->extract_request_files) {
-        tx->request_mpartp->extract_files = 1;
-        tx->request_mpartp->extract_dir = tx->connp->cfg->tmpdir;
-    }
+    }   
 
     // Register a request body data callback.
     htp_tx_register_request_body_data(tx, htp_ch_multipart_callback_request_body_data);

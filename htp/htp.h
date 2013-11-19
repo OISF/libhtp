@@ -104,33 +104,11 @@ struct htp_conn_t {
 };
 
 /**
- * Used to represent files that are seen during the processing of HTTP traffic. Most
- * commonly this refers to files seen in multipart/form-data payloads. In addition, PUT
- * request bodies can be treated as files.
- */
-struct htp_file_t {
-    /** Where did this file come from? Possible values: HTP_FILE_MULTIPART and HTP_FILE_PUT. */
-    enum htp_file_source_t source;
-
-    /** File name, as provided (e.g., in the Content-Disposition multipart part header. */
-    bstr *filename;   
-
-    /** File length. */
-    int64_t len;
-
-    /** The unique filename in which this file is stored on the filesystem, when applicable.*/
-    char *tmpname;
-
-    /** The file descriptor used for external storage, or -1 if unused. */
-    int fd;
-};
-
-/**
  * Represents a chunk of file data.
  */
-struct htp_file_data_t {
+struct htp_file_data_t {    
     /** File information. */
-    htp_file_t *file;
+    htp_multipart_part_t *part;
 
     /** Pointer to the data buffer. */
     const unsigned char *data;

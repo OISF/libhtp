@@ -2360,20 +2360,7 @@ htp_status_t htp_req_run_hook_body_data(htp_connp_t *connp, htp_tx_data_t *d) {
 
     // Run configuration hooks second
     rc = htp_hook_run_all(connp->cfg->hook_request_body_data, d);
-    if (rc != HTP_OK) return rc;
-
-    // On PUT requests, treat request body as file
-    if (connp->put_file != NULL) {
-        htp_file_data_t file_data;
-
-        file_data.data = d->data;
-        file_data.len = d->len;
-        file_data.file = connp->put_file;
-        file_data.file->len += d->len;
-
-        rc = htp_hook_run_all(connp->cfg->hook_request_file_data, &file_data);
-        if (rc != HTP_OK) return rc;
-    }
+    if (rc != HTP_OK) return rc;   
 
     return HTP_OK;
 }

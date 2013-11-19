@@ -111,8 +111,8 @@ protected:
         ASSERT_EQ(MULTIPART_PART_FILE, file1->type);
         ASSERT_TRUE(file1->name != NULL);
         ASSERT_TRUE(bstr_cmp_c(file1->name, "file1") == 0);
-        ASSERT_TRUE(file1->file->filename != NULL);
-        ASSERT_TRUE(bstr_cmp_c(file1->file->filename, "file.bin") == 0);
+        ASSERT_TRUE(file1->filename != NULL);
+        ASSERT_TRUE(bstr_cmp_c(file1->filename, "file.bin") == 0);
 
         // Field 2
         htp_multipart_part_t *field2 = (htp_multipart_part_t *) htp_list_get(body->parts, 2);
@@ -922,60 +922,9 @@ TEST_F(Multipart, WithFile) {
     ASSERT_EQ(MULTIPART_PART_FILE, part->type);
     ASSERT_TRUE(part->content_type != NULL);
     ASSERT_TRUE(bstr_cmp_c(part->content_type, "application/octet-stream") == 0);
-    ASSERT_TRUE(part->file != NULL);
-    ASSERT_TRUE(bstr_cmp_c(part->file->filename, "test.bin") == 0);
-    ASSERT_EQ(6, part->file->len);
-}
-
-TEST_F(Multipart, WithFileExternallyStored) {
-    char *parts[] = {
-        "--0123456789\r\n"
-        "Content-Disposition: form-data; name=\"field1\"\r\n"
-        "\r\n"
-        "ABCDEF"
-        "\r\n--0123456789\r\n"
-        "Content-Disposition: form-data; name=\"field2\"; filename=\"test.bin\"\r\n"
-        "Content-Type: application/octet-stream \r\n"
-        "\r\n"
-        "GHIJKL"
-        "\r\n--0123456789--",
-        NULL
-    };
-
-    cfg->extract_request_files = 1;
-    cfg->tmpdir = "/tmp";
-
-    parseParts(parts);
-
-    ASSERT_TRUE(body != NULL);
-    ASSERT_TRUE(body->parts != NULL);
-    ASSERT_EQ(2, htp_list_size(body->parts));
-
-    htp_multipart_part_t *part = (htp_multipart_part_t *) htp_list_get(body->parts, 1);
-    ASSERT_EQ(MULTIPART_PART_FILE, part->type);
-    ASSERT_TRUE(part->content_type != NULL);
-    ASSERT_TRUE(bstr_cmp_c(part->content_type, "application/octet-stream") == 0);
-    ASSERT_TRUE(part->file != NULL);
-    ASSERT_TRUE(bstr_cmp_c(part->file->filename, "test.bin") == 0);
-    ASSERT_EQ(6, part->file->len);
-
-    ASSERT_TRUE(part->file->tmpname != NULL);
-
-    int fd = open(part->file->tmpname, O_RDONLY | O_BINARY);
-    ASSERT_TRUE(fd >= 0);
-
-    struct stat statbuf;
-    ASSERT_TRUE((fstat(fd, &statbuf) >= 0));
-    ASSERT_EQ(6, statbuf.st_size);
-
-    char buf[7];
-    ssize_t result = read(fd, buf, 6);
-    ASSERT_EQ(6, result);
-    buf[6] = '\0';
-
-    ASSERT_STREQ("GHIJKL", buf);
-
-    close(fd);
+    ASSERT_TRUE(part->filename != NULL);
+    ASSERT_TRUE(bstr_cmp_c(part->filename, "test.bin") == 0);
+    // ASSERT_EQ(6, part->file->len);
 }
 
 TEST_F(Multipart, PartHeadersEmptyLineBug) {

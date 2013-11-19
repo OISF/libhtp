@@ -272,8 +272,8 @@ typedef struct htp_multipart_part_t {
     /** Part headers (htp_header_t instances), using header name as the key. */
     htp_table_t *headers;
 
-    /** File data, available only for MULTIPART_PART_FILE parts. */
-    htp_file_t *file;
+    /** File name; used only with filename parts. */
+    bstr *filename;
 } htp_multipart_part_t;
 
 

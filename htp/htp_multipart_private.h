@@ -49,8 +49,6 @@ extern "C" {
 #define CD_PARAM_NAME                   1
 #define CD_PARAM_FILENAME               2
 
-#define DEFAULT_FILE_EXTRACT_LIMIT      16
-
 enum htp_part_mode_t {
     /** When in line mode, the parser is handling part headers. */
     MODE_LINE = 0,
@@ -85,15 +83,7 @@ enum htp_multipart_state_t {
 struct htp_mpartp_t {
     htp_multipart_t multipart;
 
-    htp_cfg_t *cfg;
-
-    int extract_files;
-
-    int extract_limit;
-
-    char *extract_dir;
-
-    int file_count;
+    htp_cfg_t *cfg;         
 
     // Parsing callbacks
 

@@ -185,13 +185,7 @@ struct htp_cfg_t {
 
     /** Whether to parse HTTP Authentication headers. */
     int parse_request_auth;
-
-    /** Whether to extract files from requests using Multipart encoding. */
-    int extract_request_files;
-
-    /** How many extracted files are allowed in a single Multipart request? */
-    int extract_request_files_limit;
-
+    
     /** The location on disk where temporary files will be created. */
     char *tmpdir;
 

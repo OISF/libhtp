@@ -152,9 +152,7 @@ htp_cfg_t *htp_config_create(void) {
     cfg->log_level = HTP_LOG_NOTICE;
     cfg->response_decompression_enabled = 1;
     cfg->parse_request_cookies = 1;
-    cfg->parse_request_auth = 1;
-    cfg->extract_request_files = 0;
-    cfg->extract_request_files_limit = -1; // Use the parser default.   
+    cfg->parse_request_auth = 1;    
         
     // Default settings for URL-encoded data.
 
@@ -488,14 +486,6 @@ void htp_config_register_urlencoded_parser(htp_cfg_t *cfg) {
     if (cfg == NULL) return;
     htp_config_register_request_line(cfg, htp_ch_urlencoded_callback_request_line);
     htp_config_register_request_headers(cfg, htp_ch_urlencoded_callback_request_headers);
-}
-
-htp_status_t htp_config_set_extract_request_files(htp_cfg_t *cfg, int extract_request_files, int limit) {
-    if (cfg == NULL) return HTP_ERROR;
-    if (cfg->tmpdir == NULL) return HTP_ERROR;
-    cfg->extract_request_files = extract_request_files;
-    cfg->extract_request_files_limit = limit;
-    return HTP_OK;
 }
 
 void htp_config_set_field_limits(htp_cfg_t *cfg, size_t soft_limit, size_t hard_limit) {

@@ -1,3 +1,15 @@
+0.6
+---
+
+- Removed htp_config_set_extract_request_files().
+
+- The htp_file_t structure has been removed. The htp_file_data_t structure no longer points
+  to an htp_file_t instance; it now points to a htp_multipart_part_t instance. The name of
+  the file (that was in htp_file_t) is now in htp_multipart_part_t::filename.
+
+- The hook_request_file_data() callback is no longer invoked on PUT requests.
+
+
 0.4
 ---
 

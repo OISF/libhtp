@@ -240,24 +240,15 @@ htp_status_t htp_mpart_part_parse_c_d(htp_multipart_part_t *part) {
 
             case CD_PARAM_FILENAME:                
                 // Check that we have not seen the filename parameter already.
-                if (part->file != NULL) {                    
+                if (part->filename != NULL) {
                     part->parser->multipart.flags |= HTP_MULTIPART_CD_PARAM_REPEATED;
                     return HTP_DECLINED;
                 }
- 
-                part->file = calloc(1, sizeof (htp_file_t));
-                if (part->file == NULL) return HTP_ERROR;
+                 
+                part->filename = bstr_dup_mem(data + start, pos - start - 1);
+                if (part->filename == NULL) return HTP_ERROR;
 
-                part->file->fd = -1;
-                part->file->source = HTP_FILE_MULTIPART;
-
-                part->file->filename = bstr_dup_mem(data + start, pos - start - 1);
-                if (part->file->filename == NULL) {
-                    free(part->file);
-                    return HTP_ERROR;
-                }
-
-                htp_mpart_decode_quoted_cd_value_inplace(part->file->filename);
+                htp_mpart_decode_quoted_cd_value_inplace(part->filename);
                 
                 break;
                 
@@ -475,17 +466,7 @@ htp_multipart_part_t *htp_mpart_part_create(htp_mpartp_t *parser) {
 void htp_mpart_part_destroy(htp_multipart_part_t *part, int gave_up_data) {
     if (part == NULL) return;
 
-    if (part->file != NULL) {
-        bstr_free(part->file->filename);
-
-        if (part->file->tmpname != NULL) {
-            unlink(part->file->tmpname);
-            free(part->file->tmpname);
-        }
-
-        free(part->file);
-        part->file = NULL;
-    }
+    bstr_free(part->filename);
 
     if ((!gave_up_data) || (part->type != MULTIPART_PART_TEXT)) {
         bstr_free(part->name);
@@ -552,12 +533,7 @@ htp_status_t htp_mpart_part_finalize_data(htp_multipart_part_t *part) {
 
     if (part->type == MULTIPART_PART_FILE) {
         // Notify callbacks about the end of the file.
-        htp_mpartp_run_request_file_data_hook(part, NULL, 0);
-
-        // If we are storing the file to disk, close the file descriptor.
-        if (part->file->fd != -1) {
-            close(part->file->fd);
-        }
+        htp_mpartp_run_request_file_data_hook(part, NULL, 0);       
     } else {
         // Combine value pieces into a single buffer.
         if (bstr_builder_size(part->parser->part_data_pieces) > 0) {
@@ -571,13 +547,10 @@ htp_status_t htp_mpart_part_finalize_data(htp_multipart_part_t *part) {
 
 htp_status_t htp_mpartp_run_request_file_data_hook(htp_multipart_part_t *part, const unsigned char *data, size_t len) {
     if (part->parser->cfg == NULL) return HTP_OK;
-
-    // Keep track of the file length.
-    part->file->len += len;
-
+    
     // Package data for the callbacks.
     htp_file_data_t file_data;
-    file_data.file = part->file;
+    file_data.part = part;
     file_data.data = data;
     file_data.len = (const size_t) len;
 
@@ -666,33 +639,9 @@ htp_status_t htp_mpart_part_handle_data(htp_multipart_part_t *part, const unsign
                 part->parser->current_part_mode = MODE_DATA;
                 bstr_builder_clear(part->parser->part_header_pieces);
 
-                if (part->file != NULL) {
+                if (part->filename != NULL) {
                     // Changing part type because we have a filename.
                     part->type = MULTIPART_PART_FILE;
-
-                    if ((part->parser->extract_files) && (part->parser->file_count < part->parser->extract_limit)) {
-                        char buf[255];
-                        
-                        strncpy(buf, part->parser->extract_dir, 254);
-                        strncat(buf, "/libhtp-multipart-file-XXXXXX", 254 - strlen(buf));
-
-                        part->file->tmpname = strdup(buf);
-                        if (part->file->tmpname == NULL) {
-                            bstr_free(line);
-                            return HTP_ERROR;
-                        }
-
-                        mode_t previous_mask = umask(S_IXUSR | S_IRWXG | S_IRWXO);
-                        part->file->fd = mkstemp(part->file->tmpname);
-                        umask(previous_mask);
-
-                        if (part->file->fd < 0) {
-                            bstr_free(line);
-                            return HTP_ERROR;
-                        }
-
-                        part->parser->file_count++;
-                    }
                 } else if (part->name != NULL) {
                     // Changing part type because we have a name.
                     part->type = MULTIPART_PART_TEXT;
@@ -763,14 +712,7 @@ htp_status_t htp_mpart_part_handle_data(htp_multipart_part_t *part, const unsign
 
             case MULTIPART_PART_FILE:
                 // Invoke file data callbacks.
-                htp_mpartp_run_request_file_data_hook(part, data, len);
-
-                // Optionally, store the data in a file.
-                if (part->file->fd != -1) {
-                    if (write(part->file->fd, data, len) < 0) {
-                        return HTP_ERROR;
-                    }
-                }
+                htp_mpartp_run_request_file_data_hook(part, data, len);               
                 break;
                 
             default:
@@ -913,14 +855,7 @@ htp_mpartp_t *htp_mpartp_create(htp_cfg_t *cfg, bstr *boundary, uint64_t flags) 
     }
 
     parser->multipart.flags = flags;
-    parser->parser_state = STATE_INIT;
-    parser->extract_files = cfg->extract_request_files;
-    parser->extract_dir = cfg->tmpdir;
-    if (cfg->extract_request_files_limit >= 0) {
-        parser->extract_limit = cfg->extract_request_files_limit;
-    } else {
-        parser->extract_limit = DEFAULT_FILE_EXTRACT_LIMIT;
-    }
+    parser->parser_state = STATE_INIT;            
     parser->handle_data = htp_mpartp_handle_data;
     parser->handle_boundary = htp_mpartp_handle_boundary;
 
