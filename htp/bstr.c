@@ -393,12 +393,16 @@ int64_t bstr_util_mem_to_pint(const void *_data, size_t len, int base, size_t *l
     int64_t rval = 0, tval = 0, tflag = 0;
     size_t i = 0;
 
-    *lastlen = i;
+    if (lastlen != NULL) {
+        *lastlen = i;
+    }
 
     for (i = 0; i < len; i++) {
         int d = data[i];
 
-        *lastlen = i;
+        if (lastlen != NULL) {
+            *lastlen = i;
+        }
 
         // Convert character to digit.
         if ((d >= '0') && (d <= '9')) {
@@ -445,7 +449,9 @@ int64_t bstr_util_mem_to_pint(const void *_data, size_t len, int base, size_t *l
         }
     }
 
-    *lastlen = i + 1;
+    if (lastlen != NULL) {
+        *lastlen = i + 1;
+    }
 
     return rval;
 }

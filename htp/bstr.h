@@ -509,12 +509,15 @@ int bstr_util_cmp_mem(const void *data1, size_t len1, const void *data2, size_t 
  int bstr_util_cmp_mem_nocase(const void *data1, size_t len1, const void *data2, size_t len2);
 
 /**
- * Convert contents of a memory region to a positive integer.
+ * Converts contents of a memory region to a positive integer. Starting at
+ * the beginning, this function will process digits until the end of the
+ * region or until the first non-digit character is encountered.
  *
  * @param[in] data
  * @param[in] len
  * @param[in] base The desired number base.
- * @param[in] lastlen Points to the first unused byte in the region
+ * @param[in,out] lastlen If not NULL, the variable will on return contain the
+ *                position of the first unused byte. Optional.
  * @return If the conversion was successful, this function returns the
  *         number. When the conversion fails, -1 will be returned when not
  *         one valid digit was found, and -2 will be returned if an overflow
