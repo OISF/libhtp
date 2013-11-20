@@ -4,7 +4,7 @@
 
 - [#52] Remove the ability to extract uploaded files to the filesystem.
 
-- The hook_request_file_data() callback is no longer requests on PUT requests.
+- The hook_request_file_data() callback is no longer invoked on PUT requests.
 
 - [#57] Added support for Content-Range response headers. When this header is
   detected, the values htp_tx_t::response_first_byte_pos, htp_tx_t::response_last_byte_pos,
