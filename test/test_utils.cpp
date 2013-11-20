@@ -1809,6 +1809,7 @@ TEST(HttpParsing, ContentRange) {
     int64_t last_byte_pos = 12345678;
     int64_t instance_length = 12345678;
 
+    // Invalid
     s = bstr_dup_c("mango tree");
     ASSERT_EQ(HTP_ERROR, htp_parse_content_range(bstr_ptr(s), bstr_len(s),
         &first_byte_pos, &last_byte_pos, &instance_length));
@@ -1817,6 +1818,7 @@ TEST(HttpParsing, ContentRange) {
     ASSERT_EQ(12345678, instance_length);
     bstr_free(s);
 
+    // Invalid
     s = bstr_dup_c("1-499/1234");
     ASSERT_EQ(HTP_ERROR, htp_parse_content_range(bstr_ptr(s), bstr_len(s),
         &first_byte_pos, &last_byte_pos, &instance_length));
@@ -1825,6 +1827,7 @@ TEST(HttpParsing, ContentRange) {
     ASSERT_EQ(12345678, instance_length);
     bstr_free(s);
 
+    // Valid
     s = bstr_dup_c("bytes 1-499/1234");
     ASSERT_EQ(HTP_OK, htp_parse_content_range(bstr_ptr(s), bstr_len(s),
         &first_byte_pos, &last_byte_pos, &instance_length));
@@ -1833,6 +1836,7 @@ TEST(HttpParsing, ContentRange) {
     ASSERT_EQ(1234, instance_length);
     bstr_free(s);
 
+    // Valid
     s = bstr_dup_c("bytes 1-499/*");
     ASSERT_EQ(HTP_OK, htp_parse_content_range(bstr_ptr(s), bstr_len(s),
         &first_byte_pos, &last_byte_pos, &instance_length));
@@ -1841,6 +1845,7 @@ TEST(HttpParsing, ContentRange) {
     ASSERT_EQ(-1, instance_length);
     bstr_free(s);
 
+    // Valid
     s = bstr_dup_c("bytes */*");
     ASSERT_EQ(HTP_OK, htp_parse_content_range(bstr_ptr(s), bstr_len(s),
         &first_byte_pos, &last_byte_pos, &instance_length));
