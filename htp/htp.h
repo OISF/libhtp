@@ -60,6 +60,7 @@ extern "C" {
 #include "htp_transaction.h"
 #include "htp_urlencoded.h"
 #include "htp_utf8_decoder.h"
+#include "htp_http_parsers.h"
 
 /**
  * Represents a single TCP connection.

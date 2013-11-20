@@ -1802,3 +1802,50 @@ TEST_F(UrlencodedParser, UrlDecode1) {
     ASSERT_EQ(0, bstr_cmp_c(s, "/one/two/three/%3"));
     bstr_free(s);
 }
+
+TEST(HttpParsing, ContentRange) {
+    bstr *s = NULL;
+    int64_t first_byte_pos = 12345678;
+    int64_t last_byte_pos = 12345678;
+    int64_t instance_length = 12345678;
+
+    s = bstr_dup_c("mango tree");
+    ASSERT_EQ(HTP_ERROR, htp_parse_content_range(bstr_ptr(s), bstr_len(s),
+        &first_byte_pos, &last_byte_pos, &instance_length));
+    ASSERT_EQ(12345678, first_byte_pos);
+    ASSERT_EQ(12345678, last_byte_pos);
+    ASSERT_EQ(12345678, instance_length);
+    bstr_free(s);
+
+    s = bstr_dup_c("1-499/1234");
+    ASSERT_EQ(HTP_ERROR, htp_parse_content_range(bstr_ptr(s), bstr_len(s),
+        &first_byte_pos, &last_byte_pos, &instance_length));
+    ASSERT_EQ(12345678, first_byte_pos);
+    ASSERT_EQ(12345678, last_byte_pos);
+    ASSERT_EQ(12345678, instance_length);
+    bstr_free(s);
+
+    s = bstr_dup_c("bytes 1-499/1234");
+    ASSERT_EQ(HTP_OK, htp_parse_content_range(bstr_ptr(s), bstr_len(s),
+        &first_byte_pos, &last_byte_pos, &instance_length));
+    ASSERT_EQ(1, first_byte_pos);
+    ASSERT_EQ(499, last_byte_pos);
+    ASSERT_EQ(1234, instance_length);
+    bstr_free(s);
+
+    s = bstr_dup_c("bytes 1-499/*");
+    ASSERT_EQ(HTP_OK, htp_parse_content_range(bstr_ptr(s), bstr_len(s),
+        &first_byte_pos, &last_byte_pos, &instance_length));
+    ASSERT_EQ(1, first_byte_pos);
+    ASSERT_EQ(499, last_byte_pos);
+    ASSERT_EQ(-1, instance_length);
+    bstr_free(s);
+
+    s = bstr_dup_c("bytes */*");
+    ASSERT_EQ(HTP_OK, htp_parse_content_range(bstr_ptr(s), bstr_len(s),
+        &first_byte_pos, &last_byte_pos, &instance_length));
+    ASSERT_EQ(-1, first_byte_pos);
+    ASSERT_EQ(-1, last_byte_pos);
+    ASSERT_EQ(-1, instance_length);
+    bstr_free(s);
+}

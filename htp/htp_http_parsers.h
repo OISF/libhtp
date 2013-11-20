@@ -45,7 +45,8 @@
 extern "C" {
 #endif
 
-htp_status_t parse_http_content_ranges(void);
+htp_status_t htp_parse_content_range(void *data, size_t len, int64_t *first_byte_pos, int64_t *last_byte_pos,
+        int64_t *instance_length);
 
 
 #ifdef	__cplusplus
