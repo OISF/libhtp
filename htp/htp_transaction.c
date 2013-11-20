@@ -90,6 +90,9 @@ htp_tx_t *htp_tx_create(htp_connp_t *connp) {
     tx->response_status_number = HTP_STATUS_UNKNOWN;
     tx->response_protocol_number = HTP_PROTOCOL_UNKNOWN;
     tx->response_content_length = -1;
+    tx->response_first_byte_pos = -1;
+    tx->response_last_byte_pos = -1;
+    tx->response_instance_length = -1;
 
     tx->response_headers = htp_table_create(32);
     if (tx->response_headers == NULL) {
@@ -1041,6 +1044,27 @@ htp_status_t htp_tx_state_response_complete_ex(htp_tx_t *tx, int hybrid_mode) {
 
 htp_status_t htp_tx_state_response_headers(htp_tx_t *tx) {
     if (tx == NULL) return HTP_ERROR;
+
+    // Check for the Content-Range header.
+    htp_header_t *cr = htp_table_get_c(tx->response_headers, "content-range");
+    if (cr != NULL) {
+        htp_status_t rc = htp_parse_content_range(bstr_ptr(cr->value), bstr_len(cr->value),
+            &(tx->response_first_byte_pos), &(tx->response_last_byte_pos), &(tx->response_instance_length));
+        if (rc != HTP_OK) {
+            tx->flags |= HTP_FIELD_INVALID;
+            htp_log(tx->connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Failed to parse Content-Range response header");
+        }
+
+        // The Content-Range header is invalid if the first byte position is
+        // greater than the last byte position, or if the last byte position is
+        // greater than instance length.
+        if ((tx->response_first_byte_pos >tx->response_last_byte_pos)
+            ||((tx->response_instance_length != -1)&&(tx->response_last_byte_pos > tx->response_instance_length)))
+        {
+            tx->flags |= HTP_FIELD_INVALID;
+            htp_log(tx->connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Invalid Content-Range response header");
+        }
+    }
 
     // Check for compression.
 

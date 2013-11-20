@@ -468,6 +468,32 @@ struct htp_tx_t {
      * or if the value in it cannot be parsed.
      */
     int64_t response_content_length;
+
+    /**
+     * Position of the first response body byte, when available in the Content-Range
+     * header; -1 otherwise. This value is optional and might not be available even
+     * when the header is present. Further, this field will be populated even in the
+     * case when the C-R header is syntactically correct, but the numbers don't make
+     * sense.
+     */
+    int64_t response_first_byte_pos;
+
+    /**
+     * Position of the last response body byte, when available in the Content-Range
+     * header; -1 otherwise. This value is optional and might not be available even
+     * when the header is present. Further, this field will be populated even in the
+     * case when the C-R header is syntactically correct, but the numbers don't make
+     * sense.
+     */
+    int64_t response_last_byte_pos;
+
+    /**
+     * Instance length, when available in the Content-Range header; -1 otherwise. This
+     * value is optional and might not be available even when the header is present.
+     * Further, this field will be populated even in the case when the C-R header
+     * is syntactically correct, but the numbers don't make sense.
+     */
+    int64_t response_instance_length;
     
     /**
      * Response transfer coding, which indicates if there is a response body,

@@ -1852,3 +1852,68 @@ TEST_F(ConnectionParsing, IncorrectHostAmbiguousWarning) {
    
     ASSERT_FALSE(tx->flags & HTP_HOST_AMBIGUOUS);
 }
+
+TEST_F(ConnectionParsing, ResponseContentRange_Valid) {
+    int rc = test_run(home, "88-response-content-range.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+
+    ASSERT_EQ(1, htp_list_size(connp->conn->transactions));
+
+    htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+
+    ASSERT_EQ(HTP_REQUEST_COMPLETE, tx->request_progress);
+    ASSERT_EQ(HTP_RESPONSE_COMPLETE, tx->response_progress);
+
+    // Response with Content-Range.
+    ASSERT_EQ(6, tx->response_first_byte_pos);
+    ASSERT_EQ(12, tx->response_last_byte_pos);
+    ASSERT_EQ(422279, tx->response_instance_length);
+}
+
+TEST_F(ConnectionParsing, ResponseContentRange_NotPresent) {
+    int rc = test_run(home, "01-get.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+
+    ASSERT_EQ(1, htp_list_size(connp->conn->transactions));
+
+    htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+
+    ASSERT_EQ(HTP_REQUEST_COMPLETE, tx->request_progress);
+    ASSERT_EQ(HTP_RESPONSE_COMPLETE, tx->response_progress);
+
+    // Response without Content-Range.
+    ASSERT_EQ(-1, tx->response_first_byte_pos);
+    ASSERT_EQ(-1, tx->response_last_byte_pos);
+    ASSERT_EQ(-1, tx->response_instance_length);
+}
+
+TEST_F(ConnectionParsing, ResponseContentRange_Invalid) {
+    int rc = test_run(home, "89-response-content-range-invalid.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+
+    ASSERT_EQ(2, htp_list_size(connp->conn->transactions));
+
+    htp_tx_t *tx1 = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx1 != NULL);
+
+    ASSERT_EQ(HTP_REQUEST_COMPLETE, tx1->request_progress);
+    ASSERT_EQ(HTP_RESPONSE_COMPLETE, tx1->response_progress);
+
+    ASSERT_EQ(6, tx1->response_first_byte_pos);
+    ASSERT_EQ(12, tx1->response_last_byte_pos);
+    ASSERT_EQ(11, tx1->response_instance_length);
+    ASSERT_TRUE(tx1->flags & HTP_FIELD_INVALID);
+    
+    htp_tx_t *tx2 = (htp_tx_t *) htp_list_get(connp->conn->transactions, 1);
+    ASSERT_TRUE(tx2 != NULL);
+
+    ASSERT_EQ(HTP_REQUEST_COMPLETE, tx2->request_progress);
+    ASSERT_EQ(HTP_RESPONSE_COMPLETE, tx2->response_progress);
+
+    ASSERT_EQ(13, tx2->response_first_byte_pos);
+    ASSERT_EQ(11, tx2->response_last_byte_pos);
+    ASSERT_EQ(422279, tx2->response_instance_length);
+    ASSERT_TRUE(tx2->flags & HTP_FIELD_INVALID);
+}
