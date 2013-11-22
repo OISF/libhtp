@@ -202,17 +202,23 @@ _match:
 #line 66 "htp_http_parsers.rl"
 	{
             p_first_byte_pos = bstr_util_mem_to_pint(mark, p - mark, 10, NULL);
-            if (p_first_byte_pos < -1) cs = (content_range_error);
+            if (p_first_byte_pos < -1) {
+                cs = (content_range_error);
+                {p++; goto _out; }
+            }
         }
 	break;
 	case 2:
-#line 71 "htp_http_parsers.rl"
+#line 74 "htp_http_parsers.rl"
 	{
             p_last_byte_pos = bstr_util_mem_to_pint(mark, p - mark, 10, NULL);
-            if (p_last_byte_pos < -1) cs = (content_range_error);
+            if (p_last_byte_pos < -1)  {
+                cs = (content_range_error);
+                {p++; goto _out; }
+            }
         }
 	break;
-#line 216 "htp_http_parsers.c"
+#line 222 "htp_http_parsers.c"
 		}
 	}
 
@@ -229,13 +235,16 @@ _again:
 	while ( __nacts-- > 0 ) {
 		switch ( *__acts++ ) {
 	case 3:
-#line 76 "htp_http_parsers.rl"
+#line 82 "htp_http_parsers.rl"
 	{
             p_instance_length = bstr_util_mem_to_pint(mark, p - mark, 10, NULL);
-            if (p_instance_length < -1) cs = (content_range_error);
+            if (p_instance_length < -1)  {
+                cs = (content_range_error);
+                {p++; goto _out; }
+            }
         }
 	break;
-#line 239 "htp_http_parsers.c"
+#line 248 "htp_http_parsers.c"
 		}
 	}
 	}
@@ -243,13 +252,13 @@ _again:
 	_out: {}
 	}
 
-#line 100 "htp_http_parsers.rl"
+#line 109 "htp_http_parsers.rl"
 
 
     if (cs < 
-#line 251 "htp_http_parsers.c"
+#line 260 "htp_http_parsers.c"
 13
-#line 102 "htp_http_parsers.rl"
+#line 111 "htp_http_parsers.rl"
 ) return HTP_ERROR;
 
     // Temporary workaround to avoid the unused variable error.
