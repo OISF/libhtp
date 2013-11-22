@@ -1827,6 +1827,24 @@ TEST(HttpParsing, ContentRange) {
     ASSERT_EQ(12345678, instance_length);
     bstr_free(s);
 
+    // Invalid
+    s = bstr_dup_c("bytes 1-499/");
+    ASSERT_EQ(HTP_ERROR, htp_parse_content_range(bstr_ptr(s), bstr_len(s),
+        &first_byte_pos, &last_byte_pos, &instance_length));
+    ASSERT_EQ(12345678, first_byte_pos);
+    ASSERT_EQ(12345678, last_byte_pos);
+    ASSERT_EQ(12345678, instance_length);
+    bstr_free(s);
+
+    // Invalid
+    s = bstr_dup_c("bytes 1-499/9223372036854775808");
+    ASSERT_EQ(HTP_ERROR, htp_parse_content_range(bstr_ptr(s), bstr_len(s),
+        &first_byte_pos, &last_byte_pos, &instance_length));
+    ASSERT_EQ(12345678, first_byte_pos);
+    ASSERT_EQ(12345678, last_byte_pos);
+    ASSERT_EQ(12345678, instance_length);
+    bstr_free(s);
+
     // Valid
     s = bstr_dup_c("bytes 1-499/1234");
     ASSERT_EQ(HTP_OK, htp_parse_content_range(bstr_ptr(s), bstr_len(s),

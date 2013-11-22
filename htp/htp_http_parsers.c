@@ -58,65 +58,65 @@ htp_status_t htp_parse_content_range(void *data, size_t len, int64_t *first_byte
 
     
 #line 61 "htp_http_parsers.c"
-static const char _http_parser_content_range_actions[] = {
+static const char _content_range_actions[] = {
 	0, 1, 0, 1, 1, 1, 2, 1, 
 	3
 };
 
-static const char _http_parser_content_range_key_offsets[] = {
+static const char _content_range_key_offsets[] = {
 	0, 0, 1, 2, 3, 4, 5, 6, 
 	9, 10, 13, 16, 18, 21, 21
 };
 
-static const char _http_parser_content_range_trans_keys[] = {
+static const char _content_range_trans_keys[] = {
 	98, 121, 116, 101, 115, 32, 42, 48, 
 	57, 47, 42, 48, 57, 45, 48, 57, 
 	48, 57, 47, 48, 57, 48, 57, 0
 };
 
-static const char _http_parser_content_range_single_lengths[] = {
+static const char _content_range_single_lengths[] = {
 	0, 1, 1, 1, 1, 1, 1, 1, 
 	1, 1, 1, 0, 1, 0, 0
 };
 
-static const char _http_parser_content_range_range_lengths[] = {
+static const char _content_range_range_lengths[] = {
 	0, 0, 0, 0, 0, 0, 0, 1, 
 	0, 1, 1, 1, 1, 0, 1
 };
 
-static const char _http_parser_content_range_index_offsets[] = {
+static const char _content_range_index_offsets[] = {
 	0, 0, 2, 4, 6, 8, 10, 12, 
 	15, 17, 20, 23, 25, 28, 29
 };
 
-static const char _http_parser_content_range_trans_targs[] = {
+static const char _content_range_trans_targs[] = {
 	2, 0, 3, 0, 4, 0, 5, 0, 
 	6, 0, 7, 0, 8, 10, 0, 9, 
 	0, 13, 14, 0, 11, 10, 0, 12, 
 	0, 9, 12, 0, 0, 14, 0, 0
 };
 
-static const char _http_parser_content_range_trans_actions[] = {
+static const char _content_range_trans_actions[] = {
 	0, 0, 0, 0, 0, 0, 0, 0, 
 	0, 0, 0, 0, 0, 1, 0, 0, 
 	0, 0, 1, 0, 3, 0, 0, 1, 
 	0, 5, 0, 0, 0, 0, 0, 0
 };
 
-static const char _http_parser_content_range_eof_actions[] = {
+static const char _content_range_eof_actions[] = {
 	0, 0, 0, 0, 0, 0, 0, 0, 
 	0, 0, 0, 0, 0, 0, 7
 };
 
-static const int http_parser_content_range_start = 1;
-static const int http_parser_content_range_error = 0;
+static const int content_range_start = 1;
+static const int content_range_error = 0;
 
-static const int http_parser_content_range_en_main = 1;
+static const int content_range_en_main = 1;
 
 
 #line 118 "htp_http_parsers.c"
 	{
-	cs = http_parser_content_range_start;
+	cs = content_range_start;
 	}
 
 #line 123 "htp_http_parsers.c"
@@ -132,10 +132,10 @@ static const int http_parser_content_range_en_main = 1;
 	if ( cs == 0 )
 		goto _out;
 _resume:
-	_keys = _http_parser_content_range_trans_keys + _http_parser_content_range_key_offsets[cs];
-	_trans = _http_parser_content_range_index_offsets[cs];
+	_keys = _content_range_trans_keys + _content_range_key_offsets[cs];
+	_trans = _content_range_index_offsets[cs];
 
-	_klen = _http_parser_content_range_single_lengths[cs];
+	_klen = _content_range_single_lengths[cs];
 	if ( _klen > 0 ) {
 		const char *_lower = _keys;
 		const char *_mid;
@@ -158,7 +158,7 @@ _resume:
 		_trans += _klen;
 	}
 
-	_klen = _http_parser_content_range_range_lengths[cs];
+	_klen = _content_range_range_lengths[cs];
 	if ( _klen > 0 ) {
 		const char *_lower = _keys;
 		const char *_mid;
@@ -181,12 +181,12 @@ _resume:
 	}
 
 _match:
-	cs = _http_parser_content_range_trans_targs[_trans];
+	cs = _content_range_trans_targs[_trans];
 
-	if ( _http_parser_content_range_trans_actions[_trans] == 0 )
+	if ( _content_range_trans_actions[_trans] == 0 )
 		goto _again;
 
-	_acts = _http_parser_content_range_actions + _http_parser_content_range_trans_actions[_trans];
+	_acts = _content_range_actions + _content_range_trans_actions[_trans];
 	_nacts = (unsigned int) *_acts++;
 	while ( _nacts-- > 0 )
 	{
@@ -202,14 +202,14 @@ _match:
 #line 66 "htp_http_parsers.rl"
 	{
             p_first_byte_pos = bstr_util_mem_to_pint(mark, p - mark, 10, NULL);
-            if (p_first_byte_pos < -1) p_first_byte_pos = -1;
+            if (p_first_byte_pos < -1) cs = (content_range_error);
         }
 	break;
 	case 2:
 #line 71 "htp_http_parsers.rl"
 	{
             p_last_byte_pos = bstr_util_mem_to_pint(mark, p - mark, 10, NULL);
-            if (p_last_byte_pos < -1) p_last_byte_pos = -1;
+            if (p_last_byte_pos < -1) cs = (content_range_error);
         }
 	break;
 #line 216 "htp_http_parsers.c"
@@ -224,7 +224,7 @@ _again:
 	_test_eof: {}
 	if ( p == eof )
 	{
-	const char *__acts = _http_parser_content_range_actions + _http_parser_content_range_eof_actions[cs];
+	const char *__acts = _content_range_actions + _content_range_eof_actions[cs];
 	unsigned int __nacts = (unsigned int) *__acts++;
 	while ( __nacts-- > 0 ) {
 		switch ( *__acts++ ) {
@@ -232,7 +232,7 @@ _again:
 #line 76 "htp_http_parsers.rl"
 	{
             p_instance_length = bstr_util_mem_to_pint(mark, p - mark, 10, NULL);
-            if (p_instance_length < -1) p_last_byte_pos = -1;
+            if (p_instance_length < -1) cs = (content_range_error);
         }
 	break;
 #line 239 "htp_http_parsers.c"
@@ -246,10 +246,14 @@ _again:
 #line 100 "htp_http_parsers.rl"
 
 
-    if (cs == http_parser_content_range_error) return HTP_ERROR;
+    if (cs < 
+#line 251 "htp_http_parsers.c"
+13
+#line 102 "htp_http_parsers.rl"
+) return HTP_ERROR;
 
     // Temporary workaround to avoid the unused variable error.
-    cs = http_parser_content_range_en_main;
+    cs = content_range_en_main;
 
     *first_byte_pos = p_first_byte_pos;
     *last_byte_pos = p_last_byte_pos;

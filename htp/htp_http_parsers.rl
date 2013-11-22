@@ -55,7 +55,7 @@ htp_status_t htp_parse_content_range(void *data, size_t len, int64_t *first_byte
     int64_t p_instance_length = -1;
 
     %%{
-        machine http_parser_content_range;
+        machine content_range;
 
         write data nofinal;
 
@@ -65,17 +65,17 @@ htp_status_t htp_parse_content_range(void *data, size_t len, int64_t *first_byte
 
         action first_byte_pos {
             p_first_byte_pos = bstr_util_mem_to_pint(mark, fpc - mark, 10, NULL);
-            if (p_first_byte_pos < -1) p_first_byte_pos = -1;
+            if (p_first_byte_pos < -1) fnext *content_range_error;
         }
 
         action last_byte_pos {
             p_last_byte_pos = bstr_util_mem_to_pint(mark, fpc - mark, 10, NULL);
-            if (p_last_byte_pos < -1) p_last_byte_pos = -1;
+            if (p_last_byte_pos < -1) fnext *content_range_error;
         }
 
         action instance_length {
             p_instance_length = bstr_util_mem_to_pint(mark, fpc - mark, 10, NULL);
-            if (p_instance_length < -1) p_last_byte_pos = -1;
+            if (p_instance_length < -1) fnext *content_range_error;
         }
 
         SP = ' ';
@@ -99,10 +99,10 @@ htp_status_t htp_parse_content_range(void *data, size_t len, int64_t *first_byte
 
     }%%
 
-    if (cs == http_parser_content_range_error) return HTP_ERROR;
+    if (cs < %%{ write first_final; }%%) return HTP_ERROR;
 
     // Temporary workaround to avoid the unused variable error.
-    cs = http_parser_content_range_en_main;
+    cs = content_range_en_main;
 
     *first_byte_pos = p_first_byte_pos;
     *last_byte_pos = p_last_byte_pos;
