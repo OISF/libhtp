@@ -555,11 +555,19 @@ struct htp_tx_data_t {
     size_t len;
 
     /**
-     * Indicator if this chunk of data is the last in the series. Currently
-     * used only by REQUEST_HEADER_DATA, REQUEST_TRAILER_DATA, RESPONSE_HEADER_DATA,
-     * and RESPONSE_TRAILER_DATA callbacks.
+     * Indicator if this chunk of data is the last in the series. Used by REQUEST_HEADER_DATA,
+     * REQUEST_TRAILER_DATA, RESPONSE_HEADER_DATA, and RESPONSE_TRAILER_DATA callbacks.
      */
     int is_last;
+
+    /**
+     * The position of the first byte in the document. When ranges are not used, the entire
+     * document is sent in an HTTP message, which means that the offset here will be the same
+     * as the (request or response) body offset after decompression. However, when ranges are
+     * used, only the server sees the entire document; that means that the value here will be
+     * different. Currently used by REQUEST_BODY_DATA and RESPONSE_BODY_DATA callbacks.
+     */
+    size_t offset;
 };
 
 /**

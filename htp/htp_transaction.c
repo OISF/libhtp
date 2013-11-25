@@ -557,16 +557,17 @@ htp_status_t htp_tx_req_process_body_data_ex(htp_tx_t *tx, const void *data, siz
     // NULL data is allowed in this private function; it's
     // used to indicate the end of request body.
 
-    // Keep track of the body length.
-    tx->request_entity_len += len;
-
-    // Send data to the callbacks.
-
+    // Prepare the data for the callbacks.
     htp_tx_data_t d;
     d.tx = tx;
     d.data = (unsigned char *) data;
     d.len = len;
+    d.offset = tx->request_entity_len;
 
+    // Keep track of the request body length.
+    tx->request_entity_len += len;
+
+    // Run the hook.
     htp_status_t rc = htp_req_run_hook_body_data(tx->connp, &d);
     if (rc != HTP_OK) {
         htp_log(tx->connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Request body data callback returned error (%d)", rc);
@@ -742,7 +743,7 @@ static htp_status_t htp_tx_res_process_body_data_decompressor_callback(htp_tx_da
     // Keep track of actual response body length.
     d->tx->response_entity_len += d->len;
 
-    // Invoke all callbacks.
+    // Run the book.
     htp_status_t rc = htp_res_run_hook_body_data(d->tx->connp, d);
     if (rc != HTP_OK) return HTP_ERROR;
 
@@ -770,8 +771,9 @@ htp_status_t htp_tx_res_process_body_data_ex(htp_tx_t *tx, const void *data, siz
     d.tx = tx;
     d.data = (unsigned char *) data;
     d.len = len;
+    d.offset = tx->response_entity_len;
 
-    // Keep track of body size before decompression.
+    // Keep track of the response body size before decompression.
     tx->response_message_len += d.len;
 
     switch (tx->response_content_encoding_processing) {
@@ -788,8 +790,7 @@ htp_status_t htp_tx_res_process_body_data_ex(htp_tx_t *tx, const void *data, siz
             break;
 
         case HTP_COMPRESSION_NONE:
-            // When there's no decompression, response_entity_len.
-            // is identical to response_message_len.
+            // When there's no decompression, the entity length is identical to the message length.
             tx->response_entity_len += d.len;
 
             htp_status_t rc = htp_res_run_hook_body_data(tx->connp, &d);
