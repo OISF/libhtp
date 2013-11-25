@@ -896,7 +896,7 @@ void htp_utf8_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
     uint32_t counter = 0;
     uint8_t seen_valid = 0;
 
-    while (rpos < len) {
+    while ((rpos < len)&&(wpos < len)) {
         counter++;
 
         switch (htp_utf8_decode_allow_overlong(&state, &codepoint, data[rpos])) {
@@ -953,14 +953,18 @@ void htp_utf8_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
                     tx->response_status_expected_number = cfg->decoder_cfgs[HTP_DECODER_URL_PATH].utf8_invalid_unwanted;
                 }
 
-                // Override the decoder state because we want to continue decoding.
-                state = HTP_UTF8_ACCEPT;
-
-                // Output the replacement byte, replacing the invalid byte sequence.
+                // Output the replacement byte, replacing one or more invalid bytes.
                 data[wpos++] = cfg->decoder_cfgs[HTP_DECODER_URL_PATH].bestfit_replacement_byte;
 
-                // Advance over the consumed byte and reset the byte counter.
-                rpos++;
+                // If the invalid byte was first in a sequence, consume it. Otherwise,
+                // assume it's the starting byte of the next character.
+                if (counter == 1) {
+                    rpos++;
+                }
+
+                // Reset the decoder state and continue decoding.
+                state = HTP_UTF8_ACCEPT;
+                codepoint = 0;
                 counter = 0;
 
                 break;
@@ -1942,7 +1946,7 @@ void htp_normalize_uri_path_inplace(bstr *s) {
     size_t wpos = 0;
 
     int c = -1;
-    while (rpos < len) {
+    while ((rpos < len)&&(wpos < len)) {
         if (c == -1) {
             c = data[rpos++];
         }

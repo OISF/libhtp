@@ -1277,6 +1277,16 @@ TEST_F(DecodingTest, DecodePathInplace23_ConvertBackslash2) {
     bstr_free(i);
 }
 
+TEST_F(DecodingTest, InvalidUtf8) {
+    bstr *i = bstr_dup_c("\xf1.");
+    bstr *e = bstr_dup_c("?.");
+    htp_config_set_utf8_convert_bestfit(cfg, HTP_DECODER_URL_PATH, 1);
+    htp_utf8_decode_path_inplace(cfg, tx, i);
+    ASSERT_TRUE(bstr_cmp(i, e) == 0);
+    bstr_free(e);
+    bstr_free(i);
+}
+
 class UrlencodedParser : public testing::Test {
 protected:
 
