@@ -567,7 +567,7 @@ struct htp_tx_data_t {
      * used, only the server sees the entire document; that means that the value here will be
      * different. Currently used by REQUEST_BODY_DATA and RESPONSE_BODY_DATA callbacks.
      */
-    size_t offset;
+    int64_t offset;
 };
 
 /**

@@ -261,8 +261,6 @@ int test_run(const char *testsdir, const char *testname, htp_cfg_t *cfg, htp_con
     struct timeval tv_start, tv_end;
     int rc;
 
-    *connp = NULL;
-
     strncpy(filename, testsdir, 1024);
     strncat(filename, "/", 1024 - strlen(filename));
     strncat(filename, testname, 1024 - strlen(filename));
@@ -281,13 +279,13 @@ int test_run(const char *testsdir, const char *testname, htp_cfg_t *cfg, htp_con
     test_start(&test);
 
     // Create parser
-    *connp = htp_connp_create(cfg);
     if (*connp == NULL) {
-        fprintf(stderr, "Failed to create connection parser\n");
-        exit(1);
+        *connp = htp_connp_create(cfg);
+        if (*connp == NULL) {
+            fprintf(stderr, "Failed to create connection parser\n");
+            exit(1);
+        }
     }
-
-    htp_connp_set_user_data(*connp, (void *) 0x02);
 
     // Does the filename contain connection metdata?
     if (strncmp(testname, "stream", 6) == 0) {

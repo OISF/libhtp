@@ -740,6 +740,8 @@ static htp_status_t htp_tx_res_process_body_data_decompressor_callback(htp_tx_da
     fprint_raw_data(stderr, __FUNCTION__, d->data, d->len);
     #endif
 
+    d->offset = d->tx->response_entity_len;
+
     // Keep track of actual response body length.
     d->tx->response_entity_len += d->len;
 
@@ -770,8 +772,7 @@ htp_status_t htp_tx_res_process_body_data_ex(htp_tx_t *tx, const void *data, siz
 
     d.tx = tx;
     d.data = (unsigned char *) data;
-    d.len = len;
-    d.offset = tx->response_entity_len;
+    d.len = len;    
 
     // Keep track of the response body size before decompression.
     tx->response_message_len += d.len;
@@ -790,6 +791,8 @@ htp_status_t htp_tx_res_process_body_data_ex(htp_tx_t *tx, const void *data, siz
             break;
 
         case HTP_COMPRESSION_NONE:
+            d.offset = tx->response_entity_len;
+            
             // When there's no decompression, the entity length is identical to the message length.
             tx->response_entity_len += d.len;
 

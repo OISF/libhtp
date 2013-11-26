@@ -196,7 +196,7 @@ protected:
     }
 
     virtual void TearDown() {
-        CloseConnParser( );
+        CloseConnParser();
         htp_connp_destroy_all(connp);
         htp_config_destroy(cfg);
         testing::Test::TearDown();

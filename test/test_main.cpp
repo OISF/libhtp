@@ -56,12 +56,27 @@ protected:
         htp_config_set_server_personality(cfg, HTP_SERVER_APACHE_2);
         htp_config_register_urlencoded_parser(cfg);
         htp_config_register_multipart_parser(cfg);
+
+        connp = htp_connp_create(cfg);
+        htp_connp_set_user_data(connp, this);
+
+//        request_body_complete = 0;
+ //       request_body_error = 0;
+  //      request_body_counter = 0;
     }
 
     virtual void TearDown() {
         htp_connp_destroy_all(connp);
         htp_config_destroy(cfg);
     }
+
+public:
+
+    //int request_body_complete;
+
+   // int request_body_error;
+//
+ //   int request_body_counter;
 
     htp_connp_t *connp;
 
@@ -1916,4 +1931,81 @@ TEST_F(ConnectionParsing, ResponseContentRange_Invalid) {
     ASSERT_EQ(11, tx2->response_last_byte_pos);
     ASSERT_EQ(422279, tx2->response_instance_length);
     ASSERT_TRUE(tx2->flags & HTP_FIELD_INVALID);
+}
+
+class RequestBodyParsing : public ConnectionParsing {
+protected:
+
+    virtual void SetUp() {
+        ConnectionParsing::SetUp();
+    
+        complete = 0;
+        error = 0;
+        counter = 0;
+    }
+
+public:
+
+    int complete;
+
+    int error;
+
+    int counter;
+
+    static const int expected_offsets[];
+};
+
+const int RequestBodyParsing::expected_offsets[]= { 0, 8192, 16384, 24576, 32768, 40960, 49152, 57344, 65536,
+        73728, 81920,90112, 98304, 106496, 114688, 122880, 131072, 139264, 147456, 155648, 0 };
+
+static int ResponseBodyOffsetTest1_Callback_RESPONSE_BODY_DATA(htp_tx_data_t *d) {
+    RequestBodyParsing *user_data = (RequestBodyParsing *) htp_connp_get_user_data(d->tx->connp);
+
+    if ((user_data->counter != 0)&&(user_data->expected_offsets[user_data->counter] == 0)) {
+        user_data->error = 1;
+        return HTP_OK;
+    }
+
+    if (user_data->expected_offsets[user_data->counter] != d->offset) {
+        user_data->error = 1;
+        return HTP_OK;
+    }
+
+    user_data->counter++;
+
+    return HTP_OK;
+}
+
+static int ResponseBodyOffsetTest1_Callback_RESPONSE_COMPLETE(htp_tx_t *tx) {
+    RequestBodyParsing *user_data = (RequestBodyParsing *) htp_connp_get_user_data(tx->connp);
+
+    if (user_data->expected_offsets[user_data->counter] != 0) {
+        user_data->error = 1;
+    }
+
+    user_data->complete = 1;
+    
+    return HTP_OK;
+}
+
+TEST_F(RequestBodyParsing, ResponseBodyOffsetTest1) {
+    htp_config_register_response_body_data(cfg, ResponseBodyOffsetTest1_Callback_RESPONSE_BODY_DATA);
+    htp_config_register_response_complete(cfg, ResponseBodyOffsetTest1_Callback_RESPONSE_COMPLETE);
+
+    int rc = test_run(home, "14-compressed-response-gzip-chunked.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+
+    ASSERT_EQ(0, this->error);
+    ASSERT_EQ(1, this->complete);
+
+    ASSERT_EQ(1, htp_list_size(connp->conn->transactions));
+
+    htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+
+    ASSERT_TRUE(htp_tx_is_complete(tx));
+
+    ASSERT_EQ(28261, tx->response_message_len);
+
+    ASSERT_EQ(159590, tx->response_entity_len);
 }
