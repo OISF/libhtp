@@ -8,7 +8,10 @@
 
 - [#57] Added support for Content-Range response headers. When this header is
   detected, the values htp_tx_t::response_first_byte_pos, htp_tx_t::response_last_byte_pos,
-  and htp_tx_t::response_instance_length are populated.
+  and htp_tx_t::response_instance_length are populated. Also added htp_tx_data::offset,
+  which contains the offset of the first byte in the supplied data chunk. When
+  processing partial (206) responses, this offset specifies the offset in the server-held
+  document, only parts of which are sent via HTTP.
 
 
 0.5.9 (19 November 2013)

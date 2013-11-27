@@ -9,6 +9,8 @@
 
 - The hook_request_file_data() callback is no longer invoked on PUT requests.
 
+- Added htp_tx_data_t::offset, which contains the offset of the first byte (where applicable).
+
 
 0.4
 ---

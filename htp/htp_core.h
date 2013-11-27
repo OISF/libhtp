@@ -229,6 +229,7 @@ enum htp_file_source_t {
 #define HTP_REQUEST_INVALID                0x100000000
 #define HTP_REQUEST_INVALID_C_L            0x200000000
 #define HTP_AUTH_INVALID                   0x400000000
+#define HTP_RESPONSE_INVALID               0x800000000
 
 #define HTP_HOST_INVALID ( HTP_HOSTU_INVALID | HTP_HOSTH_INVALID )
 

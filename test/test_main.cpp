@@ -2063,6 +2063,29 @@ TEST_F(BodyDataOffset, ResponseBodyData_Chunked) {
     ASSERT_EQ(10, tx->response_entity_len);
 }
 
+TEST_F(BodyDataOffset, ResponseBodyData_Range) {
+    static int my_expected_offsets[] = { 6, 13, 0 };
+    this->expected_offsets = (int *)&my_expected_offsets;
+
+    htp_config_register_response_body_data(cfg, BodyDataOffset_Callback_BODY_DATA);
+    htp_config_register_response_complete(cfg, BodyDataOffset_Callback_BODY_COMPLETE);
+
+    int rc = test_run(home, "88-response-content-range.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+
+    ASSERT_EQ(0, this->error);
+    ASSERT_EQ(1, this->complete);
+
+    ASSERT_EQ(1, htp_list_size(connp->conn->transactions));
+
+    htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+    ASSERT_TRUE(htp_tx_is_complete(tx));
+
+    ASSERT_EQ(7, tx->response_message_len);
+    ASSERT_EQ(7, tx->response_entity_len);
+}
+
 TEST_F(BodyDataOffset, RequestBodyData_Chunked) {
     static int my_expected_offsets[] = { 0, 7, 11, 12, 0 };
     this->expected_offsets = (int *)&my_expected_offsets;
