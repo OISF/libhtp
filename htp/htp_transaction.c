@@ -1063,7 +1063,7 @@ htp_status_t htp_tx_state_response_headers(htp_tx_t *tx) {
         // The Content-Range header is invalid if the first byte position is
         // greater than the last byte position, or if the last byte position is
         // greater than instance length.
-        if ((tx->response_first_byte_pos >tx->response_last_byte_pos)
+        if ((tx->response_first_byte_pos > tx->response_last_byte_pos)
             ||((tx->response_instance_length != -1)&&(tx->response_last_byte_pos > tx->response_instance_length)))
         {
             tx->flags |= HTP_FIELD_INVALID;
