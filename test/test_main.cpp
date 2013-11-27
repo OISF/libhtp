@@ -1935,163 +1935,10 @@ TEST_F(ConnectionParsing, ResponseContentRange_Invalid) {
 
 // ----------------------------------------------------------------------------
 
-class ResponseBodyOffset1 : public ConnectionParsing {
-protected:
+static int BodyDataOffset_Callback_BODY_DATA(htp_tx_data_t *d);
+static int BodyDataOffset_Callback_BODY_COMPLETE(htp_tx_t *tx);
 
-    virtual void SetUp() {
-        ConnectionParsing::SetUp();
-    
-        complete = 0;
-        error = 0;
-        counter = 0;
-    }
-
-public:
-
-    int complete;
-
-    int error;
-
-    int counter;
-
-    static const int expected_offsets[];
-};
-
-const int ResponseBodyOffset1::expected_offsets[]= { 0, 8192, 16384, 24576, 32768, 40960, 49152, 57344, 65536,
-        73728, 81920,90112, 98304, 106496, 114688, 122880, 131072, 139264, 147456, 155648, 0 };
-
-static int ResponseBodyOffset1_Callback_RESPONSE_BODY_DATA(htp_tx_data_t *d) {
-    ResponseBodyOffset1 *user_data = (ResponseBodyOffset1 *) htp_connp_get_user_data(d->tx->connp);
-
-    if ((user_data->counter != 0)&&(user_data->expected_offsets[user_data->counter] == 0)) {
-        user_data->error = 1;
-        return HTP_OK;
-    }
-
-    if (user_data->expected_offsets[user_data->counter] != d->offset) {
-        user_data->error = 1;
-        return HTP_OK;
-    }
-
-    user_data->counter++;
-
-    return HTP_OK;
-}
-
-static int ResponseBodyOffset1_Callback_RESPONSE_COMPLETE(htp_tx_t *tx) {
-    ResponseBodyOffset1 *user_data = (ResponseBodyOffset1 *) htp_connp_get_user_data(tx->connp);
-
-    if (user_data->expected_offsets[user_data->counter] != 0) {
-        user_data->error = 1;
-    }
-
-    user_data->complete = 1;
-    
-    return HTP_OK;
-}
-
-TEST_F(ResponseBodyOffset1, Test) {
-    htp_config_register_response_body_data(cfg, ResponseBodyOffset1_Callback_RESPONSE_BODY_DATA);
-    htp_config_register_response_complete(cfg, ResponseBodyOffset1_Callback_RESPONSE_COMPLETE);
-
-    int rc = test_run(home, "14-compressed-response-gzip-chunked.t", cfg, &connp);
-    ASSERT_GE(rc, 0);
-
-    ASSERT_EQ(0, this->error);
-    ASSERT_EQ(1, this->complete);
-
-    ASSERT_EQ(1, htp_list_size(connp->conn->transactions));
-
-    htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
-    ASSERT_TRUE(tx != NULL);
-    ASSERT_TRUE(htp_tx_is_complete(tx));
-
-    ASSERT_EQ(28261, tx->response_message_len);
-    ASSERT_EQ(159590, tx->response_entity_len);
-}
-
-// ----------------------------------------------------------------------------
-
-class ResponseBodyOffset2 : public ConnectionParsing {
-protected:
-
-    virtual void SetUp() {
-        ConnectionParsing::SetUp();
-    
-        complete = 0;
-        error = 0;
-        counter = 0;
-    }
-
-public:
-
-    int complete;
-
-    int error;
-
-    int counter;
-
-    static const int expected_offsets[];
-};
-
-const int ResponseBodyOffset2::expected_offsets[]= { 0, 5, 12, 0 };
-
-static int ResponseBodyOffset2_Callback_RESPONSE_BODY_DATA(htp_tx_data_t *d) {
-    ResponseBodyOffset2 *user_data = (ResponseBodyOffset2 *) htp_connp_get_user_data(d->tx->connp);
-
-    // printf("# Offset: %lld\n", d->offset);
-    // fprint_raw_data(stderr, "#", d->data, d->len);
-
-    if ((user_data->counter != 0)&&(user_data->expected_offsets[user_data->counter] == 0)) {
-        user_data->error = 1;
-        return HTP_OK;
-    }
-
-    if (user_data->expected_offsets[user_data->counter] != d->offset) {
-        user_data->error = 1;
-        return HTP_OK;
-    }
-
-    user_data->counter++;
-
-    return HTP_OK;
-}
-
-static int ResponseBodyOffset2_Callback_RESPONSE_COMPLETE(htp_tx_t *tx) {
-    ResponseBodyOffset2 *user_data = (ResponseBodyOffset2 *) htp_connp_get_user_data(tx->connp);
-
-    if (user_data->expected_offsets[user_data->counter] != 0) {
-        user_data->error = 1;
-    }
-
-    user_data->complete = 1;
-    
-    return HTP_OK;
-}
-
-TEST_F(ResponseBodyOffset2, Test) {
-    htp_config_register_response_body_data(cfg, ResponseBodyOffset2_Callback_RESPONSE_BODY_DATA);
-    htp_config_register_response_complete(cfg, ResponseBodyOffset2_Callback_RESPONSE_COMPLETE);
-
-    int rc = test_run(home, "72-response-split-body.t", cfg, &connp);
-    ASSERT_GE(rc, 0);
-
-    ASSERT_EQ(0, this->error);
-    ASSERT_EQ(1, this->complete);
-
-    ASSERT_EQ(1, htp_list_size(connp->conn->transactions));
-
-    htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
-    ASSERT_TRUE(tx != NULL);
-    ASSERT_TRUE(htp_tx_is_complete(tx));
-
-    ASSERT_EQ(12, tx->response_message_len);
-    ASSERT_EQ(12, tx->response_entity_len);
-}
-
-// ----------------------------------------------------------------------------
-
-class RequestBodyOffset1 : public ConnectionParsing {
+class BodyDataOffset : public ConnectionParsing {
 protected:
 
     virtual void SetUp() {
@@ -2110,15 +1957,13 @@ public:
 
     int counter;
 
-    static const int expected_offsets[];
+    int *expected_offsets;
 };
 
-const int RequestBodyOffset1::expected_offsets[]= { 0, 7, 11, 12, 0 };
+static int BodyDataOffset_Callback_BODY_DATA(htp_tx_data_t *d) {
+    BodyDataOffset *user_data = (BodyDataOffset *) htp_connp_get_user_data(d->tx->connp);
 
-static int RequestBodyOffset1_Callback_REQUEST_BODY_DATA(htp_tx_data_t *d) {
-    RequestBodyOffset1 *user_data = (RequestBodyOffset1 *) htp_connp_get_user_data(d->tx->connp);
-
-    //printf("# Offset: %lld\n", d->offset);
+    //fprintf(stderr, "Offset: %llu\n", d->offset);
     //fprint_raw_data(stderr, "#", d->data, d->len);
 
     if ((user_data->counter != 0)&&(user_data->expected_offsets[user_data->counter] == 0)) {
@@ -2136,21 +1981,71 @@ static int RequestBodyOffset1_Callback_REQUEST_BODY_DATA(htp_tx_data_t *d) {
     return HTP_OK;
 }
 
-static int RequestBodyOffset1_Callback_REQUEST_COMPLETE(htp_tx_t *tx) {
-    RequestBodyOffset1 *user_data = (RequestBodyOffset1 *) htp_connp_get_user_data(tx->connp);
+static int BodyDataOffset_Callback_BODY_COMPLETE(htp_tx_t *tx) {
+    BodyDataOffset *user_data = (BodyDataOffset *) htp_connp_get_user_data(tx->connp);
 
     if (user_data->expected_offsets[user_data->counter] != 0) {
         user_data->error = 1;
     }
 
     user_data->complete = 1;
-
+    
     return HTP_OK;
 }
 
-TEST_F(RequestBodyOffset1, Test) {
-    htp_config_register_request_body_data(cfg, RequestBodyOffset1_Callback_REQUEST_BODY_DATA);
-    htp_config_register_request_complete(cfg, RequestBodyOffset1_Callback_REQUEST_COMPLETE);
+TEST_F(BodyDataOffset, ResponseBodyData_CompressedChunked) {
+    static int my_expected_offsets[]= { 0, 8192, 16384, 24576, 32768, 40960, 49152, 57344, 65536,
+        73728, 81920,90112, 98304, 106496, 114688, 122880, 131072, 139264, 147456, 155648, 0 };
+    this->expected_offsets = (int *)&my_expected_offsets;
+
+    htp_config_register_response_body_data(cfg, BodyDataOffset_Callback_BODY_DATA);
+    htp_config_register_response_complete(cfg, BodyDataOffset_Callback_BODY_COMPLETE);
+    
+    int rc = test_run(home, "14-compressed-response-gzip-chunked.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+
+    ASSERT_EQ(0, this->error);
+    ASSERT_EQ(1, this->complete);
+
+    ASSERT_EQ(1, htp_list_size(connp->conn->transactions));
+
+    htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+    ASSERT_TRUE(htp_tx_is_complete(tx));
+
+    ASSERT_EQ(28261, tx->response_message_len);
+    ASSERT_EQ(159590, tx->response_entity_len);
+}
+
+TEST_F(BodyDataOffset, ResponseBodyData_Plain) {
+    static int my_expected_offsets[] = { 0, 5, 12, 0 };
+    this->expected_offsets = (int *)&my_expected_offsets;
+
+    htp_config_register_response_body_data(cfg, BodyDataOffset_Callback_BODY_DATA);
+    htp_config_register_response_complete(cfg, BodyDataOffset_Callback_BODY_COMPLETE);
+
+    int rc = test_run(home, "72-response-split-body.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+
+    ASSERT_EQ(0, this->error);
+    ASSERT_EQ(1, this->complete);
+
+    ASSERT_EQ(1, htp_list_size(connp->conn->transactions));
+
+    htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+    ASSERT_TRUE(htp_tx_is_complete(tx));
+
+    ASSERT_EQ(12, tx->response_message_len);
+    ASSERT_EQ(12, tx->response_entity_len);
+}
+
+TEST_F(BodyDataOffset, RequestBodyData_Chunked) {
+    static int my_expected_offsets[] = { 0, 7, 11, 12, 0 };
+    this->expected_offsets = (int *)&my_expected_offsets;
+
+    htp_config_register_request_body_data(cfg, BodyDataOffset_Callback_BODY_DATA);
+    htp_config_register_request_complete(cfg, BodyDataOffset_Callback_BODY_COMPLETE);
 
     int rc = test_run(home, "66-post-chunked-split-chunk.t", cfg, &connp);
     ASSERT_GE(rc, 0);
