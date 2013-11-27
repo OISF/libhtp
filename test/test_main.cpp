@@ -2012,6 +2012,85 @@ TEST_F(ResponseBodyOffset1, Test) {
 
 // ----------------------------------------------------------------------------
 
+class ResponseBodyOffset2 : public ConnectionParsing {
+protected:
+
+    virtual void SetUp() {
+        ConnectionParsing::SetUp();
+    
+        complete = 0;
+        error = 0;
+        counter = 0;
+    }
+
+public:
+
+    int complete;
+
+    int error;
+
+    int counter;
+
+    static const int expected_offsets[];
+};
+
+const int ResponseBodyOffset2::expected_offsets[]= { 0, 5, 12, 0 };
+
+static int ResponseBodyOffset2_Callback_RESPONSE_BODY_DATA(htp_tx_data_t *d) {
+    ResponseBodyOffset2 *user_data = (ResponseBodyOffset2 *) htp_connp_get_user_data(d->tx->connp);
+
+    // printf("# Offset: %lld\n", d->offset);
+    // fprint_raw_data(stderr, "#", d->data, d->len);
+
+    if ((user_data->counter != 0)&&(user_data->expected_offsets[user_data->counter] == 0)) {
+        user_data->error = 1;
+        return HTP_OK;
+    }
+
+    if (user_data->expected_offsets[user_data->counter] != d->offset) {
+        user_data->error = 1;
+        return HTP_OK;
+    }
+
+    user_data->counter++;
+
+    return HTP_OK;
+}
+
+static int ResponseBodyOffset2_Callback_RESPONSE_COMPLETE(htp_tx_t *tx) {
+    ResponseBodyOffset2 *user_data = (ResponseBodyOffset2 *) htp_connp_get_user_data(tx->connp);
+
+    if (user_data->expected_offsets[user_data->counter] != 0) {
+        user_data->error = 1;
+    }
+
+    user_data->complete = 1;
+    
+    return HTP_OK;
+}
+
+TEST_F(ResponseBodyOffset2, Test) {
+    htp_config_register_response_body_data(cfg, ResponseBodyOffset2_Callback_RESPONSE_BODY_DATA);
+    htp_config_register_response_complete(cfg, ResponseBodyOffset2_Callback_RESPONSE_COMPLETE);
+
+    int rc = test_run(home, "72-response-split-body.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+
+    ASSERT_EQ(0, this->error);
+    ASSERT_EQ(1, this->complete);
+
+    ASSERT_EQ(1, htp_list_size(connp->conn->transactions));
+
+    htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+    ASSERT_TRUE(htp_tx_is_complete(tx));
+
+    ASSERT_EQ(12, tx->response_message_len);
+    ASSERT_EQ(12, tx->response_entity_len);
+}
+
+// ----------------------------------------------------------------------------
+
 class RequestBodyOffsetTest : public ConnectionParsing {
 protected:
 
@@ -2088,3 +2167,5 @@ TEST_F(RequestBodyOffsetTest, RequestBodyOffsetTest1) {
     ASSERT_EQ(25, tx->request_message_len);
     ASSERT_EQ(12, tx->request_entity_len);
 }
+
+// ----------------------------------------------------------------------------
