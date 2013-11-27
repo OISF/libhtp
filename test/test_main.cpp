@@ -2091,7 +2091,7 @@ TEST_F(ResponseBodyOffset2, Test) {
 
 // ----------------------------------------------------------------------------
 
-class RequestBodyOffsetTest : public ConnectionParsing {
+class RequestBodyOffset1 : public ConnectionParsing {
 protected:
 
     virtual void SetUp() {
@@ -2113,10 +2113,10 @@ public:
     static const int expected_offsets[];
 };
 
-const int RequestBodyOffsetTest::expected_offsets[]= { 0, 7, 11, 12, 0 };
+const int RequestBodyOffset1::expected_offsets[]= { 0, 7, 11, 12, 0 };
 
-static int RequestBodyOffsetTest1_Callback_REQUEST_BODY_DATA(htp_tx_data_t *d) {
-    RequestBodyOffsetTest *user_data = (RequestBodyOffsetTest *) htp_connp_get_user_data(d->tx->connp);
+static int RequestBodyOffset1_Callback_REQUEST_BODY_DATA(htp_tx_data_t *d) {
+    RequestBodyOffset1 *user_data = (RequestBodyOffset1 *) htp_connp_get_user_data(d->tx->connp);
 
     //printf("# Offset: %lld\n", d->offset);
     //fprint_raw_data(stderr, "#", d->data, d->len);
@@ -2136,8 +2136,8 @@ static int RequestBodyOffsetTest1_Callback_REQUEST_BODY_DATA(htp_tx_data_t *d) {
     return HTP_OK;
 }
 
-static int RequestBodyOffsetTest1_Callback_REQUEST_COMPLETE(htp_tx_t *tx) {
-    RequestBodyOffsetTest *user_data = (RequestBodyOffsetTest *) htp_connp_get_user_data(tx->connp);
+static int RequestBodyOffset1_Callback_REQUEST_COMPLETE(htp_tx_t *tx) {
+    RequestBodyOffset1 *user_data = (RequestBodyOffset1 *) htp_connp_get_user_data(tx->connp);
 
     if (user_data->expected_offsets[user_data->counter] != 0) {
         user_data->error = 1;
@@ -2148,9 +2148,9 @@ static int RequestBodyOffsetTest1_Callback_REQUEST_COMPLETE(htp_tx_t *tx) {
     return HTP_OK;
 }
 
-TEST_F(RequestBodyOffsetTest, RequestBodyOffsetTest1) {
-    htp_config_register_request_body_data(cfg, RequestBodyOffsetTest1_Callback_REQUEST_BODY_DATA);
-    htp_config_register_request_complete(cfg, RequestBodyOffsetTest1_Callback_REQUEST_COMPLETE);
+TEST_F(RequestBodyOffset1, Test) {
+    htp_config_register_request_body_data(cfg, RequestBodyOffset1_Callback_REQUEST_BODY_DATA);
+    htp_config_register_request_complete(cfg, RequestBodyOffset1_Callback_REQUEST_COMPLETE);
 
     int rc = test_run(home, "66-post-chunked-split-chunk.t", cfg, &connp);
     ASSERT_GE(rc, 0);
