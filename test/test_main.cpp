@@ -59,10 +59,6 @@ protected:
 
         connp = htp_connp_create(cfg);
         htp_connp_set_user_data(connp, this);
-
-//        request_body_complete = 0;
- //       request_body_error = 0;
-  //      request_body_counter = 0;
     }
 
     virtual void TearDown() {
@@ -71,12 +67,6 @@ protected:
     }
 
 public:
-
-    //int request_body_complete;
-
-   // int request_body_error;
-//
- //   int request_body_counter;
 
     htp_connp_t *connp;
 
