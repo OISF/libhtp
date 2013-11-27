@@ -1933,7 +1933,9 @@ TEST_F(ConnectionParsing, ResponseContentRange_Invalid) {
     ASSERT_TRUE(tx2->flags & HTP_FIELD_INVALID);
 }
 
-class RequestBodyParsing : public ConnectionParsing {
+// ----------------------------------------------------------------------------
+
+class ResponseBodyOffset1 : public ConnectionParsing {
 protected:
 
     virtual void SetUp() {
@@ -1955,11 +1957,11 @@ public:
     static const int expected_offsets[];
 };
 
-const int RequestBodyParsing::expected_offsets[]= { 0, 8192, 16384, 24576, 32768, 40960, 49152, 57344, 65536,
+const int ResponseBodyOffset1::expected_offsets[]= { 0, 8192, 16384, 24576, 32768, 40960, 49152, 57344, 65536,
         73728, 81920,90112, 98304, 106496, 114688, 122880, 131072, 139264, 147456, 155648, 0 };
 
-static int ResponseBodyOffsetTest1_Callback_RESPONSE_BODY_DATA(htp_tx_data_t *d) {
-    RequestBodyParsing *user_data = (RequestBodyParsing *) htp_connp_get_user_data(d->tx->connp);
+static int ResponseBodyOffset1_Callback_RESPONSE_BODY_DATA(htp_tx_data_t *d) {
+    ResponseBodyOffset1 *user_data = (ResponseBodyOffset1 *) htp_connp_get_user_data(d->tx->connp);
 
     if ((user_data->counter != 0)&&(user_data->expected_offsets[user_data->counter] == 0)) {
         user_data->error = 1;
@@ -1976,8 +1978,8 @@ static int ResponseBodyOffsetTest1_Callback_RESPONSE_BODY_DATA(htp_tx_data_t *d)
     return HTP_OK;
 }
 
-static int ResponseBodyOffsetTest1_Callback_RESPONSE_COMPLETE(htp_tx_t *tx) {
-    RequestBodyParsing *user_data = (RequestBodyParsing *) htp_connp_get_user_data(tx->connp);
+static int ResponseBodyOffset1_Callback_RESPONSE_COMPLETE(htp_tx_t *tx) {
+    ResponseBodyOffset1 *user_data = (ResponseBodyOffset1 *) htp_connp_get_user_data(tx->connp);
 
     if (user_data->expected_offsets[user_data->counter] != 0) {
         user_data->error = 1;
@@ -1988,9 +1990,9 @@ static int ResponseBodyOffsetTest1_Callback_RESPONSE_COMPLETE(htp_tx_t *tx) {
     return HTP_OK;
 }
 
-TEST_F(RequestBodyParsing, ResponseBodyOffsetTest1) {
-    htp_config_register_response_body_data(cfg, ResponseBodyOffsetTest1_Callback_RESPONSE_BODY_DATA);
-    htp_config_register_response_complete(cfg, ResponseBodyOffsetTest1_Callback_RESPONSE_COMPLETE);
+TEST_F(ResponseBodyOffset1, Test) {
+    htp_config_register_response_body_data(cfg, ResponseBodyOffset1_Callback_RESPONSE_BODY_DATA);
+    htp_config_register_response_complete(cfg, ResponseBodyOffset1_Callback_RESPONSE_COMPLETE);
 
     int rc = test_run(home, "14-compressed-response-gzip-chunked.t", cfg, &connp);
     ASSERT_GE(rc, 0);
@@ -2007,6 +2009,8 @@ TEST_F(RequestBodyParsing, ResponseBodyOffsetTest1) {
     ASSERT_EQ(28261, tx->response_message_len);
     ASSERT_EQ(159590, tx->response_entity_len);
 }
+
+// ----------------------------------------------------------------------------
 
 class RequestBodyOffsetTest : public ConnectionParsing {
 protected:
