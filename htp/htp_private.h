@@ -233,6 +233,8 @@ htp_status_t htp_tx_res_process_body_data_ex(htp_tx_t *tx, const void *data, siz
 htp_status_t htp_tx_urldecode_uri_inplace(htp_tx_t *tx, bstr *input);
 htp_status_t htp_tx_urldecode_params_inplace(htp_tx_t *tx, bstr *input);
 
+enum htp_content_encoding_t htp_determine_content_encoding(bstr *s);
+
 #ifdef	__cplusplus
 }
 #endif

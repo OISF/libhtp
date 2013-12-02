@@ -2558,3 +2558,15 @@ htp_uri_t *htp_uri_alloc() {
 char *htp_get_version(void) {
     return HTP_VERSION_STRING_FULL;
 }
+
+enum htp_content_encoding_t htp_determine_content_encoding(bstr *s) {
+    if ((bstr_cmp_c_nocase(s, "gzip") == 0) || (bstr_cmp_c_nocase(s, "x-gzip") == 0)) {
+        return HTP_COMPRESSION_GZIP;
+    } else if ((bstr_cmp_c_nocase(s, "deflate") == 0) || (bstr_cmp_c_nocase(s, "x-deflate") == 0)) {
+        return HTP_COMPRESSION_DEFLATE;
+    } else if (bstr_cmp_c_nocase(s, "identity") == 0) {
+        return HTP_COMPRESSION_NONE;
+    } else {
+        return HTP_COMPRESSION_UNKNOWN;
+    }
+}
