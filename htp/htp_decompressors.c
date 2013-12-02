@@ -54,8 +54,7 @@ static htp_status_t htp_gzip_decompressor_decompress(htp_decompressor_gzip_t *dr
     drec->stream.avail_in = d->len - consumed;
 
     while (drec->stream.avail_in != 0) {
-        // If there's no more data left in the
-        // buffer, send that information out.
+        // If the output buffer is full, empty it.
         if (drec->stream.avail_out == 0) {
             drec->crc = crc32(drec->crc, drec->buffer, GZIP_BUF_SIZE);
 
@@ -65,7 +64,7 @@ static htp_status_t htp_gzip_decompressor_decompress(htp_decompressor_gzip_t *dr
             d2.data = drec->buffer;
             d2.len = GZIP_BUF_SIZE;
 
-            // Send decompressed data to callback.
+            // Send decompressed data to the callback.
             htp_status_t callback_rc = drec->super.callback(&d2);
             if (callback_rc != HTP_OK) {
                 inflateEnd(&drec->stream);
