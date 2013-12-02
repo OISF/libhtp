@@ -770,7 +770,6 @@ htp_status_t htp_tx_res_process_body_data_ex(htp_tx_t *tx, const void *data, siz
     #endif
 
     htp_tx_data_t d;
-
     d.tx = tx;
     d.data = (unsigned char *) data;
     d.len = len;    
@@ -784,8 +783,8 @@ htp_status_t htp_tx_res_process_body_data_ex(htp_tx_t *tx, const void *data, siz
             // Send data buffer to the decompressor.
             tx->connp->out_decompressor->decompress(tx->connp->out_decompressor, &d);
 
+            // On the last invocation, shut down the decompressor.
             if (data == NULL) {
-                // Shut down the decompressor, if we used one.
                 tx->connp->out_decompressor->destroy(tx->connp->out_decompressor);
                 tx->connp->out_decompressor = NULL;
             }
@@ -794,7 +793,7 @@ htp_status_t htp_tx_res_process_body_data_ex(htp_tx_t *tx, const void *data, siz
         case HTP_COMPRESSION_NONE:
             d.offset = tx->response_range_offset + tx->response_entity_len;
             
-            // When there's no decompression, the entity length is identical to the message length.
+            // When there's no decompression, entity length is identical to the message length.
             tx->response_entity_len += d.len;
 
             htp_status_t rc = htp_res_run_hook_body_data(tx->connp, &d);
