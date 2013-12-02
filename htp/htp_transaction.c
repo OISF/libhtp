@@ -623,6 +623,8 @@ htp_status_t htp_tx_req_process_body_data(htp_tx_t *tx, const void *data, size_t
     if ((tx == NULL) || (data == NULL)) return HTP_ERROR;
     if (len == 0) return HTP_OK;
 
+    tx->request_message_len += len;
+
     return htp_tx_req_process_body_data_ex(tx, data, len);
 }
 
@@ -855,6 +857,10 @@ static htp_status_t htp_tx_res_process_body_data_decompressor_callback(htp_tx_da
 htp_status_t htp_tx_res_process_body_data(htp_tx_t *tx, const void *data, size_t len) {
     if ((tx == NULL) || (data == NULL)) return HTP_ERROR;
     if (len == 0) return HTP_OK;
+
+    // Keep track of the response body size before decompression.
+    tx->response_message_len += len;
+
     return htp_tx_res_process_body_data_ex(tx, data, len);
 }
 
@@ -871,10 +877,7 @@ htp_status_t htp_tx_res_process_body_data_ex(htp_tx_t *tx, const void *data, siz
     htp_tx_data_t d;
     d.tx = tx;
     d.data = (unsigned char *) data;
-    d.len = len;    
-
-    // Keep track of the response body size before decompression.
-    tx->response_message_len += d.len;
+    d.len = len;
 
     switch (tx->response_content_encoding_processing) {
         case HTP_COMPRESSION_GZIP:
