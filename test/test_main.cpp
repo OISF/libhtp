@@ -2123,3 +2123,19 @@ TEST_F(BodyDataOffset, RequestBodyData_Plain) {
 }
 
 // ----------------------------------------------------------------------------
+
+TEST_F(ConnectionParsing, CompressedRequest) {
+    int rc = test_run(home, "91-request-compression.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+
+    ASSERT_EQ(1, htp_list_size(connp->conn->transactions));
+
+    htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+
+    ASSERT_TRUE(htp_tx_is_complete(tx));
+
+    ASSERT_EQ(1355, tx->request_message_len);
+
+    ASSERT_EQ(2614, tx->request_entity_len);
+}

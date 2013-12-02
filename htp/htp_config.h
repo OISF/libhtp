@@ -537,7 +537,15 @@ void htp_config_set_path_separators_encoded_unwanted(htp_cfg_t *cfg, enum htp_de
 void htp_config_set_plusspace_decode(htp_cfg_t *cfg, enum htp_decoder_ctx_t ctx, int enabled);
 
 /**
- * Controls whether compressed response bodies will be automatically decompressed.
+ * Controls whether compressed request bodies will be decompressed.
+ *
+ * @param[in] cfg
+ * @param[in] enabled set to 1 to enable decompression, 0 otherwise
+ */
+void htp_config_set_request_decompression(htp_cfg_t *cfg, int enabled);
+
+/**
+ * Controls whether compressed response bodies will be decompressed.
  *
  * @param[in] cfg
  * @param[in] enabled set to 1 to enable decompression, 0 otherwise

@@ -305,8 +305,20 @@ struct htp_tx_t {
      */
     enum htp_transfer_coding_t request_transfer_coding;
 
-    /** Request body compression. */
+    /** Response body content encoding, which indicates if compression is used
+     * for the response body. This field is an interpretation of the information
+     * available in response headers.
+     */
     enum htp_content_encoding_t request_content_encoding;
+
+    /**
+     * Request body compression processing information, which is related to how
+     * the library is going to process (or has processed) a request body. Changing
+     * this field mid-processing can influence library actions. For example, setting
+     * this field to HTP_COMPRESSION_NONE in a RESPONSE_HEADERS callback will prevent
+     * decompression.
+     */
+    enum htp_content_encoding_t request_content_encoding_processing;
 
     /**
      * This field contain the request content type when that information is
@@ -508,7 +520,7 @@ struct htp_tx_t {
     enum htp_transfer_coding_t response_transfer_coding;
 
     /**
-     * Response body compression, which indicates if compression is used
+     * Response body content encoding, which indicates if compression is used
      * for the response body. This field is an interpretation of the information
      * available in response headers.
      */

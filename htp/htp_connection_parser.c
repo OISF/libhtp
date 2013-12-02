@@ -93,6 +93,11 @@ void htp_connp_destroy(htp_connp_t *connp) {
     if (connp->out_buf != NULL) {
         free(connp->out_buf);
     }
+
+    if (connp->in_decompressor != NULL) {
+        connp->in_decompressor->destroy(connp->in_decompressor);
+        connp->in_decompressor = NULL;
+    }
         
     if (connp->out_decompressor != NULL) {
         connp->out_decompressor->destroy(connp->out_decompressor);

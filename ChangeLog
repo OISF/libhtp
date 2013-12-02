@@ -13,6 +13,8 @@
   processing partial (206) responses, this offset specifies the offset in the server-held
   document, only parts of which are sent via HTTP.
 
+- Implemented #59: Support request body compression.
+
 
 0.5.9 (19 November 2013)
 ------------------------

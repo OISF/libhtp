@@ -645,7 +645,7 @@ htp_status_t htp_connp_REQ_HEADERS(htp_connp_t *connp) {
  */
 htp_status_t htp_connp_REQ_PROTOCOL(htp_connp_t *connp) {
     // Is this a short-style HTTP/0.9 request? If it is,
-    // we will not want to parse request headers.
+    // there are no request headers and no body.
     if (connp->in_tx->is_protocol_0_9 == 0) {
         // Switch to request header parsing.
         connp->in_state = htp_connp_REQ_HEADERS;

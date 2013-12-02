@@ -150,6 +150,7 @@ htp_cfg_t *htp_config_create(void) {
     cfg->field_limit_hard = HTP_FIELD_LIMIT_HARD;
     cfg->field_limit_soft = HTP_FIELD_LIMIT_SOFT;
     cfg->log_level = HTP_LOG_NOTICE;
+    cfg->request_decompression_enabled = 1;
     cfg->response_decompression_enabled = 1;
     cfg->parse_request_cookies = 1;
     cfg->parse_request_auth = 1;    
@@ -507,6 +508,11 @@ void htp_config_set_parse_request_auth(htp_cfg_t *cfg, int parse_request_auth) {
 void htp_config_set_parse_request_cookies(htp_cfg_t *cfg, int parse_request_cookies) {
     if (cfg == NULL) return;
     cfg->parse_request_cookies = parse_request_cookies;
+}
+
+void htp_config_set_request_decompression(htp_cfg_t *cfg, int enabled) {
+    if (cfg == NULL) return;
+    cfg->request_decompression_enabled = enabled;
 }
 
 void htp_config_set_response_decompression(htp_cfg_t *cfg, int enabled) {

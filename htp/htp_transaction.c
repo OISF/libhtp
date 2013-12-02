@@ -64,6 +64,7 @@ htp_tx_t *htp_tx_create(htp_connp_t *connp) {
     tx->request_progress = HTP_REQUEST_NOT_STARTED;
     tx->request_protocol_number = HTP_PROTOCOL_UNKNOWN;
     tx->request_content_length = -1;
+    tx->request_content_encoding = HTP_COMPRESSION_UNKNOWN;
 
     tx->parsed_uri_raw = htp_uri_alloc();
     if (tx->parsed_uri_raw == NULL) {
@@ -90,6 +91,7 @@ htp_tx_t *htp_tx_create(htp_connp_t *connp) {
     tx->response_status_number = HTP_STATUS_UNKNOWN;
     tx->response_protocol_number = HTP_PROTOCOL_UNKNOWN;
     tx->response_content_length = -1;
+    tx->response_content_encoding = HTP_COMPRESSION_UNKNOWN;
     tx->response_first_byte_pos = -1;
     tx->response_last_byte_pos = -1;
     tx->response_instance_length = -1;
@@ -354,6 +356,25 @@ void htp_tx_req_set_protocol_0_9(htp_tx_t *tx, int is_protocol_0_9) {
     }
 }
 
+static htp_status_t htp_tx_req_process_body_data_decompressor_callback(htp_tx_data_t *d) {
+    if (d == NULL) return HTP_ERROR;
+
+    #if HTP_DEBUG
+    fprint_raw_data(stderr, __FUNCTION__, d->data, d->len);
+    #endif
+
+    d->offset = d->tx->request_entity_len;
+
+    // Keep track of actual response body length.
+    d->tx->request_entity_len += d->len;
+
+    // Run the hook.
+    htp_status_t rc = htp_req_run_hook_body_data(d->tx->connp, d);
+    if (rc != HTP_OK) return HTP_ERROR;
+
+    return HTP_OK;
+}
+
 static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {
     if (tx == NULL) return HTP_ERROR;
 
@@ -439,7 +460,31 @@ static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {
     if (tx->request_transfer_coding == HTP_CODING_UNKNOWN) {
         tx->request_transfer_coding = HTP_CODING_INVALID;
         tx->flags |= HTP_REQUEST_INVALID;
-    }   
+    }
+
+
+
+    // Determine content encoding.
+
+    tx->request_content_encoding = HTP_COMPRESSION_NONE;
+
+    htp_header_t *ce = htp_table_get_c(tx->request_headers, "content-encoding");
+    if (ce != NULL) {
+        enum htp_content_encoding_t e = htp_determine_content_encoding(ce->value);
+        if (e != HTP_COMPRESSION_UNKNOWN) {
+            tx->request_content_encoding = e;
+        } else {
+            htp_log(tx->connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Unknown request content encoding");
+        }
+    }
+
+    // Configure decompression, if enabled in the configuration.
+    if (tx->connp->cfg->request_decompression_enabled) {
+        tx->request_content_encoding_processing = tx->request_content_encoding;
+    } else {
+        tx->request_content_encoding_processing = HTP_COMPRESSION_NONE;
+    }
+
 
     // Determine hostname.
 
@@ -450,6 +495,7 @@ static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {
     }
 
     tx->request_port_number = tx->parsed_uri->port_number;
+
 
     // Examine the Host header.
 
@@ -537,6 +583,34 @@ static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {
     rc = htp_hook_run_all(tx->connp->cfg->hook_request_headers, tx);
     if (rc != HTP_OK) return rc;
 
+    // Initialize the decompression engine as necessary. We can deal with three
+    // scenarios:
+    //
+    // 1. Decompression is enabled, compression indicated in headers, and we decompress.
+    //
+    // 2. As above, but the user disables decompression by setting request_content_encoding_processing
+    //    to COMPRESSION_NONE.
+    //
+    // 3. Decompression is disabled and we do not attempt to enable it, but the user
+    //    forces decompression by setting request_content_encoding_processing to one of the
+    //    supported algorithms.
+    if ((tx->request_content_encoding_processing == HTP_COMPRESSION_GZIP) || (tx->request_content_encoding_processing == HTP_COMPRESSION_DEFLATE)) {
+        if (tx->connp->in_decompressor != NULL) {
+            tx->connp->in_decompressor->destroy(tx->connp->out_decompressor);
+            tx->connp->in_decompressor = NULL;
+        }
+
+        tx->connp->in_decompressor = htp_gzip_decompressor_create(tx->connp, tx->request_content_encoding_processing);
+        if (tx->connp->in_decompressor == NULL) return HTP_ERROR;
+
+        tx->connp->in_decompressor->callback = htp_tx_req_process_body_data_decompressor_callback;
+    } else if (tx->request_content_encoding_processing != HTP_COMPRESSION_NONE) {
+        htp_log(tx->connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0,
+            "[Internal Error] Unknown request body compression type: %d",
+            tx->request_content_encoding_processing);
+        return HTP_ERROR;
+    }
+
     // We cannot proceed if the request is invalid.
     if (tx->flags & HTP_REQUEST_INVALID) {
         return HTP_ERROR;
@@ -558,21 +632,46 @@ htp_status_t htp_tx_req_process_body_data_ex(htp_tx_t *tx, const void *data, siz
     // NULL data is allowed in this private function; it's
     // used to indicate the end of request body.
 
+    #ifdef HTP_DEBUG
+    fprint_raw_data(stderr, __FUNCTION__, data, len);
+    #endif
+
     // Prepare the data for the callbacks.
     htp_tx_data_t d;
     d.tx = tx;
     d.data = (unsigned char *) data;
     d.len = len;
-    d.offset = tx->request_entity_len;
 
-    // Keep track of the request body length.
-    tx->request_entity_len += len;
+    switch (tx->request_content_encoding_processing) {
+        case HTP_COMPRESSION_GZIP:
+        case HTP_COMPRESSION_DEFLATE:
+            // Send data buffer to the decompressor.
+            tx->connp->in_decompressor->decompress(tx->connp->in_decompressor, &d);
 
-    // Run the hook.
-    htp_status_t rc = htp_req_run_hook_body_data(tx->connp, &d);
-    if (rc != HTP_OK) {
-        htp_log(tx->connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Request body data callback returned error (%d)", rc);
-        return HTP_ERROR;
+            // On the last invocation, shut down the decompressor.
+            if (data == NULL) {
+                tx->connp->in_decompressor->destroy(tx->connp->in_decompressor);
+                tx->connp->in_decompressor = NULL;
+            }
+            break;
+
+        case HTP_COMPRESSION_NONE:
+            d.offset = tx->request_entity_len;
+
+            // When there's no decompression, entity length is identical to the message length.
+            tx->request_entity_len += d.len;
+
+            htp_status_t rc = htp_req_run_hook_body_data(tx->connp, &d);
+            if (rc != HTP_OK) return HTP_ERROR;
+            break;
+
+        default:
+            // Internal error.
+            htp_log(tx->connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
+                    "[Internal Error] Invalid request_content_encoding_processing value: %d",
+                    tx->request_content_encoding_processing);
+            return HTP_ERROR;
+            break;
     }
 
     return HTP_OK;

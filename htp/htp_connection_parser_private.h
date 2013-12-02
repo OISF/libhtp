@@ -250,7 +250,10 @@ struct htp_connp_t {
     /** The hook that should be receiving raw connection data. */
     htp_hook_t *out_data_receiver_hook;
 
-    /** Response decompressor used to decompress response body data. */
+    /** Request body decompressor. */
+    htp_decompressor_t *in_decompressor;
+
+    /** Response body decompressor. */
     htp_decompressor_t *out_decompressor;   
 };
 
