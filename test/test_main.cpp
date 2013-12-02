@@ -1953,7 +1953,7 @@ public:
 static int BodyDataOffset_Callback_BODY_DATA(htp_tx_data_t *d) {
     BodyDataOffset *user_data = (BodyDataOffset *) htp_connp_get_user_data(d->tx->connp);
 
-    //fprintf(stderr, "Offset: %llu len: %zd\n", d->offset, d->len);
+    //fprintf(stderr, "Offset: %llu len: %zd counter: %d\n", d->offset, d->len, user_data->counter);
     //fprint_raw_data(stderr, "#", d->data, d->len);
 
     if ((user_data->counter != 0)&&(user_data->expected_offsets[user_data->counter] == 0)) {
@@ -1985,7 +1985,7 @@ static int BodyDataOffset_Callback_BODY_COMPLETE(htp_tx_t *tx) {
 
 TEST_F(BodyDataOffset, ResponseBodyData_CompressedChunked) {
     static int my_expected_offsets[]= { 0, 8192, 16384, 24576, 32768, 40960, 49152, 57344, 65536,
-        73728, 81920,90112, 98304, 106496, 114688, 122880, 131072, 139264, 147456, 155648, 0 };
+        73728, 81920,90112, 98304, 106496, 114688, 122880, 131072, 139264, 147456, 155648, 159590, 0 };
     this->expected_offsets = (int *)&my_expected_offsets;
 
     htp_config_register_response_body_data(cfg, BodyDataOffset_Callback_BODY_DATA);

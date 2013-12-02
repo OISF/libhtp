@@ -45,13 +45,33 @@
  * @param[in] d
  * @return HTP_OK on success, HTP_ERROR or some other negative integer on failure.
  */
-static htp_status_t htp_gzip_decompressor_decompress(htp_decompressor_gzip_t *drec, htp_tx_data_t *d) {
+static htp_status_t htp_gzip_decompressor_decompress(htp_decompressor_gzip_t *drec, htp_tx_data_t *din) {
     size_t consumed = 0;
+
+    // Pass-through the NULL chunk, which indicates the end of the stream.
+    if (din->data == NULL) {
+        // Prepare data for callback.
+        htp_tx_data_t dout;
+        dout.tx = din->tx;
+        dout.data = NULL;
+        dout.len = 0;
+
+        // Send decompressed data to the callback.
+        htp_status_t callback_rc = drec->super.callback(&dout);
+        if (callback_rc != HTP_OK) {
+            inflateEnd(&drec->stream);
+            drec->zlib_initialized = 0;
+
+            return callback_rc;
+        }
+
+        return HTP_OK;
+    }
 
     // Decompress data.
     int rc = 0;
-    drec->stream.next_in = (unsigned char *) (d->data + consumed);
-    drec->stream.avail_in = d->len - consumed;
+    drec->stream.next_in = (unsigned char *) (din->data + consumed);
+    drec->stream.avail_in = din->len - consumed;
 
     while (drec->stream.avail_in != 0) {
         // If the output buffer is full, empty it.
@@ -59,13 +79,13 @@ static htp_status_t htp_gzip_decompressor_decompress(htp_decompressor_gzip_t *dr
             drec->crc = crc32(drec->crc, drec->buffer, GZIP_BUF_SIZE);
 
             // Prepare data for callback.
-            htp_tx_data_t d2;
-            d2.tx = d->tx;
-            d2.data = drec->buffer;
-            d2.len = GZIP_BUF_SIZE;
+            htp_tx_data_t dout;
+            dout.tx = din->tx;
+            dout.data = drec->buffer;
+            dout.len = GZIP_BUF_SIZE;
 
             // Send decompressed data to the callback.
-            htp_status_t callback_rc = drec->super.callback(&d2);
+            htp_status_t callback_rc = drec->super.callback(&dout);
             if (callback_rc != HTP_OK) {
                 inflateEnd(&drec->stream);
                 drec->zlib_initialized = 0;
@@ -88,7 +108,7 @@ static htp_status_t htp_gzip_decompressor_decompress(htp_decompressor_gzip_t *dr
 
             // Prepare data for the callback.
             htp_tx_data_t d2;
-            d2.tx = d->tx;
+            d2.tx = din->tx;
             d2.data = drec->buffer;
             d2.len = len;
 
@@ -107,7 +127,7 @@ static htp_status_t htp_gzip_decompressor_decompress(htp_decompressor_gzip_t *dr
         }
 
         if (rc != Z_OK) {
-            htp_log(d->tx->connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "GZip decompressor: inflate failed with %d", rc);
+            htp_log(din->tx->connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "GZip decompressor: inflate failed with %d", rc);
 
             inflateEnd(&drec->stream);
             drec->zlib_initialized = 0;
