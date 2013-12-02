@@ -822,8 +822,10 @@ htp_status_t htp_connp_RES_LINE(htp_connp_t *connp) {
             // data as a response body because that is what browsers do.
            
             if (htp_treat_response_line_as_body(connp->out_tx)) {
+                // We don't have any headers to look at, so assume the body is not compressed.
                 connp->out_tx->response_content_encoding_processing = HTP_COMPRESSION_NONE;
 
+                // Consume the line as response body.
                 htp_status_t rc = htp_tx_res_process_body_data_ex(connp->out_tx, data, len + chomp_result);
                 if (rc != HTP_OK) return rc;
 
