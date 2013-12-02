@@ -804,7 +804,7 @@ htp_status_t htp_tx_res_process_body_data_ex(htp_tx_t *tx, const void *data, siz
         default:
             // Internal error.
             htp_log(tx->connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
-                    "[Internal Error] Invalid tx->response_content_encoding_processing value: %d",
+                    "[Internal Error] Invalid response_content_encoding_processing value: %d",
                     tx->response_content_encoding_processing);
             return HTP_ERROR;
             break;
