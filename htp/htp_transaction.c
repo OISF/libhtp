@@ -1085,13 +1085,14 @@ htp_status_t htp_tx_state_response_headers(htp_tx_t *tx) {
 
     // Determine content encoding.
     tx->response_content_encoding = HTP_COMPRESSION_NONE;
+
     htp_header_t *ce = htp_table_get_c(tx->response_headers, "content-encoding");
     if (ce != NULL) {
-        if ((bstr_cmp_c(ce->value, "gzip") == 0) || (bstr_cmp_c(ce->value, "x-gzip") == 0)) {
+        if ((bstr_cmp_c_nocase(ce->value, "gzip") == 0) || (bstr_cmp_c_nocase(ce->value, "x-gzip") == 0)) {
             tx->response_content_encoding = HTP_COMPRESSION_GZIP;
-        } else if ((bstr_cmp_c(ce->value, "deflate") == 0) || (bstr_cmp_c(ce->value, "x-deflate") == 0)) {
+        } else if ((bstr_cmp_c_nocase(ce->value, "deflate") == 0) || (bstr_cmp_c_nocase(ce->value, "x-deflate") == 0)) {
             tx->response_content_encoding = HTP_COMPRESSION_DEFLATE;
-        } else if (bstr_cmp_c(ce->value, "identity") != 0) {
+        } else if (bstr_cmp_c_nocase(ce->value, "identity") != 0) {
             htp_log(tx->connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Unknown response content encoding");
         }
     }
@@ -1133,7 +1134,9 @@ htp_status_t htp_tx_state_response_headers(htp_tx_t *tx) {
         
         tx->connp->out_decompressor->callback = htp_tx_res_process_body_data_decompressor_callback;
     } else if (tx->response_content_encoding_processing != HTP_COMPRESSION_NONE) {
-        htp_log(tx->connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Unknown response body compression type: %d", tx->response_content_encoding_processing);
+        htp_log(tx->connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0,
+            "[Internal Error] Unknown response body compression type: %d",
+            tx->response_content_encoding_processing);
         return HTP_ERROR;
     }
 
