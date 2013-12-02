@@ -1084,6 +1084,7 @@ htp_status_t htp_tx_state_response_headers(htp_tx_t *tx) {
     // Check for compression.
 
     // Determine content encoding.
+    
     tx->response_content_encoding = HTP_COMPRESSION_NONE;
 
     htp_header_t *ce = htp_table_get_c(tx->response_headers, "content-encoding");
