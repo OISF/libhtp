@@ -93,7 +93,7 @@ htp_tx_t *htp_tx_create(htp_connp_t *connp) {
     tx->response_first_byte_pos = -1;
     tx->response_last_byte_pos = -1;
     tx->response_instance_length = -1;
-    tx->response_range_offset = 0;
+    tx->response_entity_offset = 0;
 
     tx->response_headers = htp_table_create(32);
     if (tx->response_headers == NULL) {
@@ -741,7 +741,7 @@ static htp_status_t htp_tx_res_process_body_data_decompressor_callback(htp_tx_da
     fprint_raw_data(stderr, __FUNCTION__, d->data, d->len);
     #endif
 
-    d->offset = d->tx->response_range_offset + d->tx->response_entity_len;
+    d->offset = d->tx->response_entity_offset + d->tx->response_entity_len;
 
     // Keep track of actual response body length.
     d->tx->response_entity_len += d->len;
@@ -791,7 +791,7 @@ htp_status_t htp_tx_res_process_body_data_ex(htp_tx_t *tx, const void *data, siz
             break;
 
         case HTP_COMPRESSION_NONE:
-            d.offset = tx->response_range_offset + tx->response_entity_len;
+            d.offset = tx->response_entity_offset + tx->response_entity_len;
             
             // When there's no decompression, entity length is identical to the message length.
             tx->response_entity_len += d.len;
@@ -1072,7 +1072,7 @@ htp_status_t htp_tx_state_response_headers(htp_tx_t *tx) {
         // Use the Content-Range values on partial responses.
         if (tx->response_status_number == 206) {
             if (tx->response_first_byte_pos >= 0) {
-                tx->response_range_offset = tx->response_first_byte_pos;
+                tx->response_entity_offset = tx->response_first_byte_pos;
             } else {
                 tx->flags |= HTP_RESPONSE_INVALID;
                 htp_log(tx->connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Partial (206) response with invalid C-R header");

@@ -462,6 +462,12 @@ struct htp_tx_t {
     int64_t response_entity_len;
 
     /**
+     * Response entity offset, which is the same value as htp_tx_t::response_first_byte_pos,
+     * but only on partial (206) responses. Zero otherwise.
+     */
+    int64_t response_entity_offset;
+
+    /**
      * Contains the value specified in the Content-Length header. The value of this
      * field will be -1 from the beginning of the transaction and until response
      * headers are processed. It will stay -1 if the C-L header was not provided,
@@ -494,12 +500,6 @@ struct htp_tx_t {
      * is syntactically correct, but the numbers don't make sense.
      */
     int64_t response_instance_length;
-
-    /**
-     * Response body offset, which is the same value as htp_tx_t::response_first_byte_pos,
-     * but only on partial (206) responses. Zero otherwise.
-     */
-    int64_t response_range_offset;
     
     /**
      * Response transfer coding, which indicates if there is a response body,
