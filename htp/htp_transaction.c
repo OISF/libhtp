@@ -746,7 +746,7 @@ static htp_status_t htp_tx_res_process_body_data_decompressor_callback(htp_tx_da
     // Keep track of actual response body length.
     d->tx->response_entity_len += d->len;
 
-    // Run the book.
+    // Run the hook.
     htp_status_t rc = htp_res_run_hook_body_data(d->tx->connp, d);
     if (rc != HTP_OK) return HTP_ERROR;
 
