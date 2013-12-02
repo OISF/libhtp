@@ -1091,6 +1091,8 @@ htp_status_t htp_tx_state_response_headers(htp_tx_t *tx) {
             tx->response_content_encoding = HTP_COMPRESSION_GZIP;
         } else if ((bstr_cmp_c(ce->value, "deflate") == 0) || (bstr_cmp_c(ce->value, "x-deflate") == 0)) {
             tx->response_content_encoding = HTP_COMPRESSION_DEFLATE;
+        } else if (bstr_cmp_c(ce->value, "identity") != 0) {
+            htp_log(tx->connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Unknown response content encoding");
         }
     }
 
@@ -1131,6 +1133,7 @@ htp_status_t htp_tx_state_response_headers(htp_tx_t *tx) {
         
         tx->connp->out_decompressor->callback = htp_tx_res_process_body_data_decompressor_callback;
     } else if (tx->response_content_encoding_processing != HTP_COMPRESSION_NONE) {
+        htp_log(tx->connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Unknown response body compression type: %d", tx->response_content_encoding_processing);
         return HTP_ERROR;
     }
 
