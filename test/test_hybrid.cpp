@@ -871,3 +871,41 @@ TEST_F(HybridParsing, DeleteTransactionBeforeComplete)
     // Close connection
     CloseConnParser();   
 }
+
+TEST_F(HybridParsing, RequestCompression) {
+    // Create a new LibHTP transaction.
+    htp_tx_t *tx = htp_connp_tx_create(connp);
+    ASSERT_TRUE(tx != NULL);
+
+    // Request begins.
+    htp_tx_state_request_start(tx);
+
+    // Request line data.
+    htp_tx_req_set_method(tx, "POST", 4, HTP_ALLOC_COPY);
+    htp_tx_req_set_method_number(tx, HTP_M_POST);
+    htp_tx_req_set_uri(tx, "/", 1, HTP_ALLOC_COPY);
+    htp_tx_req_set_protocol(tx, "HTTP/1.1", 8, HTP_ALLOC_COPY);
+    htp_tx_req_set_protocol_number(tx, HTP_PROTOCOL_1_1);
+    htp_tx_req_set_protocol_0_9(tx, 0);
+    htp_tx_state_request_line(tx);
+
+    // Configure headers to trigger the URLENCODED parser.
+    htp_tx_req_set_header(tx, "Content-Length", 14, "187", 3, HTP_ALLOC_COPY);
+    htp_tx_req_set_header(tx, "Content-Encoding", 16, "gzip", 4, HTP_ALLOC_COPY);
+
+    // Request headers complete.
+    htp_tx_state_request_headers(tx);
+
+    // Send request body.
+    bstr *body = htp_base64_decode_mem(HybridParsing_CompressedResponse, strlen(HybridParsing_CompressedResponse));
+    ASSERT_TRUE(body != NULL);
+    htp_tx_req_process_body_data(tx, bstr_ptr(body), bstr_len(body));
+    bstr_free(body);
+
+    // Request complete.
+    htp_tx_state_request_complete(tx);
+
+    // Check that decompression worked.
+    ASSERT_EQ(187, tx->request_message_len);
+    ASSERT_EQ(225, tx->request_entity_len);
+}
