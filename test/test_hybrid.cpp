@@ -402,7 +402,7 @@ TEST_F(HybridParsing, PostUrlecodedTest) {
 
     // Request line data
     htp_tx_req_set_method(tx, "POST", 4, HTP_ALLOC_COPY);
-    htp_tx_req_set_method_number(tx, HTP_M_GET);
+    htp_tx_req_set_method_number(tx, HTP_M_POST);
     htp_tx_req_set_uri(tx, "/", 1, HTP_ALLOC_COPY);
     htp_tx_req_set_protocol(tx, "HTTP/1.1", 8, HTP_ALLOC_COPY);
     htp_tx_req_set_protocol_number(tx, HTP_PROTOCOL_1_1);
@@ -636,7 +636,7 @@ TEST_F(HybridParsing, PostUrlecodedChunked) {
 
     // Request line data.
     htp_tx_req_set_method(tx, "POST", 4, HTP_ALLOC_COPY);
-    htp_tx_req_set_method_number(tx, HTP_M_GET);
+    htp_tx_req_set_method_number(tx, HTP_M_POST);
     htp_tx_req_set_uri(tx, "/", 1, HTP_ALLOC_COPY);
     htp_tx_req_set_protocol(tx, "HTTP/1.1", 8, HTP_ALLOC_COPY);
     htp_tx_req_set_protocol_number(tx, HTP_PROTOCOL_1_1);
