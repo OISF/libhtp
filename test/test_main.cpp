@@ -2139,3 +2139,17 @@ TEST_F(ConnectionParsing, CompressedRequest) {
 
     ASSERT_EQ(2614, tx->request_entity_len);
 }
+
+TEST_F(ConnectionParsing, ResponseExtra1) {
+    int rc = test_run(home, "92-response-extra-1.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+
+    ASSERT_EQ(1, htp_list_size(connp->conn->transactions));
+}
+
+TEST_F(ConnectionParsing, ResponseExtra2) {
+    int rc = test_run(home, "93-response-extra-2.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+
+    ASSERT_EQ(1, htp_list_size(connp->conn->transactions));
+}
