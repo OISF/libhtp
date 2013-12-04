@@ -144,7 +144,7 @@ void *htp_connp_get_user_data(const htp_connp_t *connp);
  * @param[in] timestamp Optional.
  */
 void htp_connp_open(htp_connp_t *connp, const char *client_addr, int client_port, const char *server_addr,
-    int server_port, htp_time_t *timestamp);
+    int server_port, const htp_time_t *timestamp);
 
 /**
  * Associate user data with the supplied parser.
