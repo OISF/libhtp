@@ -792,8 +792,15 @@ htp_status_t htp_connp_RES_LINE(htp_connp_t *connp) {
                 // Find the next outgoing transaction
                 connp->out_tx = htp_list_get(connp->conn->transactions, connp->out_next_tx_index);
                 if (connp->out_tx == NULL) {
-                    htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Unable to match response to request");
-                    return HTP_ERROR;
+                    if  (connp->in_tx == NULL) {
+                        // There are no ongoing requests to match to. Let's assume
+                        // that this is going to be a 408 response to a zero-byte request.
+                        connp->out_tx = connp->in_tx = htp_connp_tx_create(connp);
+                        if (connp->in_tx == NULL) return HTP_ERROR;
+                    } else {
+                        htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Unable to match response to request");
+                        return HTP_ERROR;
+                    }
                 }
 
                 // We've used one transaction

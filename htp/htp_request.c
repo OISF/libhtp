@@ -749,8 +749,13 @@ htp_status_t htp_connp_REQ_IDLE(htp_connp_t * connp) {
     // connection.
     IN_TEST_NEXT_BYTE_OR_RETURN(connp);
 
-    connp->in_tx = htp_connp_tx_create(connp);
-    if (connp->in_tx == NULL) return HTP_ERROR;
+    // Before creating a new transaction, check if one exists already. This
+    // might happen when the client opens a connection to the server and
+    // does not send anything. At some point, the server might respond with 408.
+    if (connp->in_tx == NULL) {
+        connp->in_tx = htp_connp_tx_create(connp);
+        if (connp->in_tx == NULL) return HTP_ERROR;
+    }
 
     // Change state to TRANSACTION_START
     htp_tx_state_request_start(connp->in_tx);

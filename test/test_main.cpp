@@ -1805,7 +1805,6 @@ TEST_F(ConnectionParsing, ResponseNoStatusHeaders2) {
     ASSERT_EQ(HTP_RESPONSE_COMPLETE, tx->response_progress);
 }
 
-/*
 TEST_F(ConnectionParsing, ZeroByteRequestTimeout) {
     int rc = test_run(home, "85-zero-byte-request-timeout.t", cfg, &connp);
     ASSERT_GE(rc, 0);
@@ -1815,10 +1814,9 @@ TEST_F(ConnectionParsing, ZeroByteRequestTimeout) {
     htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
     ASSERT_TRUE(tx != NULL);
 
-    ASSERT_EQ(HTP_REQUEST_NOT_STARTED, tx->request_progress);
+    ASSERT_EQ(HTP_REQUEST_COMPLETE, tx->request_progress);
     ASSERT_EQ(HTP_RESPONSE_COMPLETE, tx->response_progress);
 }
-*/
 
 TEST_F(ConnectionParsing, PartialRequestTimeout) {
     int rc = test_run(home, "86-partial-request-timeout.t", cfg, &connp);
