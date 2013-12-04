@@ -206,9 +206,6 @@ struct htp_tx_t {
     
     // Request fields
 
-    /** Contains a count of how many empty lines were skipped before the request line. */
-    unsigned int request_ignored_lines;
-
     /** The first line of this request. */
     bstr *request_line;      
 
@@ -396,9 +393,6 @@ struct htp_tx_t {
 
 
     // Response fields
-
-    /** How many empty lines did we ignore before reaching the status line? */
-    unsigned int response_ignored_lines;
 
     /** Response line. */
     bstr *response_line;   

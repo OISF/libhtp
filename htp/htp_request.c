@@ -684,11 +684,7 @@ htp_status_t htp_connp_REQ_LINE(htp_connp_t *connp) {
 
             // Is this a line that should be ignored?
             if (htp_connp_is_line_ignorable(connp, data, len)) {
-                // We have an empty/whitespace line, which we'll note, ignore and move on.
-                connp->in_tx->request_ignored_lines++;
-
                 htp_connp_req_clear_buffer(connp);
-
                 return HTP_OK;
             }
 
