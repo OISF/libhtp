@@ -204,9 +204,22 @@ static htp_status_t htp_connp_res_buffer(htp_connp_t *connp) {
         newlen += bstr_len(connp->out_header);
     }
 
-    if (newlen > connp->cfg->field_limit_hard) {
-        htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Response the buffer limit: size %zd limit %zd.",
-                newlen, connp->cfg->field_limit_hard);
+    // Check for the hard limit.
+
+    size_t field_limit_hard;
+    
+    if (connp->out_tx != NULL) {
+        // If we're inside a response.
+        field_limit_hard = connp->out_tx->cfg->field_limit_hard;
+    } else {
+        // If we're between responses.
+        field_limit_hard = connp->cfg->field_limit_hard;
+    }
+
+    if (newlen > field_limit_hard) {
+        htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
+            "Response the buffer limit: size %zd limit %zd.",
+            newlen, field_limit_hard);
         return HTP_ERROR;
     }
 
