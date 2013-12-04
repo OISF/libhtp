@@ -894,8 +894,6 @@ htp_status_t htp_connp_RES_IDLE(htp_connp_t *connp) {
     // We've used one transaction
     connp->out_next_tx_index++;
 
-    // TODO Detect state mismatch
-
     connp->out_content_length = -1;
     connp->out_body_data_left = -1;
 
