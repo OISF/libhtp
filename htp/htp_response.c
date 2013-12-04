@@ -755,9 +755,11 @@ htp_status_t htp_connp_RES_HEADERS(htp_connp_t *connp) {
  */
 htp_status_t htp_connp_RES_LINE(htp_connp_t *connp) {
     for (;;) {
-        // Don't try to get more data if the stream is closed. If we do, we'll return, asking for more data.
+        // Get the next byte, but only if the stream is not closed. Currently,
+        // trying to get a byte from a closed stream leaves the parser with HTP_DATA. It
+        // would be better to have a special value to indicate the end of stream. Then
+        // the states could handle it correctly.
         if (connp->out_status != HTP_STREAM_CLOSED) {
-            // Get one byte
             OUT_COPY_BYTE_OR_RETURN(connp);
         }
 
