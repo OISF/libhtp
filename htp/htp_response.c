@@ -204,9 +204,9 @@ static htp_status_t htp_connp_res_buffer(htp_connp_t *connp) {
         newlen += bstr_len(connp->out_header);
     }
 
-    if (newlen > connp->out_tx->cfg->field_limit_hard) {
+    if (newlen > connp->cfg->field_limit_hard) {
         htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Response the buffer limit: size %zd limit %zd.",
-                newlen, connp->out_tx->cfg->field_limit_hard);
+                newlen, connp->cfg->field_limit_hard);
         return HTP_ERROR;
     }
 
@@ -780,8 +780,7 @@ htp_status_t htp_connp_RES_LINE(htp_connp_t *connp) {
 
             // Is this a line that should be ignored?
             if (htp_connp_is_line_ignorable(connp, data, len)) {
-                // We have an empty/whitespace line, which we'll note, ignore and move on
-                connp->out_tx->response_ignored_lines++;
+                connp->out_state = htp_connp_RES_IDLE;
 
                 // Start again
                 htp_connp_res_clear_buffer(connp);
@@ -789,27 +788,50 @@ htp_status_t htp_connp_RES_LINE(htp_connp_t *connp) {
                 return HTP_OK;
             }
 
-            // Deallocate previous response line allocations, which we would have on a 100 response.
+            if (connp->out_tx == NULL) {
+                // Find the next outgoing transaction
+                connp->out_tx = htp_list_get(connp->conn->transactions, connp->out_next_tx_index);
+                if (connp->out_tx == NULL) {
+                    htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Unable to match response to request");
+                    return HTP_ERROR;
+                }
 
-            if (connp->out_tx->response_line != NULL) {
-                bstr_free(connp->out_tx->response_line);
-                connp->out_tx->response_line = NULL;
+                // We've used one transaction
+                connp->out_next_tx_index++;
+
+                connp->out_content_length = -1;
+                connp->out_body_data_left = -1;
+            } else {
+                if (connp->out_tx->seen_100continue == 0) {
+                    htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "[Internal Error] Have not seen 100 response");
+                    return HTP_ERROR;
+                }
+
+                // Deallocate previous response line allocations, which we would have on a 100 response.
+
+                if (connp->out_tx->response_line != NULL) {
+                    bstr_free(connp->out_tx->response_line);
+                    connp->out_tx->response_line = NULL;
+                }
+
+                if (connp->out_tx->response_protocol != NULL) {
+                    bstr_free(connp->out_tx->response_protocol);
+                    connp->out_tx->response_protocol = NULL;
+                }
+
+                if (connp->out_tx->response_status != NULL) {
+                    bstr_free(connp->out_tx->response_status);
+                    connp->out_tx->response_status = NULL;
+                }
+
+                if (connp->out_tx->response_message != NULL) {
+                    bstr_free(connp->out_tx->response_message);
+                    connp->out_tx->response_message = NULL;
+                }
             }
 
-            if (connp->out_tx->response_protocol != NULL) {
-                bstr_free(connp->out_tx->response_protocol);
-                connp->out_tx->response_protocol = NULL;
-            }
-
-            if (connp->out_tx->response_status != NULL) {
-                bstr_free(connp->out_tx->response_status);
-                connp->out_tx->response_status = NULL;
-            }
-
-            if (connp->out_tx->response_message != NULL) {
-                bstr_free(connp->out_tx->response_message);
-                connp->out_tx->response_message = NULL;
-            }
+            htp_status_t rc = htp_tx_state_response_start(connp->out_tx);
+            if (rc != HTP_OK) return rc;
 
             // Process response line.           
 
@@ -829,7 +851,7 @@ htp_status_t htp_connp_RES_LINE(htp_connp_t *connp) {
                 connp->out_tx->response_content_encoding_processing = HTP_COMPRESSION_NONE;
 
                 // Consume the line as response body.
-                htp_status_t rc = htp_tx_res_process_body_data_ex(connp->out_tx, data, len + chomp_result);
+                rc = htp_tx_res_process_body_data_ex(connp->out_tx, data, len + chomp_result);
                 if (rc != HTP_OK) return rc;
 
                 // Continue to process response body. Because we don't have
@@ -843,7 +865,7 @@ htp_status_t htp_connp_RES_LINE(htp_connp_t *connp) {
                 return HTP_OK;
             }
 
-            htp_status_t rc = htp_tx_state_response_line(connp->out_tx);
+            rc = htp_tx_state_response_line(connp->out_tx);
             if (rc != HTP_OK) return rc;
 
             htp_connp_res_clear_buffer(connp);
@@ -882,24 +904,8 @@ htp_status_t htp_connp_RES_IDLE(htp_connp_t *connp) {
     // connection.
     OUT_TEST_NEXT_BYTE_OR_RETURN(connp);
 
-    // Parsing a new response
-
-    // Find the next outgoing transaction
-    connp->out_tx = htp_list_get(connp->conn->transactions, connp->out_next_tx_index);
-    if (connp->out_tx == NULL) {
-        htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Unable to match response to request");
-        return HTP_ERROR;
-    }
-
-    // We've used one transaction
-    connp->out_next_tx_index++;
-
-    connp->out_content_length = -1;
-    connp->out_body_data_left = -1;
-
-    htp_status_t rc = htp_tx_state_response_start(connp->out_tx);
-    if (rc != HTP_OK) return rc;
-
+    connp->out_state = htp_connp_RES_LINE;
+    
     return HTP_OK;
 }
 
