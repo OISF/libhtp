@@ -88,7 +88,7 @@ struct htp_connp_t {
      * The time when the last request data chunk was received. Can be NULL if
      * the upstream code is not providing the timestamps when calling us.
      */
-    htp_time_t in_timestamp;
+    struct timeval in_timestamp;
 
     /** Pointer to the current request data chunk. */
     unsigned char *in_current_data;
@@ -181,7 +181,7 @@ struct htp_connp_t {
     size_t out_next_tx_index;
 
     /** The time when the last response data chunk was received. Can be NULL. */
-    htp_time_t out_timestamp;
+    struct timeval out_timestamp;
 
     /** Pointer to the current response data chunk. */
     unsigned char *out_current_data;

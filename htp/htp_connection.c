@@ -59,12 +59,12 @@ htp_conn_t *htp_conn_create(void) {
     return conn;
 }
 
-void htp_conn_close(htp_conn_t *conn, const htp_time_t *timestamp) {
+void htp_conn_close(htp_conn_t *conn, const struct timeval *timestamp) {
     if (conn == NULL) return;
 
     // Update timestamp.
     if (timestamp != NULL) {
-        memcpy(&(conn->close_timestamp), timestamp, sizeof(htp_time_t));
+        memcpy(&(conn->close_timestamp), timestamp, sizeof(*timestamp));
     }
 }
 
@@ -111,7 +111,7 @@ void htp_conn_destroy(htp_conn_t *conn) {
 }
 
 htp_status_t htp_conn_open(htp_conn_t *conn, const char *client_addr, int client_port,
-        const char *server_addr, int server_port, const htp_time_t *timestamp)
+        const char *server_addr, int server_port, const struct timeval *timestamp)
 {
     if (conn == NULL) return HTP_ERROR;
 
@@ -158,12 +158,12 @@ htp_status_t htp_conn_remove_tx(htp_conn_t *conn, const htp_tx_t *tx) {
     return HTP_DECLINED;
 }
 
-void htp_conn_track_inbound_data(htp_conn_t *conn, size_t len, const htp_time_t *timestamp) {
+void htp_conn_track_inbound_data(htp_conn_t *conn, size_t len, const struct timeval *timestamp) {
     if (conn == NULL) return;
     conn->in_data_counter += len;    
 }
 
-void htp_conn_track_outbound_data(htp_conn_t *conn, size_t len, const htp_time_t *timestamp) {
+void htp_conn_track_outbound_data(htp_conn_t *conn, size_t len, const struct timeval *timestamp) {
     if (conn == NULL) return;
     conn->out_data_counter += len;    
 }

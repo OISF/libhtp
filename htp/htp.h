@@ -92,10 +92,10 @@ struct htp_conn_t {
     uint8_t flags;
 
     /** When was this connection opened? Can be NULL. */
-    htp_time_t open_timestamp;
+    struct timeval open_timestamp;
 
     /** When was this connection closed? Can be NULL. */
-    htp_time_t close_timestamp;
+    struct timeval close_timestamp;
 
     /** Inbound data counter. */
     int64_t in_data_counter;

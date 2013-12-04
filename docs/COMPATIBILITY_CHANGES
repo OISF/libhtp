@@ -1,6 +1,8 @@
 0.6
 ---
 
+- Removed htp_time_t; now explicitly using struct timeval.
+
 - Removed htp_config_set_extract_request_files().
 
 - The htp_file_t structure has been removed. The htp_file_data_t structure no longer points

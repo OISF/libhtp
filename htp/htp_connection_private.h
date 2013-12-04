@@ -56,7 +56,7 @@ htp_conn_t *htp_conn_create(void);
  * @param[in] conn
  * @param[in] timestamp
  */
-void htp_conn_close(htp_conn_t *conn, const htp_time_t *timestamp);
+void htp_conn_close(htp_conn_t *conn, const struct timeval *timestamp);
 
 /**
  * Destroys a connection, as well as all the transactions it contains. It is
@@ -82,7 +82,7 @@ void htp_conn_destroy(htp_conn_t *conn);
  * @return
  */
 htp_status_t htp_conn_open(htp_conn_t *conn, const char *remote_addr, int remote_port,
-    const char *local_addr, int local_port, const htp_time_t *timestamp);
+    const char *local_addr, int local_port, const struct timeval *timestamp);
 
 /**
  * Removes the given transaction structure, which makes it possible to
@@ -102,7 +102,7 @@ htp_status_t htp_conn_remove_tx(htp_conn_t *conn, const htp_tx_t *tx);
  * @param[in] len
  * @param[in] timestamp
  */
-void htp_conn_track_inbound_data(htp_conn_t *conn, size_t len, const htp_time_t *timestamp);
+void htp_conn_track_inbound_data(htp_conn_t *conn, size_t len, const struct timeval *timestamp);
 
 /**
  * Keeps track of outbound packets and data.
@@ -111,7 +111,7 @@ void htp_conn_track_inbound_data(htp_conn_t *conn, size_t len, const htp_time_t 
  * @param[in] len
  * @param[in] timestamp
  */
-void htp_conn_track_outbound_data(htp_conn_t *conn, size_t len, const htp_time_t *timestamp);
+void htp_conn_track_outbound_data(htp_conn_t *conn, size_t len, const struct timeval *timestamp);
 
 #ifdef	__cplusplus
 }

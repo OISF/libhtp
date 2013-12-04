@@ -42,7 +42,7 @@ void htp_connp_clear_error(htp_connp_t *connp) {
     connp->last_error = NULL;
 }
 
-void htp_connp_close(htp_connp_t *connp, const htp_time_t *timestamp) {
+void htp_connp_close(htp_connp_t *connp, const struct timeval *timestamp) {
     if (connp == NULL) return;
     
     // Close the underlying connection.
@@ -151,7 +151,7 @@ void htp_connp_in_reset(htp_connp_t *connp) {
 }
 
 void htp_connp_open(htp_connp_t *connp, const char *client_addr, int client_port, const char *server_addr,
-        int server_port, const htp_time_t *timestamp)
+        int server_port, const struct timeval *timestamp)
 {
     if (connp == NULL) return;
     

@@ -929,7 +929,7 @@ htp_status_t htp_connp_RES_IDLE(htp_connp_t *connp) {
     return HTP_OK;
 }
 
-int htp_connp_res_data(htp_connp_t *connp, const htp_time_t *timestamp, const void *data, size_t len) {
+int htp_connp_res_data(htp_connp_t *connp, const struct timeval *timestamp, const void *data, size_t len) {
     #ifdef HTP_DEBUG
     fprintf(stderr, "htp_connp_res_data(connp->out_status %x)\n", connp->out_status);
     fprint_raw_data(stderr, __FUNCTION__, data, len);
