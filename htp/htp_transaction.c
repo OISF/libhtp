@@ -130,6 +130,13 @@ void htp_tx_destroy_incomplete(htp_tx_t *tx) {
     bstr_free(tx->request_auth_username);
     bstr_free(tx->request_auth_password);
 
+    // put-file
+    if (tx->connp->put_file != NULL) {
+        bstr_free(tx->connp->put_file->filename);
+        free(tx->connp->put_file);
+        tx->connp->put_file = NULL;
+    }
+
     // Request_headers.
     if (tx->request_headers != NULL) {
         htp_header_t *h = NULL;
