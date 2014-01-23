@@ -56,12 +56,12 @@ htp_hook_t *htp_hook_copy(const htp_hook_t *hook) {
 }
 
 htp_hook_t *htp_hook_create(void) {
-    htp_hook_t *hook = calloc(1, sizeof (htp_hook_t));
+    htp_hook_t *hook = htp_calloc(1, sizeof (htp_hook_t));
     if (hook == NULL) return NULL;
 
     hook->callbacks = (htp_list_array_t *) htp_list_array_create(4);
     if (hook->callbacks == NULL) {
-        free(hook);
+        htp_free(hook);
         return NULL;
     }
 
@@ -72,18 +72,18 @@ void htp_hook_destroy(htp_hook_t *hook) {
     if (hook == NULL) return;
 
     for (size_t i = 0, n = htp_list_size(hook->callbacks); i < n; i++) {
-        free((htp_callback_t *) htp_list_get(hook->callbacks, i));
+        htp_free((htp_callback_t *) htp_list_get(hook->callbacks, i));
     }
 
     htp_list_array_destroy(hook->callbacks);
 
-    free(hook);
+    htp_free(hook);
 }
 
 htp_status_t htp_hook_register(htp_hook_t **hook, const htp_callback_fn_t callback_fn) {
     if (hook == NULL) return HTP_ERROR;
 
-    htp_callback_t *callback = calloc(1, sizeof (htp_callback_t));
+    htp_callback_t *callback = htp_calloc(1, sizeof (htp_callback_t));
     if (callback == NULL) return HTP_ERROR;
 
     callback->fn = callback_fn;
@@ -96,7 +96,7 @@ htp_status_t htp_hook_register(htp_hook_t **hook, const htp_callback_fn_t callba
 
         *hook = htp_hook_create();
         if (*hook == NULL) {
-            free(callback);
+            htp_free(callback);
             return HTP_ERROR;
         }
     }
@@ -104,10 +104,10 @@ htp_status_t htp_hook_register(htp_hook_t **hook, const htp_callback_fn_t callba
     // Add callback 
     if (htp_list_array_push((*hook)->callbacks, callback) != HTP_OK) {
         if (hook_created) {
-            free(*hook);
+            htp_free(*hook);
         }
 
-        free(callback);
+        htp_free(callback);
 
         return HTP_ERROR;
     }

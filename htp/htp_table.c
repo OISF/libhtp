@@ -148,7 +148,7 @@ void htp_table_clear_ex(htp_table_t *table) {
 htp_table_t *htp_table_create(size_t size) {
     if (size == 0) return NULL;
 
-    htp_table_t *table = calloc(1, sizeof (htp_table_t));
+    htp_table_t *table = htp_calloc(1, sizeof (htp_table_t));
     if (table == NULL) return NULL;
 
     table->alloc_type = HTP_TABLE_KEYS_ALLOC_UKNOWN;
@@ -156,7 +156,7 @@ htp_table_t *htp_table_create(size_t size) {
     // Use a list behind the scenes.
     table->list = htp_list_array_create(size * 2);
     if (table->list == NULL) {
-        free(table);
+        htp_free(table);
         return NULL;
     }
 
@@ -171,7 +171,7 @@ void htp_table_destroy(htp_table_t *table) {
     htp_list_destroy(table->list);
     table->list = NULL;
 
-    free(table);
+    htp_free(table);
 }
 
 void htp_table_destroy_ex(htp_table_t *table) {

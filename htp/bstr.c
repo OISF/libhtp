@@ -41,7 +41,7 @@
 #include "bstr.h"
 
 bstr *bstr_alloc(size_t len) {
-    bstr *b = malloc(sizeof (bstr) + len);
+    bstr *b = htp_malloc(sizeof (bstr) + len);
     if (b == NULL) return NULL;
 
     b->len = 0;
@@ -270,7 +270,7 @@ bstr *bstr_expand(bstr *b, size_t newsize) {
     // Catch attempts to "expand" to a smaller size
     if (bstr_size(b) > newsize) return NULL;
 
-    bstr *bnew = realloc(b, sizeof (bstr) + newsize);
+    bstr *bnew = htp_realloc(b, sizeof (bstr) + newsize);
     if (bnew == NULL) return NULL;
 
     bstr_adjust_size(bnew, newsize);
@@ -280,7 +280,7 @@ bstr *bstr_expand(bstr *b, size_t newsize) {
 
 void bstr_free(bstr *b) {
     if (b == NULL) return;
-    free(b);
+    htp_free(b);
 }
 
 int bstr_index_of(const bstr *haystack, const bstr *needle) {
@@ -537,7 +537,7 @@ char *bstr_util_memdup_to_c(const void *_data, size_t len) {
     // Now copy the string into a NUL-terminated buffer.
 
     char *r, *d;
-    r = d = malloc(len + nulls + 1);
+    r = d = htp_malloc(len + nulls + 1);
     if (d == NULL) return NULL;
 
     while (len--) {
@@ -565,7 +565,7 @@ bstr *bstr_wrap_c(const char *cstr) {
 }
 
 bstr *bstr_wrap_mem(const void *data, size_t len) {
-    bstr *b = (bstr *) malloc(sizeof (bstr));
+    bstr *b = (bstr *) htp_malloc(sizeof (bstr));
     if (b == NULL) return NULL;
 
     b->size = b->len = len;

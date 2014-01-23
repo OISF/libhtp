@@ -154,8 +154,8 @@ static void htp_gzip_decompressor_destroy(htp_decompressor_gzip_t *drec) {
         drec->zlib_initialized = 0;
     }
 
-    free(drec->buffer);
-    free(drec);
+    htp_free(drec->buffer);
+    htp_free(drec);
 }
 
 /**
@@ -166,15 +166,15 @@ static void htp_gzip_decompressor_destroy(htp_decompressor_gzip_t *drec) {
  * @return New htp_decompressor_t instance on success, or NULL on failure.
  */
 htp_decompressor_t *htp_gzip_decompressor_create(htp_connp_t *connp, enum htp_content_encoding_t format) {
-    htp_decompressor_gzip_t *drec = calloc(1, sizeof (htp_decompressor_gzip_t));
+    htp_decompressor_gzip_t *drec = htp_calloc(1, sizeof (htp_decompressor_gzip_t));
     if (drec == NULL) return NULL;
 
     drec->super.decompress = (int (*)(htp_decompressor_t *, htp_tx_data_t *))htp_gzip_decompressor_decompress;
     drec->super.destroy = (void (*)(htp_decompressor_t *))htp_gzip_decompressor_destroy;
 
-    drec->buffer = malloc(GZIP_BUF_SIZE);
+    drec->buffer = htp_malloc(GZIP_BUF_SIZE);
     if (drec->buffer == NULL) {
-        free(drec);
+        htp_free(drec);
         return NULL;
     }
 
@@ -194,8 +194,8 @@ htp_decompressor_t *htp_gzip_decompressor_create(htp_connp_t *connp, enum htp_co
         htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "GZip decompressor: inflateInit2 failed with code %d", rc);
 
         inflateEnd(&drec->stream);
-        free(drec->buffer);
-        free(drec);
+        htp_free(drec->buffer);
+        htp_free(drec);
 
         return NULL;
     }

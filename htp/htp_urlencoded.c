@@ -172,21 +172,21 @@ static void htp_urlenp_add_field_piece(htp_urlenp_t *urlenp, const unsigned char
  * @return New parser, or NULL on memory allocation failure.
  */
 htp_urlenp_t *htp_urlenp_create(htp_tx_t *tx) {
-    htp_urlenp_t *urlenp = calloc(1, sizeof (htp_urlenp_t));
+    htp_urlenp_t *urlenp = htp_calloc(1, sizeof (htp_urlenp_t));
     if (urlenp == NULL) return NULL;
 
     urlenp->tx = tx;
 
     urlenp->params = htp_table_create(HTP_URLENP_DEFAULT_PARAMS_SIZE);
     if (urlenp->params == NULL) {
-        free(urlenp);
+        htp_free(urlenp);
         return NULL;
     }
 
     urlenp->_bb = bstr_builder_create();
     if (urlenp->_bb == NULL) {
         htp_table_destroy(urlenp->params);
-        free(urlenp);
+        htp_free(urlenp);
         return NULL;
     }
 
@@ -222,7 +222,7 @@ void htp_urlenp_destroy(htp_urlenp_t *urlenp) {
         htp_table_destroy(urlenp->params);
     }
 
-    free(urlenp);
+    htp_free(urlenp);
 }
 
 /**

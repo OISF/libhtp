@@ -65,7 +65,7 @@ htp_status_t htp_ch_urlencoded_callback_request_body_data(htp_tx_data_t *d) {
         for (size_t i = 0, n = htp_table_size(tx->request_urlenp_body->params); i < n; i++) {
             value = htp_table_get_index(tx->request_urlenp_body->params, i, &name);
 
-            htp_param_t *param = calloc(1, sizeof (htp_param_t));
+            htp_param_t *param = htp_calloc(1, sizeof (htp_param_t));
             if (param == NULL) return HTP_ERROR;
 
             param->name = name;
@@ -75,7 +75,7 @@ htp_status_t htp_ch_urlencoded_callback_request_body_data(htp_tx_data_t *d) {
             param->parser_data = NULL;
 
             if (htp_tx_req_add_param(tx, param) != HTP_OK) {
-                free(param);
+                htp_free(param);
                 return HTP_ERROR;
             }
         }
@@ -155,7 +155,7 @@ htp_status_t htp_ch_urlencoded_callback_request_line(htp_tx_t *tx) {
     for (size_t i = 0, n = htp_table_size(tx->request_urlenp_query->params); i < n; i++) {
         value = htp_table_get_index(tx->request_urlenp_query->params, i, &name);
 
-        htp_param_t *param = calloc(1, sizeof (htp_param_t));
+        htp_param_t *param = htp_calloc(1, sizeof (htp_param_t));
         if (param == NULL) return HTP_ERROR;
         
         param->name = name;
@@ -165,7 +165,7 @@ htp_status_t htp_ch_urlencoded_callback_request_line(htp_tx_t *tx) {
         param->parser_data = NULL;
 
         if (htp_tx_req_add_param(tx, param) != HTP_OK) {
-            free(param);
+            htp_free(param);
             return HTP_ERROR;
         }
     }
@@ -208,7 +208,7 @@ htp_status_t htp_ch_multipart_callback_request_body_data(htp_tx_data_t *d) {
 
             // Use text parameters.
             if (part->type == MULTIPART_PART_TEXT) {
-                htp_param_t *param = calloc(1, sizeof (htp_param_t));
+                htp_param_t *param = htp_calloc(1, sizeof (htp_param_t));
                 if (param == NULL) return HTP_ERROR;
                 param->name = part->name;
                 param->value = part->value;
@@ -217,7 +217,7 @@ htp_status_t htp_ch_multipart_callback_request_body_data(htp_tx_data_t *d) {
                 param->parser_data = part;
 
                 if (htp_tx_req_add_param(tx, param) != HTP_OK) {
-                    free(param);
+                    htp_free(param);
                     return HTP_ERROR;
                 }
             }

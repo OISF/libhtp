@@ -120,7 +120,7 @@ int htp_header_parse_internal_strict(unsigned char *data, size_t len, htp_header
  *
  */
 htp_header_t *htp_connp_header_parse(htp_connp_t *reqp, unsigned char *data, size_t len) {
-    htp_header_t *h = calloc(1, sizeof (htp_header_t));
+    htp_header_t *h = htp_calloc(1, sizeof (htp_header_t));
     if (h == NULL) return NULL;
 
     // Parse the header line    

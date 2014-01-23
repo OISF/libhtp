@@ -38,6 +38,22 @@
 
 #include "htp_private.h"
 
+void *htp_malloc(size_t size) {
+    return malloc(size);
+}
+
+void *htp_calloc(size_t nmemb, size_t size) {
+    return calloc(nmemb, size);
+}
+
+void *htp_realloc(void *ptr, size_t size) {
+    return realloc(ptr, size);
+}
+
+void htp_free(void *ptr) {
+    free(ptr);
+}
+
 /**
  * Is character a linear white space character?
  *
@@ -361,7 +377,7 @@ void htp_log(htp_connp_t *connp, const char *file, int line, enum htp_log_level_
 
     // Create a new log entry.
 
-    htp_log_t *log = calloc(1, sizeof (htp_log_t));
+    htp_log_t *log = htp_calloc(1, sizeof (htp_log_t));
     if (log == NULL) return;
 
     log->connp = connp;
@@ -638,7 +654,7 @@ int htp_parse_uri(bstr *input, htp_uri_t **uri) {
     // Allow a htp_uri_t structure to be provided on input,
     // but allocate a new one if the structure is NULL.
     if (*uri == NULL) {
-        *uri = calloc(1, sizeof (htp_uri_t));
+        *uri = htp_calloc(1, sizeof (htp_uri_t));
         if (*uri == NULL) return HTP_ERROR;
     }
 
@@ -2556,11 +2572,11 @@ void htp_uri_free(htp_uri_t *uri) {
     bstr_free(uri->query);
     bstr_free(uri->fragment);
 
-    free(uri);
+    htp_free(uri);
 }
 
 htp_uri_t *htp_uri_alloc() {
-    htp_uri_t *u = calloc(1, sizeof (htp_uri_t));
+    htp_uri_t *u = htp_calloc(1, sizeof (htp_uri_t));
     if (u == NULL) return NULL;
 
     u->port_number = -1;

@@ -144,7 +144,7 @@ static unsigned char bestfit_1252[] = {
 };
 
 htp_cfg_t *htp_config_create(void) {
-    htp_cfg_t *cfg = calloc(1, sizeof (htp_cfg_t));
+    htp_cfg_t *cfg = htp_calloc(1, sizeof (htp_cfg_t));
     if (cfg == NULL) return NULL;
 
     cfg->field_limit_hard = HTP_FIELD_LIMIT_HARD;
@@ -178,7 +178,7 @@ htp_cfg_t *htp_config_copy(htp_cfg_t *cfg) {
 
     // Start by making a copy of the entire structure,
     // which is essentially a shallow copy.
-    htp_cfg_t *copy = malloc(sizeof (htp_cfg_t));
+    htp_cfg_t *copy = htp_malloc(sizeof (htp_cfg_t));
     if (copy == NULL) return NULL;
     memcpy(copy, cfg, sizeof (htp_cfg_t));
 
@@ -371,7 +371,7 @@ void htp_config_destroy(htp_cfg_t *cfg) {
     htp_hook_destroy(cfg->hook_transaction_complete);
     htp_hook_destroy(cfg->hook_log);
 
-    free(cfg);
+    htp_free(cfg);
 }
 
 void *htp_config_get_user_data(htp_cfg_t *cfg) {

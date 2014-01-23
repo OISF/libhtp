@@ -146,7 +146,7 @@ int htp_transcode_bstr(iconv_t cd, bstr *input, bstr **output) {
     bstr_builder_t *bb = NULL;
 
     const size_t buflen = 10;
-    unsigned char *buf = malloc(buflen);
+    unsigned char *buf = htp_malloc(buflen);
     if (buf == NULL) {
         return HTP_ERROR;
     }
@@ -166,7 +166,7 @@ int htp_transcode_bstr(iconv_t cd, bstr *input, bstr **output) {
                 if (bb == NULL) {
                     bb = bstr_builder_create();
                     if (bb == NULL) {
-                        free(buf);
+                        htp_free(buf);
                         return HTP_ERROR;
                     }
                 }
@@ -182,7 +182,7 @@ int htp_transcode_bstr(iconv_t cd, bstr *input, bstr **output) {
             } else {
                 // Error
                 if (bb != NULL) bstr_builder_destroy(bb);
-                free(buf);
+                htp_free(buf);
                 return HTP_ERROR;
             }
         }
@@ -193,18 +193,18 @@ int htp_transcode_bstr(iconv_t cd, bstr *input, bstr **output) {
         *output = bstr_builder_to_str(bb);
         bstr_builder_destroy(bb);
         if (*output == NULL) {
-            free(buf);
+            htp_free(buf);
             return HTP_ERROR;
         }
     } else {
         *output = bstr_dup_mem(buf, buflen - outleft);
         if (*output == NULL) {
-            free(buf);
+            htp_free(buf);
             return HTP_ERROR;
         }
     }
     
-    free(buf);
+    htp_free(buf);
 
     return HTP_OK;
 }

@@ -245,7 +245,7 @@ htp_status_t htp_mpart_part_parse_c_d(htp_multipart_part_t *part) {
                     return HTP_DECLINED;
                 }
  
-                part->file = calloc(1, sizeof (htp_file_t));
+                part->file = htp_calloc(1, sizeof (htp_file_t));
                 if (part->file == NULL) return HTP_ERROR;
 
                 part->file->fd = -1;
@@ -253,7 +253,7 @@ htp_status_t htp_mpart_part_parse_c_d(htp_multipart_part_t *part) {
 
                 part->file->filename = bstr_dup_mem(data + start, pos - start - 1);
                 if (part->file->filename == NULL) {
-                    free(part->file);
+                    htp_free(part->file);
                     return HTP_ERROR;
                 }
 
@@ -385,19 +385,19 @@ htp_status_t htp_mpartp_parse_header(htp_multipart_part_t *part, const unsigned 
     }
 
     // Now extract the name and the value.
-    htp_header_t *h = calloc(1, sizeof (htp_header_t));
+    htp_header_t *h = htp_calloc(1, sizeof (htp_header_t));
     if (h == NULL) return HTP_ERROR;
 
     h->name = bstr_dup_mem(data + name_start, name_end - name_start);
     if (h->name == NULL) {
-        free(h);
+        htp_free(h);
         return HTP_ERROR;
     }
 
     h->value = bstr_dup_mem(data + value_start, value_end - value_start);
     if (h->value == NULL) {
         bstr_free(h->name);
-        free(h);
+        htp_free(h);
         return HTP_ERROR;
     }
 
@@ -414,7 +414,7 @@ htp_status_t htp_mpartp_parse_header(htp_multipart_part_t *part, const unsigned 
         if (new_value == NULL) {
             bstr_free(h->name);
             bstr_free(h->value);
-            free(h);
+            htp_free(h);
             return HTP_ERROR;
         }
 
@@ -425,7 +425,7 @@ htp_status_t htp_mpartp_parse_header(htp_multipart_part_t *part, const unsigned 
         // The header is no longer needed.
         bstr_free(h->name);
         bstr_free(h->value);
-        free(h);
+        htp_free(h);
 
         // Keep track of same-name headers.
         h_existing->flags |= HTP_MULTIPART_PART_HEADER_REPEATED;
@@ -435,7 +435,7 @@ htp_status_t htp_mpartp_parse_header(htp_multipart_part_t *part, const unsigned 
         if (htp_table_add(part->headers, h->name, h) != HTP_OK) {
             bstr_free(h->value);
             bstr_free(h->name);
-            free(h);
+            htp_free(h);
             return HTP_ERROR;
         }
     }
@@ -450,12 +450,12 @@ htp_status_t htp_mpartp_parse_header(htp_multipart_part_t *part, const unsigned 
  * @return New part instance, or NULL on memory allocation failure.
  */
 htp_multipart_part_t *htp_mpart_part_create(htp_mpartp_t *parser) {
-    htp_multipart_part_t * part = calloc(1, sizeof (htp_multipart_part_t));
+    htp_multipart_part_t * part = htp_calloc(1, sizeof (htp_multipart_part_t));
     if (part == NULL) return NULL;
 
     part->headers = htp_table_create(4);
     if (part->headers == NULL) {
-        free(part);
+        htp_free(part);
         return NULL;
     }
 
@@ -480,10 +480,10 @@ void htp_mpart_part_destroy(htp_multipart_part_t *part, int gave_up_data) {
 
         if (part->file->tmpname != NULL) {
             unlink(part->file->tmpname);
-            free(part->file->tmpname);
+            htp_free(part->file->tmpname);
         }
 
-        free(part->file);
+        htp_free(part->file);
         part->file = NULL;
     }
 
@@ -500,13 +500,13 @@ void htp_mpart_part_destroy(htp_multipart_part_t *part, int gave_up_data) {
             h = htp_table_get_index(part->headers, i, NULL);
             bstr_free(h->name);
             bstr_free(h->value);
-            free(h);
+            htp_free(h);
         }
 
         htp_table_destroy(part->headers);
     }
 
-    free(part);
+    htp_free(part);
 }
 
 /**
@@ -855,7 +855,7 @@ static htp_status_t htp_mpartp_init_boundary(htp_mpartp_t *parser, unsigned char
     // Copy the boundary and convert it to lowercase.
 
     parser->multipart.boundary_len = len + 4;
-    parser->multipart.boundary = malloc(parser->multipart.boundary_len + 1);
+    parser->multipart.boundary = htp_malloc(parser->multipart.boundary_len + 1);
     if (parser->multipart.boundary == NULL) return HTP_ERROR;
 
     parser->multipart.boundary[0] = CR;
@@ -883,7 +883,7 @@ static htp_status_t htp_mpartp_init_boundary(htp_mpartp_t *parser, unsigned char
 htp_mpartp_t *htp_mpartp_create(htp_cfg_t *cfg, bstr *boundary, uint64_t flags) {
     if ((cfg == NULL) || (boundary == NULL)) return NULL;
 
-    htp_mpartp_t *parser = calloc(1, sizeof (htp_mpartp_t));
+    htp_mpartp_t *parser = htp_calloc(1, sizeof (htp_mpartp_t));
     if (parser == NULL) return NULL;
 
     parser->cfg = cfg;
@@ -943,7 +943,7 @@ void htp_mpartp_destroy(htp_mpartp_t *parser) {
     if (parser == NULL) return;
 
     if (parser->multipart.boundary != NULL) {
-        free(parser->multipart.boundary);
+        htp_free(parser->multipart.boundary);
     }
 
     bstr_builder_destroy(parser->boundary_pieces);
@@ -961,7 +961,7 @@ void htp_mpartp_destroy(htp_mpartp_t *parser) {
         htp_list_destroy(parser->multipart.parts);
     }
 
-    free(parser);
+    htp_free(parser);
 }
 
 /**

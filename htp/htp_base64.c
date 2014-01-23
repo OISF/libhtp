@@ -178,7 +178,7 @@ bstr *htp_base64_decode_mem(const void *data, size_t len) {
 
     htp_base64_decoder_init(&decoder);
 
-    unsigned char *tmpstr = malloc(len);
+    unsigned char *tmpstr = htp_malloc(len);
     if (tmpstr == NULL) return NULL;
 
     int resulting_len = htp_base64_decode(&decoder, data, len, tmpstr, len);
@@ -186,7 +186,7 @@ bstr *htp_base64_decode_mem(const void *data, size_t len) {
         r = bstr_dup_mem(tmpstr, resulting_len);
     }
 
-    free(tmpstr);
+    htp_free(tmpstr);
 
     return r;
 }

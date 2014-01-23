@@ -211,13 +211,13 @@ static htp_status_t htp_connp_req_buffer(htp_connp_t *connp) {
     // Copy the data remaining in the buffer.
 
     if (connp->in_buf == NULL) {
-        connp->in_buf = malloc(len);
+        connp->in_buf = htp_malloc(len);
         if (connp->in_buf == NULL) return HTP_ERROR;
         memcpy(connp->in_buf, data, len);
         connp->in_buf_size = len;
     } else {
         size_t newsize = connp->in_buf_size + len;
-        unsigned char *newbuf = realloc(connp->in_buf, newsize);
+        unsigned char *newbuf = htp_realloc(connp->in_buf, newsize);
         if (newbuf == NULL) return HTP_ERROR;
         connp->in_buf = newbuf;
         memcpy(connp->in_buf + connp->in_buf_size, data, len);
@@ -268,7 +268,7 @@ static void htp_connp_req_clear_buffer(htp_connp_t *connp) {
     connp->in_current_consume_offset = connp->in_current_read_offset;
 
     if (connp->in_buf != NULL) {
-        free(connp->in_buf);
+        htp_free(connp->in_buf);
         connp->in_buf = NULL;
         connp->in_buf_size = 0;
     }

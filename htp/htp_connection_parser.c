@@ -59,7 +59,7 @@ void htp_connp_close(htp_connp_t *connp, const htp_time_t *timestamp) {
 }
 
 htp_connp_t *htp_connp_create(htp_cfg_t *cfg) {
-    htp_connp_t *connp = calloc(1, sizeof (htp_connp_t));
+    htp_connp_t *connp = htp_calloc(1, sizeof (htp_connp_t));
     if (connp == NULL) return NULL;
 
     // Use the supplied configuration structure
@@ -68,7 +68,7 @@ htp_connp_t *htp_connp_create(htp_cfg_t *cfg) {
     // Create a new connection.
     connp->conn = htp_conn_create();
     if (connp->conn == NULL) {
-        free(connp);
+        htp_free(connp);
         return NULL;
     }
 
@@ -87,11 +87,11 @@ void htp_connp_destroy(htp_connp_t *connp) {
     if (connp == NULL) return;
     
     if (connp->in_buf != NULL) {
-        free(connp->in_buf);
+        htp_free(connp->in_buf);
     }
 
     if (connp->out_buf != NULL) {
-        free(connp->out_buf);
+        htp_free(connp->out_buf);
     }
         
     if (connp->out_decompressor != NULL) {
@@ -101,10 +101,10 @@ void htp_connp_destroy(htp_connp_t *connp) {
 
     if (connp->put_file != NULL) {
         bstr_free(connp->put_file->filename);
-        free(connp->put_file);
+        htp_free(connp->put_file);
     }
 
-    free(connp);
+    htp_free(connp);
 }
 
 void htp_connp_destroy_all(htp_connp_t *connp) {

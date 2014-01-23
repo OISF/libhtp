@@ -68,12 +68,12 @@ void bstr_builder_clear(bstr_builder_t *bb) {
 }
 
 bstr_builder_t *bstr_builder_create() {
-    bstr_builder_t *bb = calloc(1, sizeof (bstr_builder_t));
+    bstr_builder_t *bb = htp_calloc(1, sizeof (bstr_builder_t));
     if (bb == NULL) return NULL;
 
     bb->pieces = htp_list_create(BSTR_BUILDER_DEFAULT_SIZE);
     if (bb->pieces == NULL) {
-        free(bb);
+        htp_free(bb);
         return NULL;
     }
 
@@ -91,7 +91,7 @@ void bstr_builder_destroy(bstr_builder_t *bb) {
 
     htp_list_destroy(bb->pieces);
 
-    free(bb);
+    htp_free(bb);
 }
 
 size_t bstr_builder_size(const bstr_builder_t *bb) {

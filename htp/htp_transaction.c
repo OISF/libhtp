@@ -51,7 +51,7 @@ static bstr *copy_or_wrap_mem(const void *data, size_t len, enum htp_alloc_strat
 htp_tx_t *htp_tx_create(htp_connp_t *connp) {
     if (connp == NULL) return NULL;
 
-    htp_tx_t *tx = calloc(1, sizeof (htp_tx_t));
+    htp_tx_t *tx = htp_calloc(1, sizeof (htp_tx_t));
     if (tx == NULL) return NULL;
 
     tx->connp = connp;
@@ -137,7 +137,7 @@ void htp_tx_destroy_incomplete(htp_tx_t *tx) {
             h = htp_table_get_index(tx->request_headers, i, NULL);
             bstr_free(h->name);
             bstr_free(h->value);
-            free(h);
+            htp_free(h);
         }
 
         htp_table_destroy(tx->request_headers);
@@ -156,7 +156,7 @@ void htp_tx_destroy_incomplete(htp_tx_t *tx) {
         param = htp_table_get_index(tx->request_params, i, NULL);
         bstr_free(param->name);
         bstr_free(param->value);
-        free(param);
+        htp_free(param);
     }
 
     htp_table_destroy(tx->request_params);
@@ -190,7 +190,7 @@ void htp_tx_destroy_incomplete(htp_tx_t *tx) {
             h = htp_table_get_index(tx->response_headers, i, NULL);
             bstr_free(h->name);
             bstr_free(h->value);
-            free(h);
+            htp_free(h);
         }
 
         htp_table_destroy(tx->response_headers);
@@ -201,7 +201,7 @@ void htp_tx_destroy_incomplete(htp_tx_t *tx) {
         htp_config_destroy(tx->cfg);
     }
 
-    free(tx);
+    htp_free(tx);
 }
 
 int htp_tx_get_is_config_shared(const htp_tx_t *tx) {
@@ -277,26 +277,26 @@ htp_status_t htp_tx_req_set_header(htp_tx_t *tx, const char *name, size_t name_l
         const char *value, size_t value_len, enum htp_alloc_strategy_t alloc) {
     if ((tx == NULL) || (name == NULL) || (value == NULL)) return HTP_ERROR;
 
-    htp_header_t *h = calloc(1, sizeof (htp_header_t));
+    htp_header_t *h = htp_calloc(1, sizeof (htp_header_t));
     if (h == NULL) return HTP_ERROR;
 
     h->name = copy_or_wrap_mem(name, name_len, alloc);
     if (h->name == NULL) {
-        free(h);
+        htp_free(h);
         return HTP_ERROR;
     }
 
     h->value = copy_or_wrap_mem(value, value_len, alloc);
     if (h->value == NULL) {
         bstr_free(h->name);
-        free(h);
+        htp_free(h);
         return HTP_ERROR;
     }
 
     if (htp_table_add(tx->request_headers, h->name, h) != HTP_OK) {
         bstr_free(h->name);
         bstr_free(h->value);
-        free(h);
+        htp_free(h);
         return HTP_ERROR;
     }
 
@@ -442,7 +442,7 @@ static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {
         if (htp_tx_req_has_body(tx)) {
             // Prepare to treat PUT request body as a file.
             
-            tx->connp->put_file = calloc(1, sizeof (htp_file_t));
+            tx->connp->put_file = htp_calloc(1, sizeof (htp_file_t));
             if (tx->connp->put_file == NULL) return HTP_ERROR;
 
             tx->connp->put_file->fd = -1;
@@ -596,7 +596,7 @@ htp_status_t htp_tx_req_set_headers_clear(htp_tx_t *tx) {
         h = htp_table_get_index(tx->request_headers, i, NULL);
         bstr_free(h->name);
         bstr_free(h->value);
-        free(h);
+        htp_free(h);
     }
 
     htp_table_destroy(tx->request_headers);
@@ -699,26 +699,26 @@ htp_status_t htp_tx_res_set_header(htp_tx_t *tx, const char *name, size_t name_l
     if ((tx == NULL) || (name == NULL) || (value == NULL)) return HTP_ERROR;
 
 
-    htp_header_t *h = calloc(1, sizeof (htp_header_t));
+    htp_header_t *h = htp_calloc(1, sizeof (htp_header_t));
     if (h == NULL) return HTP_ERROR;
 
     h->name = copy_or_wrap_mem(name, name_len, alloc);
     if (h->name == NULL) {
-        free(h);
+        htp_free(h);
         return HTP_ERROR;
     }
 
     h->value = copy_or_wrap_mem(value, value_len, alloc);
     if (h->value == NULL) {
         bstr_free(h->name);
-        free(h);
+        htp_free(h);
         return HTP_ERROR;
     }
 
     if (htp_table_add(tx->response_headers, h->name, h) != HTP_OK) {
         bstr_free(h->name);
         bstr_free(h->value);
-        free(h);
+        htp_free(h);
         return HTP_ERROR;
     }
 
@@ -733,7 +733,7 @@ htp_status_t htp_tx_res_set_headers_clear(htp_tx_t *tx) {
         h = htp_table_get_index(tx->response_headers, i, NULL);
         bstr_free(h->name);
         bstr_free(h->value);
-        free(h);
+        htp_free(h);
     }
 
     htp_table_destroy(tx->response_headers);
@@ -838,7 +838,7 @@ htp_status_t htp_tx_state_request_complete_partial(htp_tx_t *tx) {
     // Clean-up.
     if (tx->connp->put_file != NULL) {
         bstr_free(tx->connp->put_file->filename);
-        free(tx->connp->put_file);
+        htp_free(tx->connp->put_file);
         tx->connp->put_file = NULL;
     }
 

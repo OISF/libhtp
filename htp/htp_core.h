@@ -43,6 +43,12 @@
 extern "C" {
 #endif
 
+/* these are implemented in htp_util.c */
+void *htp_malloc(size_t size);
+void *htp_calloc(size_t nmemb, size_t size);
+void *htp_realloc(void *ptr, size_t size);
+void htp_free(void *ptr);
+
 typedef int htp_status_t;
 
 typedef struct htp_cfg_t htp_cfg_t;

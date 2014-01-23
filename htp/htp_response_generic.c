@@ -236,11 +236,11 @@ htp_status_t htp_parse_response_header_generic(htp_connp_t *connp, htp_header_t 
  */
 htp_status_t htp_process_response_header_generic(htp_connp_t *connp, unsigned char *data, size_t len) {
     // Create a new header structure.
-    htp_header_t *h = calloc(1, sizeof (htp_header_t));
+    htp_header_t *h = htp_calloc(1, sizeof (htp_header_t));
     if (h == NULL) return HTP_ERROR;
 
     if (htp_parse_response_header_generic(connp, h, data, len) != HTP_OK) {
-        free(h);
+        htp_free(h);
         return HTP_ERROR;
     }
 
@@ -260,7 +260,7 @@ htp_status_t htp_process_response_header_generic(htp_connp_t *connp, unsigned ch
         if (new_value == NULL) {
             bstr_free(h->name);
             bstr_free(h->value);
-            free(h);
+            htp_free(h);
             return HTP_ERROR;
         }
 
@@ -271,7 +271,7 @@ htp_status_t htp_process_response_header_generic(htp_connp_t *connp, unsigned ch
         // The new header structure is no longer needed.
         bstr_free(h->name);
         bstr_free(h->value);
-        free(h);
+        htp_free(h);
 
         // Keep track of repeated same-name headers.
         h_existing->flags |= HTP_FIELD_REPEATED;
@@ -280,7 +280,7 @@ htp_status_t htp_process_response_header_generic(htp_connp_t *connp, unsigned ch
         if (htp_table_add(connp->out_tx->response_headers, h->name, h) != HTP_OK) {
             bstr_free(h->name);
             bstr_free(h->value);
-            free(h);
+            htp_free(h);
             return HTP_ERROR;
         }
     }

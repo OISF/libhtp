@@ -213,13 +213,13 @@ static htp_status_t htp_connp_res_buffer(htp_connp_t *connp) {
     // Copy the data remaining in the buffer.
 
     if (connp->out_buf == NULL) {
-        connp->out_buf = malloc(len);
+        connp->out_buf = htp_malloc(len);
         if (connp->out_buf == NULL) return HTP_ERROR;
         memcpy(connp->out_buf, data, len);
         connp->out_buf_size = len;
     } else {
         size_t newsize = connp->out_buf_size + len;
-        unsigned char *newbuf = realloc(connp->out_buf, newsize);
+        unsigned char *newbuf = htp_realloc(connp->out_buf, newsize);
         if (newbuf == NULL) return HTP_ERROR;
         connp->out_buf = newbuf;
         memcpy(connp->out_buf + connp->out_buf_size, data, len);
@@ -270,7 +270,7 @@ static void htp_connp_res_clear_buffer(htp_connp_t *connp) {
     connp->out_current_consume_offset = connp->out_current_read_offset;
 
     if (connp->out_buf != NULL) {
-        free(connp->out_buf);
+        htp_free(connp->out_buf);
         connp->out_buf = NULL;
         connp->out_buf_size = 0;
     }
@@ -502,7 +502,7 @@ htp_status_t htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
             h = htp_table_get_index(connp->out_tx->response_headers, i, NULL);
             bstr_free(h->name);
             bstr_free(h->value);
-            free(h);
+            htp_free(h);
         }
 
         htp_table_clear(connp->out_tx->response_headers);
