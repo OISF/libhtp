@@ -662,6 +662,8 @@ htp_status_t htp_urldecode_inplace_ex(htp_cfg_t *cfg, enum htp_decoder_ctx_t ctx
  */
 char *htp_get_version(void);
 
+uint64_t htp_memory_get_memuse(void);
+
 #ifdef __cplusplus
 }
 #endif

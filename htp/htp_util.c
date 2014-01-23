@@ -38,19 +38,36 @@
 
 #include "htp_private.h"
 
+static uint64_t memuse = 0;
+
+uint64_t htp_memory_get_memuse(void) {
+    return memuse;
+}
+
 void *htp_malloc(size_t size) {
-    return malloc(size);
+    void *ptr = malloc(size);
+    if (ptr != NULL)
+        __sync_add_and_fetch(&memuse, size);
+    return ptr;
 }
 
 void *htp_calloc(size_t nmemb, size_t size) {
-    return calloc(nmemb, size);
+    void *ptr = calloc(nmemb, size);
+    if (ptr != NULL)
+        __sync_add_and_fetch(&memuse, (nmemb * size));
+    return ptr;
 }
 
 void *htp_realloc(void *ptr, size_t size, size_t oldsize) {
-    return realloc(ptr, size);
+    int64_t diff = size - oldsize;
+    void *outptr = realloc(ptr, size);
+    if (outptr != NULL)
+        __sync_add_and_fetch(&memuse, diff);
+    return outptr;
 }
 
 void htp_free(void *ptr, size_t size) {
+    __sync_sub_and_fetch(&memuse, size);
     free(ptr);
 }
 
