@@ -73,7 +73,7 @@ htp_status_t htp_table_add(htp_table_t *table, const bstr *key, const void *elem
     if (dupkey == NULL) return HTP_ERROR;
 
     if (_htp_table_add(table, dupkey, element) != HTP_OK) {
-        free(dupkey);
+        bstr_free(dupkey);
         return HTP_ERROR;
     }
 
