@@ -72,7 +72,10 @@ void htp_free(void *ptr, size_t size) {
 }
 
 char *htp_strdup(const char *s) {
-    return strdup(s);
+    char *ptr = strdup(s);
+    if (ptr != NULL)
+        __sync_add_and_fetch(&memuse, strlen(ptr));
+    return ptr;
 }
 
 /**
