@@ -145,7 +145,7 @@ int htp_transcode_bstr(iconv_t cd, bstr *input, bstr **output) {
 
     bstr_builder_t *bb = NULL;
 
-    size_t buflen = 10;
+    const size_t buflen = 10;
     unsigned char *buf = malloc(buflen);
     if (buf == NULL) {
         return HTP_ERROR;
