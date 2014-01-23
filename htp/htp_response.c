@@ -219,7 +219,7 @@ static htp_status_t htp_connp_res_buffer(htp_connp_t *connp) {
         connp->out_buf_size = len;
     } else {
         size_t newsize = connp->out_buf_size + len;
-        unsigned char *newbuf = htp_realloc(connp->out_buf, newsize);
+        unsigned char *newbuf = htp_realloc(connp->out_buf, newsize, connp->out_buf_size);
         if (newbuf == NULL) return HTP_ERROR;
         connp->out_buf = newbuf;
         memcpy(connp->out_buf + connp->out_buf_size, data, len);

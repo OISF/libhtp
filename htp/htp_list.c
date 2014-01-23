@@ -134,7 +134,7 @@ htp_status_t htp_list_array_push(htp_list_array_t *l, void *e) {
             // element in the list resides in the first slot. In
             // that case we just add some new space to the end,
             // adjust the max_size and that's that.
-            newblock = htp_realloc(l->elements, new_size * sizeof (void *));
+            newblock = htp_realloc(l->elements, new_size * sizeof (void *), l->max_size * sizeof (void *));
             if (newblock == NULL) return HTP_ERROR;
         } else {
             // When the first element is not in the first

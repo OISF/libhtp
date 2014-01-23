@@ -270,7 +270,7 @@ bstr *bstr_expand(bstr *b, size_t newsize) {
     // Catch attempts to "expand" to a smaller size
     if (bstr_size(b) > newsize) return NULL;
 
-    bstr *bnew = htp_realloc(b, sizeof (bstr) + newsize);
+    bstr *bnew = htp_realloc(b, sizeof (bstr) + newsize, sizeof (bstr) + bstr_size(b));
     if (bnew == NULL) return NULL;
 
     bstr_adjust_size(bnew, newsize);
