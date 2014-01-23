@@ -203,7 +203,7 @@ htp_cfg_t *htp_config_copy(htp_cfg_t *cfg) {
     if (cfg->hook_request_uri_normalize != NULL) {
         copy->hook_request_uri_normalize = htp_hook_copy(cfg->hook_request_uri_normalize);
         if (copy->hook_request_uri_normalize == NULL) {
-            free(copy);
+            htp_config_destroy(copy);
             return NULL;
         }
     }
