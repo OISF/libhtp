@@ -106,7 +106,7 @@ htp_status_t htp_php_parameter_processor(htp_param_t *p) {
 
     // If we made any changes, free the old parameter name and put the new one in.
     if (new_name != NULL) {
-        free(p->name);
+        bstr_free(p->name);
         p->name = new_name;
     }
 
