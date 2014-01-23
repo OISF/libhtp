@@ -154,8 +154,8 @@ static void htp_gzip_decompressor_destroy(htp_decompressor_gzip_t *drec) {
         drec->zlib_initialized = 0;
     }
 
-    htp_free(drec->buffer);
-    htp_free(drec);
+    htp_free(drec->buffer, GZIP_BUF_SIZE);
+    htp_free(drec, sizeof (htp_decompressor_gzip_t));
 }
 
 /**
@@ -174,7 +174,7 @@ htp_decompressor_t *htp_gzip_decompressor_create(htp_connp_t *connp, enum htp_co
 
     drec->buffer = htp_malloc(GZIP_BUF_SIZE);
     if (drec->buffer == NULL) {
-        htp_free(drec);
+        htp_free(drec, sizeof (htp_decompressor_gzip_t));
         return NULL;
     }
 
@@ -194,8 +194,8 @@ htp_decompressor_t *htp_gzip_decompressor_create(htp_connp_t *connp, enum htp_co
         htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "GZip decompressor: inflateInit2 failed with code %d", rc);
 
         inflateEnd(&drec->stream);
-        htp_free(drec->buffer);
-        htp_free(drec);
+        htp_free(drec->buffer, GZIP_BUF_SIZE);
+        htp_free(drec, sizeof (htp_decompressor_gzip_t));
 
         return NULL;
     }

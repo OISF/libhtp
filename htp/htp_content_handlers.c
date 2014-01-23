@@ -75,7 +75,7 @@ htp_status_t htp_ch_urlencoded_callback_request_body_data(htp_tx_data_t *d) {
             param->parser_data = NULL;
 
             if (htp_tx_req_add_param(tx, param) != HTP_OK) {
-                htp_free(param);
+                htp_free(param, sizeof(htp_param_t));
                 return HTP_ERROR;
             }
         }
@@ -165,7 +165,7 @@ htp_status_t htp_ch_urlencoded_callback_request_line(htp_tx_t *tx) {
         param->parser_data = NULL;
 
         if (htp_tx_req_add_param(tx, param) != HTP_OK) {
-            htp_free(param);
+            htp_free(param, sizeof (htp_param_t));
             return HTP_ERROR;
         }
     }
@@ -217,7 +217,7 @@ htp_status_t htp_ch_multipart_callback_request_body_data(htp_tx_data_t *d) {
                 param->parser_data = part;
 
                 if (htp_tx_req_add_param(tx, param) != HTP_OK) {
-                    htp_free(param);
+                    htp_free(param, sizeof (htp_param_t));
                     return HTP_ERROR;
                 }
             }

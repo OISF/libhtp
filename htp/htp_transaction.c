@@ -137,7 +137,7 @@ void htp_tx_destroy_incomplete(htp_tx_t *tx) {
             h = htp_table_get_index(tx->request_headers, i, NULL);
             bstr_free(h->name);
             bstr_free(h->value);
-            htp_free(h);
+            htp_free(h, sizeof(htp_header_t));
         }
 
         htp_table_destroy(tx->request_headers);
@@ -156,7 +156,7 @@ void htp_tx_destroy_incomplete(htp_tx_t *tx) {
         param = htp_table_get_index(tx->request_params, i, NULL);
         bstr_free(param->name);
         bstr_free(param->value);
-        htp_free(param);
+        htp_free(param, sizeof(htp_param_t));
     }
 
     htp_table_destroy(tx->request_params);
@@ -190,7 +190,7 @@ void htp_tx_destroy_incomplete(htp_tx_t *tx) {
             h = htp_table_get_index(tx->response_headers, i, NULL);
             bstr_free(h->name);
             bstr_free(h->value);
-            htp_free(h);
+            htp_free(h, sizeof(htp_header_t));
         }
 
         htp_table_destroy(tx->response_headers);
@@ -201,7 +201,7 @@ void htp_tx_destroy_incomplete(htp_tx_t *tx) {
         htp_config_destroy(tx->cfg);
     }
 
-    htp_free(tx);
+    htp_free(tx, sizeof(*tx));
 }
 
 int htp_tx_get_is_config_shared(const htp_tx_t *tx) {
@@ -282,21 +282,21 @@ htp_status_t htp_tx_req_set_header(htp_tx_t *tx, const char *name, size_t name_l
 
     h->name = copy_or_wrap_mem(name, name_len, alloc);
     if (h->name == NULL) {
-        htp_free(h);
+        htp_free(h, sizeof (htp_header_t));
         return HTP_ERROR;
     }
 
     h->value = copy_or_wrap_mem(value, value_len, alloc);
     if (h->value == NULL) {
         bstr_free(h->name);
-        htp_free(h);
+        htp_free(h, sizeof (htp_header_t));
         return HTP_ERROR;
     }
 
     if (htp_table_add(tx->request_headers, h->name, h) != HTP_OK) {
         bstr_free(h->name);
         bstr_free(h->value);
-        htp_free(h);
+        htp_free(h, sizeof (htp_header_t));
         return HTP_ERROR;
     }
 
@@ -596,7 +596,7 @@ htp_status_t htp_tx_req_set_headers_clear(htp_tx_t *tx) {
         h = htp_table_get_index(tx->request_headers, i, NULL);
         bstr_free(h->name);
         bstr_free(h->value);
-        htp_free(h);
+        htp_free(h, sizeof (htp_header_t));
     }
 
     htp_table_destroy(tx->request_headers);
@@ -704,21 +704,21 @@ htp_status_t htp_tx_res_set_header(htp_tx_t *tx, const char *name, size_t name_l
 
     h->name = copy_or_wrap_mem(name, name_len, alloc);
     if (h->name == NULL) {
-        htp_free(h);
+        htp_free(h, sizeof (htp_header_t));
         return HTP_ERROR;
     }
 
     h->value = copy_or_wrap_mem(value, value_len, alloc);
     if (h->value == NULL) {
         bstr_free(h->name);
-        htp_free(h);
+        htp_free(h, sizeof (htp_header_t));
         return HTP_ERROR;
     }
 
     if (htp_table_add(tx->response_headers, h->name, h) != HTP_OK) {
         bstr_free(h->name);
         bstr_free(h->value);
-        htp_free(h);
+        htp_free(h, sizeof (htp_header_t));
         return HTP_ERROR;
     }
 
@@ -733,7 +733,7 @@ htp_status_t htp_tx_res_set_headers_clear(htp_tx_t *tx) {
         h = htp_table_get_index(tx->response_headers, i, NULL);
         bstr_free(h->name);
         bstr_free(h->value);
-        htp_free(h);
+        htp_free(h, sizeof (htp_header_t));
     }
 
     htp_table_destroy(tx->response_headers);
@@ -838,7 +838,7 @@ htp_status_t htp_tx_state_request_complete_partial(htp_tx_t *tx) {
     // Clean-up.
     if (tx->connp->put_file != NULL) {
         bstr_free(tx->connp->put_file->filename);
-        htp_free(tx->connp->put_file);
+        htp_free(tx->connp->put_file, sizeof(*(tx->connp->put_file)));
         tx->connp->put_file = NULL;
     }
 

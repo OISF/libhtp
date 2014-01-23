@@ -253,7 +253,7 @@ htp_status_t htp_mpart_part_parse_c_d(htp_multipart_part_t *part) {
 
                 part->file->filename = bstr_dup_mem(data + start, pos - start - 1);
                 if (part->file->filename == NULL) {
-                    htp_free(part->file);
+                    htp_free(part->file, sizeof(htp_file_t));
                     return HTP_ERROR;
                 }
 
@@ -390,14 +390,14 @@ htp_status_t htp_mpartp_parse_header(htp_multipart_part_t *part, const unsigned 
 
     h->name = bstr_dup_mem(data + name_start, name_end - name_start);
     if (h->name == NULL) {
-        htp_free(h);
+        htp_free(h, sizeof(htp_header_t));
         return HTP_ERROR;
     }
 
     h->value = bstr_dup_mem(data + value_start, value_end - value_start);
     if (h->value == NULL) {
         bstr_free(h->name);
-        htp_free(h);
+        htp_free(h, sizeof(htp_header_t));
         return HTP_ERROR;
     }
 
@@ -414,7 +414,7 @@ htp_status_t htp_mpartp_parse_header(htp_multipart_part_t *part, const unsigned 
         if (new_value == NULL) {
             bstr_free(h->name);
             bstr_free(h->value);
-            htp_free(h);
+            htp_free(h, sizeof(htp_header_t));
             return HTP_ERROR;
         }
 
@@ -425,7 +425,7 @@ htp_status_t htp_mpartp_parse_header(htp_multipart_part_t *part, const unsigned 
         // The header is no longer needed.
         bstr_free(h->name);
         bstr_free(h->value);
-        htp_free(h);
+        htp_free(h, sizeof(htp_header_t));
 
         // Keep track of same-name headers.
         h_existing->flags |= HTP_MULTIPART_PART_HEADER_REPEATED;
@@ -435,7 +435,7 @@ htp_status_t htp_mpartp_parse_header(htp_multipart_part_t *part, const unsigned 
         if (htp_table_add(part->headers, h->name, h) != HTP_OK) {
             bstr_free(h->value);
             bstr_free(h->name);
-            htp_free(h);
+            htp_free(h, sizeof(htp_header_t));
             return HTP_ERROR;
         }
     }
@@ -455,7 +455,7 @@ htp_multipart_part_t *htp_mpart_part_create(htp_mpartp_t *parser) {
 
     part->headers = htp_table_create(4);
     if (part->headers == NULL) {
-        htp_free(part);
+        htp_free(part, sizeof (htp_multipart_part_t));
         return NULL;
     }
 
@@ -480,10 +480,10 @@ void htp_mpart_part_destroy(htp_multipart_part_t *part, int gave_up_data) {
 
         if (part->file->tmpname != NULL) {
             unlink(part->file->tmpname);
-            htp_free(part->file->tmpname);
+            htp_free(part->file->tmpname, strlen(part->file->tmpname));
         }
 
-        htp_free(part->file);
+        htp_free(part->file, sizeof(*(part->file)));
         part->file = NULL;
     }
 
@@ -500,13 +500,13 @@ void htp_mpart_part_destroy(htp_multipart_part_t *part, int gave_up_data) {
             h = htp_table_get_index(part->headers, i, NULL);
             bstr_free(h->name);
             bstr_free(h->value);
-            htp_free(h);
+            htp_free(h, sizeof(htp_header_t));
         }
 
         htp_table_destroy(part->headers);
     }
 
-    htp_free(part);
+    htp_free(part, sizeof(htp_multipart_part_t));
 }
 
 /**
@@ -943,7 +943,7 @@ void htp_mpartp_destroy(htp_mpartp_t *parser) {
     if (parser == NULL) return;
 
     if (parser->multipart.boundary != NULL) {
-        htp_free(parser->multipart.boundary);
+        htp_free(parser->multipart.boundary, parser->multipart.boundary_len);
     }
 
     bstr_builder_destroy(parser->boundary_pieces);
@@ -961,7 +961,7 @@ void htp_mpartp_destroy(htp_mpartp_t *parser) {
         htp_list_destroy(parser->multipart.parts);
     }
 
-    htp_free(parser);
+    htp_free(parser, sizeof(htp_mpartp_t));
 }
 
 /**

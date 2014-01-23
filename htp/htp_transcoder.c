@@ -166,7 +166,7 @@ int htp_transcode_bstr(iconv_t cd, bstr *input, bstr **output) {
                 if (bb == NULL) {
                     bb = bstr_builder_create();
                     if (bb == NULL) {
-                        htp_free(buf);
+                        htp_free(buf, buflen);
                         return HTP_ERROR;
                     }
                 }
@@ -182,7 +182,7 @@ int htp_transcode_bstr(iconv_t cd, bstr *input, bstr **output) {
             } else {
                 // Error
                 if (bb != NULL) bstr_builder_destroy(bb);
-                htp_free(buf);
+                htp_free(buf, buflen);
                 return HTP_ERROR;
             }
         }
@@ -193,18 +193,18 @@ int htp_transcode_bstr(iconv_t cd, bstr *input, bstr **output) {
         *output = bstr_builder_to_str(bb);
         bstr_builder_destroy(bb);
         if (*output == NULL) {
-            htp_free(buf);
+            htp_free(buf, buflen);
             return HTP_ERROR;
         }
     } else {
         *output = bstr_dup_mem(buf, buflen - outleft);
         if (*output == NULL) {
-            htp_free(buf);
+            htp_free(buf, buflen);
             return HTP_ERROR;
         }
     }
     
-    htp_free(buf);
+    htp_free(buf, buflen);
 
     return HTP_OK;
 }

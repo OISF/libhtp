@@ -280,7 +280,7 @@ bstr *bstr_expand(bstr *b, size_t newsize) {
 
 void bstr_free(bstr *b) {
     if (b == NULL) return;
-    htp_free(b);
+    htp_free(b, (sizeof (bstr) + bstr_size(b)));
 }
 
 int bstr_index_of(const bstr *haystack, const bstr *needle) {

@@ -186,7 +186,7 @@ bstr *htp_base64_decode_mem(const void *data, size_t len) {
         r = bstr_dup_mem(tmpstr, resulting_len);
     }
 
-    htp_free(tmpstr);
+    htp_free(tmpstr, len);
 
     return r;
 }

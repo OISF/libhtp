@@ -371,7 +371,7 @@ void htp_config_destroy(htp_cfg_t *cfg) {
     htp_hook_destroy(cfg->hook_transaction_complete);
     htp_hook_destroy(cfg->hook_log);
 
-    htp_free(cfg);
+    htp_free(cfg, sizeof(*cfg));
 }
 
 void *htp_config_get_user_data(htp_cfg_t *cfg) {

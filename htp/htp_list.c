@@ -51,7 +51,7 @@ htp_list_t *htp_list_array_create(size_t size) {
     // Allocate the initial batch of elements.
     l->elements = htp_malloc(size * sizeof (void *));
     if (l->elements == NULL) {
-        htp_free(l);
+        htp_free(l, sizeof (htp_list_array_t));
         return NULL;
     }
 
@@ -76,8 +76,8 @@ void htp_list_array_clear(htp_list_array_t *l) {
 void htp_list_array_destroy(htp_list_array_t *l) {
     if (l == NULL) return;
 
-    htp_free(l->elements);
-    htp_free(l);
+    htp_free(l->elements, l->max_size * sizeof (void *));
+    htp_free(l, sizeof(htp_list_array_t));
 }
 
 void *htp_list_array_get(const htp_list_array_t *l, size_t idx) {
@@ -155,7 +155,7 @@ htp_status_t htp_list_array_push(htp_list_array_t *l, void *e) {
                     (void *) l->elements,
                     (size_t) (l->first * sizeof (void *)));
 
-            htp_free(l->elements);
+            htp_free(l->elements, l->max_size * sizeof (void *));
         }
 
         l->first = 0;

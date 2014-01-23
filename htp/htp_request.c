@@ -268,7 +268,7 @@ static void htp_connp_req_clear_buffer(htp_connp_t *connp) {
     connp->in_current_consume_offset = connp->in_current_read_offset;
 
     if (connp->in_buf != NULL) {
-        htp_free(connp->in_buf);
+        htp_free(connp->in_buf, connp->in_buf_size);
         connp->in_buf = NULL;
         connp->in_buf_size = 0;
     }

@@ -54,7 +54,7 @@ htp_status_t htp_process_request_header_generic(htp_connp_t *connp, unsigned cha
 
     // Now try to parse the header.
     if (htp_parse_request_header_generic(connp, h, data, len) != HTP_OK) {
-        htp_free(h);
+        htp_free(h, sizeof (htp_header_t));
         return HTP_ERROR;
     }
 
@@ -74,7 +74,7 @@ htp_status_t htp_process_request_header_generic(htp_connp_t *connp, unsigned cha
         if (new_value == NULL) {
             bstr_free(h->name);
             bstr_free(h->value);
-            htp_free(h);
+            htp_free(h, sizeof (htp_header_t));
             return HTP_ERROR;
         }
 
@@ -85,7 +85,7 @@ htp_status_t htp_process_request_header_generic(htp_connp_t *connp, unsigned cha
         // The new header structure is no longer needed.
         bstr_free(h->name);
         bstr_free(h->value);
-        htp_free(h);
+        htp_free(h, sizeof (htp_header_t));
 
         // Keep track of repeated same-name headers.
         h_existing->flags |= HTP_FIELD_REPEATED;

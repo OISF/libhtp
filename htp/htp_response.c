@@ -270,7 +270,7 @@ static void htp_connp_res_clear_buffer(htp_connp_t *connp) {
     connp->out_current_consume_offset = connp->out_current_read_offset;
 
     if (connp->out_buf != NULL) {
-        htp_free(connp->out_buf);
+        htp_free(connp->out_buf, connp->out_buf_size);
         connp->out_buf = NULL;
         connp->out_buf_size = 0;
     }
@@ -502,7 +502,7 @@ htp_status_t htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
             h = htp_table_get_index(connp->out_tx->response_headers, i, NULL);
             bstr_free(h->name);
             bstr_free(h->value);
-            htp_free(h);
+            htp_free(h, sizeof(htp_header_t));
         }
 
         htp_table_clear(connp->out_tx->response_headers);

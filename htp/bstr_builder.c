@@ -73,7 +73,7 @@ bstr_builder_t *bstr_builder_create() {
 
     bb->pieces = htp_list_create(BSTR_BUILDER_DEFAULT_SIZE);
     if (bb->pieces == NULL) {
-        htp_free(bb);
+        htp_free(bb, sizeof (bstr_builder_t));
         return NULL;
     }
 
@@ -91,7 +91,7 @@ void bstr_builder_destroy(bstr_builder_t *bb) {
 
     htp_list_destroy(bb->pieces);
 
-    htp_free(bb);
+    htp_free(bb, sizeof (bstr_builder_t));
 }
 
 size_t bstr_builder_size(const bstr_builder_t *bb) {

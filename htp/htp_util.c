@@ -50,7 +50,7 @@ void *htp_realloc(void *ptr, size_t size, size_t oldsize) {
     return realloc(ptr, size);
 }
 
-void htp_free(void *ptr) {
+void htp_free(void *ptr, size_t size) {
     free(ptr);
 }
 
@@ -2572,7 +2572,7 @@ void htp_uri_free(htp_uri_t *uri) {
     bstr_free(uri->query);
     bstr_free(uri->fragment);
 
-    htp_free(uri);
+    htp_free(uri, sizeof(htp_uri_t));
 }
 
 htp_uri_t *htp_uri_alloc() {

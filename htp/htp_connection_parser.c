@@ -68,7 +68,7 @@ htp_connp_t *htp_connp_create(htp_cfg_t *cfg) {
     // Create a new connection.
     connp->conn = htp_conn_create();
     if (connp->conn == NULL) {
-        htp_free(connp);
+        htp_free(connp, sizeof (htp_connp_t));
         return NULL;
     }
 
@@ -87,11 +87,11 @@ void htp_connp_destroy(htp_connp_t *connp) {
     if (connp == NULL) return;
     
     if (connp->in_buf != NULL) {
-        htp_free(connp->in_buf);
+        htp_free(connp->in_buf, connp->in_buf_size);
     }
 
     if (connp->out_buf != NULL) {
-        htp_free(connp->out_buf);
+        htp_free(connp->out_buf, connp->out_buf_size);
     }
         
     if (connp->out_decompressor != NULL) {
@@ -101,10 +101,10 @@ void htp_connp_destroy(htp_connp_t *connp) {
 
     if (connp->put_file != NULL) {
         bstr_free(connp->put_file->filename);
-        htp_free(connp->put_file);
+        htp_free(connp->put_file, sizeof(*connp->put_file));
     }
 
-    htp_free(connp);
+    htp_free(connp, sizeof(htp_connp_t));
 }
 
 void htp_connp_destroy_all(htp_connp_t *connp) {

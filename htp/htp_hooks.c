@@ -61,7 +61,7 @@ htp_hook_t *htp_hook_create(void) {
 
     hook->callbacks = (htp_list_array_t *) htp_list_array_create(4);
     if (hook->callbacks == NULL) {
-        htp_free(hook);
+        htp_free(hook, sizeof (htp_hook_t));
         return NULL;
     }
 
@@ -72,12 +72,12 @@ void htp_hook_destroy(htp_hook_t *hook) {
     if (hook == NULL) return;
 
     for (size_t i = 0, n = htp_list_size(hook->callbacks); i < n; i++) {
-        htp_free((htp_callback_t *) htp_list_get(hook->callbacks, i));
+        htp_free((htp_callback_t *) htp_list_get(hook->callbacks, i), sizeof(htp_callback_t));
     }
 
     htp_list_array_destroy(hook->callbacks);
 
-    htp_free(hook);
+    htp_free(hook, sizeof (htp_hook_t));
 }
 
 htp_status_t htp_hook_register(htp_hook_t **hook, const htp_callback_fn_t callback_fn) {
@@ -96,7 +96,7 @@ htp_status_t htp_hook_register(htp_hook_t **hook, const htp_callback_fn_t callba
 
         *hook = htp_hook_create();
         if (*hook == NULL) {
-            htp_free(callback);
+            htp_free(callback, sizeof(htp_callback_t));
             return HTP_ERROR;
         }
     }
@@ -104,10 +104,10 @@ htp_status_t htp_hook_register(htp_hook_t **hook, const htp_callback_fn_t callba
     // Add callback 
     if (htp_list_array_push((*hook)->callbacks, callback) != HTP_OK) {
         if (hook_created) {
-            htp_free(*hook);
+            htp_free(*hook, sizeof (htp_hook_t));
         }
 
-        htp_free(callback);
+        htp_free(callback, sizeof(htp_callback_t));
 
         return HTP_ERROR;
     }

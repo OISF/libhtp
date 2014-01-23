@@ -44,7 +44,7 @@ htp_conn_t *htp_conn_create(void) {
 
     conn->transactions = htp_list_create(16);
     if (conn->transactions == NULL) {
-        htp_free(conn);
+        htp_free(conn, sizeof (htp_conn_t));
         return NULL;
     }
 
@@ -52,7 +52,7 @@ htp_conn_t *htp_conn_create(void) {
     if (conn->messages == NULL) {
         htp_list_destroy(conn->transactions);
         conn->transactions = NULL;
-        htp_free(conn);
+        htp_free(conn, sizeof (htp_conn_t));
         return NULL;
     }
 
@@ -91,8 +91,8 @@ void htp_conn_destroy(htp_conn_t *conn) {
         // Destroy individual messages.
         for (size_t i = 0, n = htp_list_size(conn->messages); i < n; i++) {
             htp_log_t *l = htp_list_get(conn->messages, i);
-            htp_free((void *) l->msg);
-            htp_free(l);
+            htp_free((void *) l->msg, strlen(l->msg));
+            htp_free(l, sizeof(*l));
         }
 
         htp_list_destroy(conn->messages);
@@ -100,14 +100,14 @@ void htp_conn_destroy(htp_conn_t *conn) {
     }
 
     if (conn->server_addr != NULL) {
-        htp_free(conn->server_addr);
+        htp_free(conn->server_addr, strlen(conn->server_addr));
     }
 
     if (conn->client_addr != NULL) {
-        htp_free(conn->client_addr);
+        htp_free(conn->client_addr, strlen(conn->client_addr));
     }
     
-    htp_free(conn);
+    htp_free(conn, sizeof(htp_conn_t));
 }
 
 htp_status_t htp_conn_open(htp_conn_t *conn, const char *client_addr, int client_port,
@@ -126,7 +126,7 @@ htp_status_t htp_conn_open(htp_conn_t *conn, const char *client_addr, int client
         conn->server_addr = strdup(server_addr);
         if (conn->server_addr == NULL) {
             if (conn->client_addr != NULL) {
-                htp_free(conn->client_addr);
+                htp_free(conn->client_addr, strlen(conn->client_addr));
             }
 
             return HTP_ERROR;
