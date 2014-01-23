@@ -116,14 +116,14 @@ htp_status_t htp_conn_open(htp_conn_t *conn, const char *client_addr, int client
     if (conn == NULL) return HTP_ERROR;
 
     if (client_addr != NULL) {
-        conn->client_addr = strdup(client_addr);
+        conn->client_addr = htp_strdup(client_addr);
         if (conn->client_addr == NULL) return HTP_ERROR;
     }
 
     conn->client_port = client_port;
 
     if (server_addr != NULL) {
-        conn->server_addr = strdup(server_addr);
+        conn->server_addr = htp_strdup(server_addr);
         if (conn->server_addr == NULL) {
             if (conn->client_addr != NULL) {
                 htp_free(conn->client_addr, strlen(conn->client_addr));

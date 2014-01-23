@@ -47,6 +47,7 @@ extern "C" {
 void *htp_malloc(size_t size);
 void *htp_calloc(size_t nmemb, size_t size);
 void *htp_realloc(void *ptr, size_t size, size_t oldsize);
+char *htp_strdup(const char *s);
 void htp_free(void *ptr, size_t size);
 
 typedef int htp_status_t;

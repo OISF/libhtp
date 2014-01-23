@@ -676,7 +676,7 @@ htp_status_t htp_mpart_part_handle_data(htp_multipart_part_t *part, const unsign
                         strncpy(buf, part->parser->extract_dir, 254);
                         strncat(buf, "/libhtp-multipart-file-XXXXXX", 254 - strlen(buf));
 
-                        part->file->tmpname = strdup(buf);
+                        part->file->tmpname = htp_strdup(buf);
                         if (part->file->tmpname == NULL) {
                             bstr_free(line);
                             return HTP_ERROR;

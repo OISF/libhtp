@@ -71,6 +71,10 @@ void htp_free(void *ptr, size_t size) {
     free(ptr);
 }
 
+char *htp_strdup(const char *s) {
+    return strdup(s);
+}
+
 /**
  * Is character a linear white space character?
  *
@@ -402,7 +406,7 @@ void htp_log(htp_connp_t *connp, const char *file, int line, enum htp_log_level_
     log->line = line;
     log->level = level;
     log->code = code;
-    log->msg = strdup(buf);
+    log->msg = htp_strdup(buf);
 
     htp_list_add(connp->conn->messages, log);
 
