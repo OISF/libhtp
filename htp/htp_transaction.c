@@ -154,8 +154,8 @@ void htp_tx_destroy_incomplete(htp_tx_t *tx) {
     htp_param_t *param = NULL;
     for (size_t i = 0, n = htp_table_size(tx->request_params); i < n; i++) {
         param = htp_table_get_index(tx->request_params, i, NULL);
-        free(param->name);
-        free(param->value);
+        bstr_free(param->name);
+        bstr_free(param->value);
         free(param);
     }
 
