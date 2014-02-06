@@ -370,6 +370,7 @@ void htp_log(htp_connp_t *connp, const char *file, int line, enum htp_log_level_
     log->level = level;
     log->code = code;
     log->msg = strdup(buf);
+    log->tx = connp->in_tx ? connp->in_tx : connp->out_tx;
 
     htp_list_add(connp->conn->messages, log);
 
