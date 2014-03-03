@@ -1,8 +1,21 @@
 
+0.5.10 (3 March 2014)
+--------------------
+
+- Fixed [#63] Final response body data callback missing on compressed responses.
+
+- Do not consume the byte that comes after an invalid UTF-8 character.
+
+- Use case insensitive comparison for content-coding values. Warn if unknown
+  response content encoding is encountered.
+
+- Small fixes. [#66, #69] [Victor Julien]
+
+
 0.5.9 (19 November 2013)
 ------------------------
 
-- Fixed a HTP_HOST_AMBIGUOUS false positive.
+- Fixed an HTP_HOST_AMBIGUOUS false positive.
 
 - Fixed the tests not compiling on OS X 10.9.
 

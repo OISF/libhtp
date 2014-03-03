@@ -14,6 +14,7 @@
 *.dSYM
 *.a
 *.pdf
+*.sig
 htp-*.tar.gz
 compile
 .cproject

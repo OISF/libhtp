@@ -154,8 +154,8 @@ void htp_tx_destroy_incomplete(htp_tx_t *tx) {
     htp_param_t *param = NULL;
     for (size_t i = 0, n = htp_table_size(tx->request_params); i < n; i++) {
         param = htp_table_get_index(tx->request_params, i, NULL);
-        free(param->name);
-        free(param->value);
+        bstr_free(param->name);
+        bstr_free(param->value);
         free(param);
     }
 
@@ -1067,13 +1067,17 @@ htp_status_t htp_tx_state_response_headers(htp_tx_t *tx) {
     // Check for compression.
 
     // Determine content encoding.
+
     tx->response_content_encoding = HTP_COMPRESSION_NONE;
+
     htp_header_t *ce = htp_table_get_c(tx->response_headers, "content-encoding");
     if (ce != NULL) {
-        if ((bstr_cmp_c(ce->value, "gzip") == 0) || (bstr_cmp_c(ce->value, "x-gzip") == 0)) {
+        if ((bstr_cmp_c_nocase(ce->value, "gzip") == 0) || (bstr_cmp_c_nocase(ce->value, "x-gzip") == 0)) {
             tx->response_content_encoding = HTP_COMPRESSION_GZIP;
-        } else if ((bstr_cmp_c(ce->value, "deflate") == 0) || (bstr_cmp_c(ce->value, "x-deflate") == 0)) {
+        } else if ((bstr_cmp_c_nocase(ce->value, "deflate") == 0) || (bstr_cmp_c_nocase(ce->value, "x-deflate") == 0)) {
             tx->response_content_encoding = HTP_COMPRESSION_DEFLATE;
+        } else if (bstr_cmp_c_nocase(ce->value, "inflate") != 0) {
+            htp_log(tx->connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Unknown response content encoding");
         }
     }
 

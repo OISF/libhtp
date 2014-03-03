@@ -48,71 +48,26 @@
 static htp_status_t htp_gzip_decompressor_decompress(htp_decompressor_gzip_t *drec, htp_tx_data_t *d) {
     size_t consumed = 0;
 
-    #if 0
-    // Return if we've previously had an error.
-    if (drec->initialized < 0) return HTP_ERROR;
-    
-    // Do we need to initialize?
-    if (drec->initialized == 0) {
-        // Check the header
-        if ((drec->header_len == 0) && (d->len >= 10)) {
-            // We have received enough data initialize; use the input buffer directly.
-            if ((d->data[0] != DEFLATE_MAGIC_1) || (d->data[1] != DEFLATE_MAGIC_2)) {
-                htp_log(d->tx->connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0,
-                        "GZip decompressor: Magic bytes mismatch");
-                drec->initialized = -1;
-                return HTP_ERROR;
-            }
+    // Pass-through the NULL chunk, which indicates the end of the stream.
 
-            if (d->data[3] != 0) {
-                htp_log(d->tx->connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0,
-                        "GZip decompressor: Unable to handle flags: %d", d->data[3]);
-                drec->initialized = -1;
-                return HTP_ERROR;
-            }
+    if (d->data == NULL) {
+        // Prepare data for callback.
+        htp_tx_data_t dout;
+        dout.tx = d->tx;
+        dout.data = NULL;
+        dout.len = 0;
 
-            drec->initialized = 1;
-            consumed = 10;
-        } else {
-            // We do not (or did not) have enough bytes, so we have
-            // to copy some data into our internal header buffer.
+        // Send decompressed data to the callback.
+        htp_status_t callback_rc = drec->super.callback(&dout);
+        if (callback_rc != HTP_OK) {
+            inflateEnd(&drec->stream);
+            drec->zlib_initialized = 0;
 
-            // How many bytes do we need?
-            size_t copylen = 10 - drec->header_len;
-
-            // Is there enough in input?
-            if (copylen > d->len) copylen = d->len;
-
-            // Copy the bytes.
-            memcpy(drec->header + drec->header_len, d->data, copylen);
-            drec->header_len += copylen;
-            consumed = copylen;
-
-            // Do we have enough now?
-            if (drec->header_len == 10) {
-                // We do!
-                if ((drec->header[0] != DEFLATE_MAGIC_1) || (drec->header[1] != DEFLATE_MAGIC_2)) {
-                    htp_log(d->tx->connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0,
-                            "GZip decompressor: Magic bytes mismatch");
-                    drec->initialized = -1;
-                    return HTP_ERROR;
-                }
-
-                if (drec->header[3] != 0) {
-                    htp_log(d->tx->connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0,
-                            "GZip decompressor: Unable to handle flags: %d", d->data[3]);
-                    drec->initialized = -1;
-                    return HTP_ERROR;
-                }
-
-                drec->initialized = 1;
-            } else {
-                // Need more data.
-                return HTP_OK;
-            }
+            return callback_rc;
         }
+
+        return HTP_OK;
     }
-    #endif
 
     // Decompress data.
     int rc = 0;

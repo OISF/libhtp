@@ -99,6 +99,11 @@ void htp_connp_destroy(htp_connp_t *connp) {
         connp->out_decompressor = NULL;
     }
 
+    if (connp->put_file != NULL) {
+        bstr_free(connp->put_file->filename);
+        free(connp->put_file);
+    }
+
     free(connp);
 }
 
