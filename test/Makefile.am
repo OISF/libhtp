@@ -1,4 +1,4 @@
-LDADD = $(top_builddir)/htp/.libs/libhtp.a -lz @LIBICONV@ 
+LDADD = $(top_builddir)/htp/libhtp.la -lz @LIBICONV@ 
 AM_CFLAGS = -g -std=gnu99
 AM_CPPFLAGS = -I$(top_srcdir) -I$(top_builddir)/htp -Wno-write-strings -DGTEST_USE_OWN_TR1_TUPLE=1
 AUTOMAKE_OPTIONS = subdir-objects
