@@ -4,7 +4,7 @@ ACLOCAL_AMFLAGS = -I m4
 SUBDIRS = htp test docs
 
 DIST_SUBDIRS = htp test docs
-EXTRA_DIST = LICENSE NOTICE docs/doxygen.conf docs/QUICK_START 
+EXTRA_DIST = LICENSE NOTICE docs/doxygen.conf docs/QUICK_START VERSION get-version.sh
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = htp.pc
