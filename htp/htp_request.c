@@ -792,6 +792,15 @@ int htp_connp_req_data(htp_connp_t *connp, const struct timeval *timestamp, cons
         return HTP_STREAM_ERROR;
     }
 
+    // Sanity check: we must have a transaction pointer if the state is not IDLE (no inbound transaction)
+    if ((connp->in_tx == NULL)&&(connp->in_state != htp_connp_REQ_IDLE)) {
+        connp->in_status = HTP_STREAM_ERROR;
+
+        htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Missing inbound transaction data");
+
+        return HTP_STREAM_ERROR;
+    }
+
     // If the length of the supplied data chunk is zero, proceed
     // only if the stream has been closed. We do not allow zero-sized
     // chunks in the API, but we use them internally to force the parsers
