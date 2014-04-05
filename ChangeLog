@@ -1,4 +1,12 @@
 
+0.5.11 (5 April 2014)
+---------------------
+
+- Fixed [#72] On CONNECT requests inbound tx progress prematurely set to complete
+
+- Fixed [#71] Fix missing files in distribution target [Pierre Chifflier]
+
+
 0.5.10 (3 March 2014)
 --------------------
 
