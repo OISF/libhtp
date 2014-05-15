@@ -1646,7 +1646,29 @@ TEST_F(ConnectionParsing, ResponseContainsTeAndCl) {
 
 TEST_F(ConnectionParsing, ResponseMultipleCl) {
     int rc = test_run(home, "74-response-multiple-cl.t", cfg, &connp);
-    ASSERT_LT(rc, 0); // Expect error.
+    ASSERT_GE(rc, 0);
+
+    ASSERT_EQ(1, htp_list_size(connp->conn->transactions));
+
+    htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+
+    ASSERT_EQ(HTP_REQUEST_COMPLETE, tx->request_progress);
+    ASSERT_EQ(HTP_RESPONSE_COMPLETE, tx->response_progress);
+
+    ASSERT_TRUE(tx->flags & HTP_REQUEST_SMUGGLING);
+
+    htp_header_t *h = (htp_header_t *)htp_table_get_c(tx->response_headers, "Content-Length");
+    ASSERT_TRUE(h != NULL);
+    ASSERT_TRUE(h->value != NULL);
+    ASSERT_TRUE(h->flags & HTP_FIELD_REPEATED);
+
+    ASSERT_EQ(0, bstr_cmp_c(h->value, "12"));
+}
+
+TEST_F(ConnectionParsing, ResponseMultipleClMismatch) {
+    int rc = test_run(home, "88-response-multiple-cl-mismatch.t", cfg, &connp);
+    ASSERT_LT(rc, 0); // Expect error
 
     ASSERT_EQ(1, htp_list_size(connp->conn->transactions));
 
@@ -1655,8 +1677,6 @@ TEST_F(ConnectionParsing, ResponseMultipleCl) {
 
     ASSERT_EQ(HTP_REQUEST_COMPLETE, tx->request_progress);
     ASSERT_EQ(HTP_RESPONSE_HEADERS, tx->response_progress);
-
-    ASSERT_TRUE(tx->flags & HTP_REQUEST_SMUGGLING);
 }
 
 TEST_F(ConnectionParsing, ResponseInvalidCl) {
