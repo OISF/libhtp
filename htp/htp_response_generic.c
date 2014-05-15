@@ -252,29 +252,51 @@ htp_status_t htp_process_response_header_generic(htp_connp_t *connp, unsigned ch
     // Do we already have a header with the same name?
     htp_header_t *h_existing = htp_table_get(connp->out_tx->response_headers, h->name);
     if (h_existing != NULL) {
-        // TODO Do we want to have a list of the headers that are
-        //      allowed to be combined in this way?
+        /*
+         * While having multiple content-length headers is against the RFC
+         * many browsers will ignore the subsequent ones if the value is
+         * the same.
+         */
+        if (bstr_cmp_c_nocase(h->name, "Content-Length") == 0) {
+            /*
+             * Don't use bstr_cmp() and friends because we want to catch:
+             * Content-Length:12
+             * Content-Length: 12
+             * So parse the content length and compare the integers.
+             */
+            int64_t existing_cl, new_cl;
+            existing_cl = htp_parse_content_length(h_existing->value);
+            new_cl = htp_parse_content_length(h->value);
+            if ((existing_cl == -1 || new_cl == -1) || existing_cl != new_cl) {
+                return HTP_ERROR;
+            } else {
+                h_existing->flags |= HTP_FIELD_REPEATED;
+            }
+        } else {
+            // TODO Do we want to have a list of the headers that are
+            //      allowed to be combined in this way?
 
-        // Add to the existing header.
-        bstr *new_value = bstr_expand(h_existing->value, bstr_len(h_existing->value) + 2 + bstr_len(h->value));
-        if (new_value == NULL) {
+            // Add to the existing header.
+            bstr *new_value = bstr_expand(h_existing->value, bstr_len(h_existing->value) + 2 + bstr_len(h->value));
+            if (new_value == NULL) {
+                bstr_free(h->name);
+                bstr_free(h->value);
+                free(h);
+                return HTP_ERROR;
+            }
+
+            h_existing->value = new_value;
+            bstr_add_mem_noex(h_existing->value, (unsigned char *) ", ", 2);
+            bstr_add_noex(h_existing->value, h->value);
+
+            // The new header structure is no longer needed.
             bstr_free(h->name);
             bstr_free(h->value);
             free(h);
-            return HTP_ERROR;
+
+            // Keep track of repeated same-name headers.
+            h_existing->flags |= HTP_FIELD_REPEATED;
         }
-
-        h_existing->value = new_value;
-        bstr_add_mem_noex(h_existing->value, (unsigned char *) ", ", 2);
-        bstr_add_noex(h_existing->value, h->value);
-
-        // The new header structure is no longer needed.
-        bstr_free(h->name);
-        bstr_free(h->value);
-        free(h);
-
-        // Keep track of repeated same-name headers.
-        h_existing->flags |= HTP_FIELD_REPEATED;
     } else {
         // Add as a new header.
         if (htp_table_add(connp->out_tx->response_headers, h->name, h) != HTP_OK) {
