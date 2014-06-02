@@ -1882,3 +1882,53 @@ TEST(HttpParsing, ContentRange) {
     ASSERT_EQ(-1, instance_length);
     bstr_free(s);
 }
+
+TEST(Buf, Test1) {
+    htp_buf_t *b = htp_buf_create();
+    ASSERT_TRUE(b != NULL);
+
+    const char *first_chunk = "AAAA";
+    ASSERT_EQ(HTP_OK, htp_buf_add(b, (void *)first_chunk, strlen(first_chunk)));
+
+    unsigned char *data;
+    size_t len;
+
+    // Expect to see the first chunk (not a copy of it).
+    ASSERT_EQ(HTP_OK, htp_buf_get(b, &data, &len));
+    ASSERT_EQ(data, (unsigned char *)first_chunk);
+    ASSERT_EQ(len, strlen(first_chunk));
+
+    ASSERT_EQ(HTP_DECLINED, htp_buf_get(b, &data, &len));
+
+    htp_buf_destroy(b);
+}
+
+TEST(Buf, Test2) {
+    htp_buf_t *b = htp_buf_create();
+    ASSERT_TRUE(b != NULL);
+
+    const char *first_chunk = "AAAA";
+    ASSERT_EQ(HTP_OK, htp_buf_add(b, (void *)first_chunk, strlen(first_chunk)));
+
+    ASSERT_EQ(HTP_OK, htp_buf_keep(b));
+
+    const char *second_chunk = "BBBB";
+    ASSERT_EQ(HTP_OK, htp_buf_add(b, (void *)second_chunk, strlen(second_chunk)));
+
+    unsigned char *data;
+    size_t len;
+
+    // Expect to see a copy of the first chunk.
+    ASSERT_EQ(HTP_OK, htp_buf_get(b, &data, &len));
+    ASSERT_EQ(len, strlen(first_chunk));
+    ASSERT_EQ(0, memcmp(data, first_chunk, len));
+
+    // Expect to see the second chunk (not a copy of it).
+    ASSERT_EQ(HTP_OK, htp_buf_get(b, &data, &len));
+    ASSERT_EQ(data, (unsigned char *)second_chunk);
+    ASSERT_EQ(len, strlen(second_chunk));
+
+    ASSERT_EQ(HTP_DECLINED, htp_buf_get(b, &data, &len));
+
+    htp_buf_destroy(b);
+}

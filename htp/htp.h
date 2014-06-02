@@ -50,6 +50,7 @@ extern "C" {
 
 #include "bstr.h"
 #include "htp_base64.h"
+#include "htp_buf.h"
 #include "htp_config.h"
 #include "htp_connection_parser.h"
 #include "htp_decompressors.h"

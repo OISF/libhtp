@@ -1,5 +1,5 @@
 
-h_sources = bstr.h bstr_builder.h htp.h htp_base64.h htp_config.h htp_connection_parser.h \
+h_sources = bstr.h bstr_builder.h htp.h htp_base64.h htp_buf.h htp_config.h htp_connection_parser.h \
     htp_core.h htp_decompressors.h htp_hooks.h htp_http_parsers.h htp_list.h \
     htp_multipart.h htp_table.h htp_transaction.h \
     htp_urlencoded.h htp_utf8_decoder.h htp_version.h
@@ -7,7 +7,7 @@ h_sources = bstr.h bstr_builder.h htp.h htp_base64.h htp_config.h htp_connection
 h_sources_private = htp_config_private.h htp_connection_private.h htp_connection_parser_private.h htp_list_private.h \
     htp_multipart_private.h htp_private.h htp_table_private.h
 
-c_sources = bstr.c bstr_builder.c htp_base64.c htp_config.c htp_connection.c htp_connection_parser.c \
+c_sources = bstr.c bstr_builder.c htp_base64.c htp_buf.c htp_config.c htp_connection.c htp_connection_parser.c \
     htp_content_handlers.c htp_cookies.c htp_decompressors.c htp_hooks.c htp_http_parsers.c htp_list.c htp_multipart.c \
     htp_parsers.c htp_php.c htp_request.c htp_request_apache_2_2.c htp_request_generic.c htp_request_parsers.c \
     htp_response.c htp_response_generic.c htp_table.c htp_transaction.c htp_transcoder.c htp_urlencoded.c htp_util.c \
