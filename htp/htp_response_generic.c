@@ -266,10 +266,13 @@ htp_status_t htp_process_response_header_generic(htp_connp_t *connp, unsigned ch
             existing_cl = htp_parse_content_length(h_existing->value);
             new_cl = htp_parse_content_length(h->value);
             if ((existing_cl == -1) || (new_cl == -1) || (existing_cl != new_cl)) {
-                // Ambiguous C-L header values.
+                // Ambiguous response C-L value.
+                htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Ambiguous response C-L value");
+
                 bstr_free(h->name);
                 bstr_free(h->value);
-                free(h);                
+                free(h);
+                
                 return HTP_ERROR;
             }
 
