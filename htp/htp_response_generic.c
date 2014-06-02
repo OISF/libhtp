@@ -267,6 +267,9 @@ htp_status_t htp_process_response_header_generic(htp_connp_t *connp, unsigned ch
             new_cl = htp_parse_content_length(h->value);
             if ((existing_cl == -1) || (new_cl == -1) || (existing_cl != new_cl)) {
                 // Ambiguous C-L header values.
+                bstr_free(h->name);
+                bstr_free(h->value);
+                free(h);                
                 return HTP_ERROR;
             }
 
