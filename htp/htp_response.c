@@ -954,7 +954,7 @@ int htp_connp_res_data(htp_connp_t *connp, const struct timeval *timestamp, cons
     }
 
     // Sanity check: we must have a transaction pointer if the state is not IDLE (no outbound transaction)
-    if ((connp->out_tx == NULL)&&(connp->out_state != htp_connp_RES_IDLE)) {
+    if ((connp->out_tx == NULL)&&(connp->out_state != htp_connp_RES_IDLE)&&(connp->out_state != htp_connp_RES_LINE)) {
         connp->out_status = HTP_STREAM_ERROR;
 
         htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Missing outbound transaction data");
