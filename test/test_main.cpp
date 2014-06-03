@@ -2182,3 +2182,10 @@ TEST_F(ConnectionParsing, ResponseExtra2) {
 
     ASSERT_EQ(1, htp_list_size(connp->conn->transactions));
 }
+
+TEST_F(ConnectionParsing, MultipartByteranges) {
+    int rc = test_run(home, "94-response-multipart-byteranges.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+
+    ASSERT_EQ(1, htp_list_size(connp->conn->transactions));
+}
