@@ -1887,3 +1887,149 @@ TEST_F(Multipart, HeaderValueTrim) {
     ASSERT_TRUE(h != NULL);
     ASSERT_TRUE(bstr_cmp_c(h->value, "form-data; name=\"field1\" ") == 0);
 }
+
+TEST_F(Multipart, TestX_1) {
+    mpartp = htp_mpartp_create(cfg, bstr_dup_c("---------------------------41184676334"), 0 /* flags */);
+
+    char *parts[999];
+
+    size_t i = 0;
+    parts[i++] = (char *) "-----------------------------41184676334\r\n";
+    parts[i++] = (char *) "DATA";
+    parts[i++] = (char *) "\r\n-----------------------------41184676334--";
+    parts[i++] = NULL;
+
+    i = 0;
+    for (;;) {
+        if (parts[i] == NULL) break;
+        htp_mpartp_parse(mpartp, parts[i], strlen(parts[i]));
+        i++;
+    }
+
+    htp_mpartp_finalize(mpartp);
+    
+    htp_mpartp_destroy(mpartp);
+    mpartp = NULL;
+}
+
+TEST_F(Multipart, TestX_2) {
+    mpartp = htp_mpartp_create(cfg, bstr_dup_c("---------------------------41184676334"), 0 /* flags */);
+
+    char *parts[999];
+
+    size_t i = 0;
+    parts[i++] = (char *) "\r\n-----------------------------41184676334\r\n";
+    parts[i++] = (char *) "DATA";
+    parts[i++] = (char *) "\r\n-----------------------------41184676334--";
+    parts[i++] = NULL;
+
+    i = 0;
+    for (;;) {
+        if (parts[i] == NULL) break;
+        htp_mpartp_parse(mpartp, parts[i], strlen(parts[i]));
+        i++;
+    }
+
+    htp_mpartp_finalize(mpartp);
+
+    htp_mpartp_destroy(mpartp);
+    mpartp = NULL;
+}
+
+TEST_F(Multipart, TestX_3) {
+    mpartp = htp_mpartp_create(cfg, bstr_dup_c("---------------------------41184676334"), 0 /* flags */);
+
+    char *parts[999];
+
+    size_t i = 0;
+    parts[i++] = (char *) "\r\n-----------------------------41184676334\r\n";
+    parts[i++] = (char *) "\r\n--DATA";
+    parts[i++] = (char *) "\r\n-----------------------------41184676334--";
+    parts[i++] = NULL;
+
+    i = 0;
+    for (;;) {
+        if (parts[i] == NULL) break;
+        htp_mpartp_parse(mpartp, parts[i], strlen(parts[i]));
+        i++;
+    }
+
+    htp_mpartp_finalize(mpartp);
+
+    htp_mpartp_destroy(mpartp);
+    mpartp = NULL;
+}
+
+TEST_F(Multipart, TestX_4) {
+    mpartp = htp_mpartp_create(cfg, bstr_dup_c("---------------------------41184676334"), 0 /* flags */);
+
+    char *parts[999];
+
+    size_t i = 0;
+    parts[i++] = (char *) "\r\n-----------------------------";
+    parts[i++] = (char *) "41184676334\r\n";
+    parts[i++] = (char *) "\r\n--DATA";
+    parts[i++] = (char *) "\r\n-----------------------------41184676334--";
+    parts[i++] = NULL;
+
+    i = 0;
+    for (;;) {
+        if (parts[i] == NULL) break;
+        htp_mpartp_parse(mpartp, parts[i], strlen(parts[i]));
+        i++;
+    }
+
+    htp_mpartp_finalize(mpartp);
+
+    htp_mpartp_destroy(mpartp);
+    mpartp = NULL;
+}
+
+TEST_F(Multipart, TestX_5) {
+    mpartp = htp_mpartp_create(cfg, bstr_dup_c("---------------------------41184676334"), 0 /* flags */);
+
+    char *parts[999];
+
+    size_t i = 0;
+    parts[i++] = (char *) "\r\n-----------------------------41184676334\r\n";
+    parts[i++] = (char *) "\r\n";
+    parts[i++] = (char *) "--DATA";
+    parts[i++] = (char *) "\r\n-----------------------------41184676334--";
+    parts[i++] = NULL;
+
+    i = 0;
+    for (;;) {
+        if (parts[i] == NULL) break;
+        htp_mpartp_parse(mpartp, parts[i], strlen(parts[i]));
+        i++;
+    }
+
+    htp_mpartp_finalize(mpartp);
+
+    htp_mpartp_destroy(mpartp);
+    mpartp = NULL;
+}
+
+TEST_F(Multipart, TestX_6) {
+    mpartp = htp_mpartp_create(cfg, bstr_dup_c("---------------------------41184676334"), 0 /* flags */);
+
+    char *parts[999];
+
+    size_t i = 0;
+    parts[i++] = (char *) "-----------------------------\r\n";
+    parts[i++] = (char *) "DATA";
+    parts[i++] = (char *) "\r\n-----------------------------41184676334--";
+    parts[i++] = NULL;
+
+    i = 0;
+    for (;;) {
+        if (parts[i] == NULL) break;
+        htp_mpartp_parse(mpartp, parts[i], strlen(parts[i]));
+        i++;
+    }
+
+    htp_mpartp_finalize(mpartp);
+
+    htp_mpartp_destroy(mpartp);
+    mpartp = NULL;
+}

@@ -60,24 +60,24 @@ enum htp_part_mode_t {
 enum htp_multipart_state_t {
     /** Initial state, after the parser has been created but before the boundary initialized. */
     STATE_INIT = 0,
-
-    /** Processing data, waiting for a new line (which might indicate a new boundary). */
-    STATE_DATA = 1,
-
+   
     /** Testing a potential boundary. */
-    STATE_BOUNDARY = 2,
+    STATE_BOUNDARY = 1,
 
     /** Checking the first byte after a boundary. */
-    STATE_BOUNDARY_IS_LAST1 = 3,
+    STATE_BOUNDARY_IS_LAST1 = 2,
 
     /** Checking the second byte after a boundary. */
-    STATE_BOUNDARY_IS_LAST2 = 4,
+    STATE_BOUNDARY_IS_LAST2 = 3,
 
     /** Consuming linear whitespace after a boundary. */
-    STATE_BOUNDARY_EAT_LWS = 5,
+    STATE_BOUNDARY_EAT_LWS = 4,
 
     /** Used after a CR byte is detected in STATE_BOUNDARY_EAT_LWS. */
-    STATE_BOUNDARY_EAT_LWS_CR = 6
+    STATE_BOUNDARY_EAT_LWS_CR = 5,
+
+    /** Processing data, waiting for a new line (which might indicate a new boundary). */
+    STATE_DATA = 6
 };
 
 struct htp_mpartp_t {
@@ -97,6 +97,10 @@ struct htp_mpartp_t {
      * Parser state; one of MULTIPART_STATE_* constants.
      */
     enum htp_multipart_state_t parser_state;
+    
+    enum htp_multipart_state_t stored_state;
+    int check_for_boundary_start;
+    int boundary_match_offset;
 
     /**
      * Keeps track of the current position in the boundary matching progress.
