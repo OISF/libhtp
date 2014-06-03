@@ -2189,3 +2189,10 @@ TEST_F(ConnectionParsing, MultipartByteranges) {
 
     ASSERT_EQ(1, htp_list_size(connp->conn->transactions));
 }
+
+TEST_F(ConnectionParsing, MultipartByterangesNoCL) {
+    int rc = test_run(home, "95-response-multipart-byteranges-no-cl.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+
+    ASSERT_EQ(1, htp_list_size(connp->conn->transactions));
+}
