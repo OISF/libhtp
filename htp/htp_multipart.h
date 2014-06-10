@@ -207,45 +207,29 @@ enum htp_multipart_state_t {
 
     /** Used after a CR byte is detected in STATE_BOUNDARY_EAT_LWS. */
     STATE_BOUNDARY_EAT_LWS_CR = 5,
+    
+    STATE_DATA_INIT = 6,
 
-    /** Processing data, waiting for a new line (which might indicate a new boundary). */
-    STATE_DATA = 6
+    STATE_DATA = 7,
 };
 
 typedef struct htp_multipart_parser_t {    
     htp_cfg_t *cfg;
 
     uint64_t flags;
-
-    /** Multipart boundary. */
+    
     char *boundary;
 
-    /** Boundary length. */
     size_t boundary_len;
 
-    // Internal parsing fields; move into a private structure
-
-    /**
-     * Parser state; one of MULTIPART_STATE_* constants.
-     */
     enum htp_multipart_state_t parser_state;
 
-    enum htp_multipart_state_t stored_state;
-
-    int check_for_boundary_start;
+    enum htp_multipart_state_t stored_state;   
 
     int boundary_match_offset;
-
-    /**
-     * Keeps track of the current position in the boundary matching progress.
-     * When this field reaches boundary_len, we have a boundary match.
-     */
+    
     size_t boundary_match_pos;
     
-    /**
-     * The offset of the current boundary candidate, relative to the most
-     * recent data chunk (first unprocessed chunk of data).
-     */
     size_t boundary_candidate_pos;   
 } htp_multipart_parser_t;
 

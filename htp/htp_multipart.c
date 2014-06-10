@@ -67,9 +67,10 @@ static htp_status_t htp_multipart_init_boundary(htp_multipart_parser_t *parser, 
     // to boundary matching. Thus, we handle all the possibilities.
 
     parser->parser_state = STATE_BOUNDARY;
-    parser->stored_state = STATE_DATA;
-    parser->check_for_boundary_start = 1;
+    parser->stored_state = STATE_DATA_INIT;    
+    parser->boundary_match_offset = 2;
     parser->boundary_match_pos = 2;
+    parser->boundary_candidate_pos = 0;
 
     return HTP_OK;
 }
@@ -109,7 +110,15 @@ void htp_multipart_destroy(htp_multipart_parser_t *parser) {
     free(parser);
 }
 
-htp_status_t htp_multipart_finalize(htp_multipart_parser_t *parser) {    
+htp_status_t htp_multipart_finalize(htp_multipart_parser_t *parser) {
+    // If we're matching a boundary and haven't seen all bytes,
+    // process the boundary as data. If we have seen all the bytes,
+    // consider the data a boundary even if the CRLF is missing.
+    if (parser->parser_state < STATE_BOUNDARY_IS_LAST1) {
+        fprint_raw_data(stdout, "DATA2", parser->boundary + parser->boundary_match_offset, parser->boundary_match_pos);
+    }
+
+    // TODO Finish last part, etc.
 
     return HTP_OK;
 }
@@ -257,33 +266,44 @@ htp_status_t htp_multipart_find_boundary(bstr *content_type, bstr **boundary, ui
     return HTP_OK;
 }
 
-
-htp_status_t htp_multipart_parse(htp_multipart_parser_t *parser, const void *_data, size_t len) {
+static htp_status_t htp_multipart_parse_ex(htp_multipart_parser_t *parser, const void *_data, size_t len, size_t backtrack_pos) {
     unsigned char *data = (unsigned char *) _data;
 
     size_t pos = 0;
 
+    size_t data_pos = 0;
+
+    size_t local_boundary_bytes = 0;
+    
     while (pos < len) {
         int c = data[pos];
 
-        if ((parser->parser_state >= STATE_DATA)&&(parser->check_for_boundary_start)) {
+        printf("State: %i, pos %i, c %i %c\n", parser->parser_state, pos, c, c);
+
+        if ((parser->parser_state >= STATE_DATA_INIT)&&(pos >= backtrack_pos)) {
+            printf("Testing byte for boundary; pos %i: %i %c\n", pos, c, c);
+            
             if (c == CR) {
+                printf("Boundary CANDIDATE byte MATCH at pos %i: %i %c\n", pos, c, c);
                 parser->stored_state = parser->parser_state;
                 parser->boundary_candidate_pos = pos;
                 parser->boundary_match_offset = 0;
                 parser->boundary_match_pos = 1;
                 parser->parser_state = STATE_BOUNDARY;
+                local_boundary_bytes = 1;
                 pos++;
                 continue;
             } else if (c == LF) {
+                printf("Boundary CANDIDATE  byte MATCH at pos %i: %i %c\n", pos, c, c);
                 parser->stored_state = parser->parser_state;
                 parser->boundary_candidate_pos = pos;
                 parser->boundary_match_offset = 1;
                 parser->boundary_match_pos = 2;
                 parser->parser_state = STATE_BOUNDARY;
+                local_boundary_bytes = 1;
                 pos++;
                 continue;
-            }
+            }           
         }
 
         switch(parser->parser_state) {
@@ -292,22 +312,32 @@ htp_status_t htp_multipart_parse(htp_multipart_parser_t *parser, const void *_da
                 printf("Invalid state: STATE_INIT\n");
                 return HTP_ERROR;
 
-            case STATE_BOUNDARY :
-                printf("boundary_match_pos %i\n", parser->boundary_match_pos);
-
+            case STATE_BOUNDARY :                
                 if (c == parser->boundary[parser->boundary_match_pos]) {
                     parser->boundary_match_pos++;
                     pos++;
+                    local_boundary_bytes++;
+
+                    printf("Boundary byte MATCH at pos %i: %i %c\n", pos, c, c);
 
                     if (parser->boundary_match_pos == parser->boundary_len) {
                         parser->parser_state = STATE_BOUNDARY_IS_LAST1;
                     }
                 } else {
-                    printf("Boundary byte MISMATCH: %i %c\n", c, c);
+                    printf("Boundary byte MISMATCH at pos %i: %i %c\n", pos, c, c);
+                    printf("Backtracking; local_boundary_bytes %i match len %i\n", local_boundary_bytes, parser->boundary_match_pos - parser->boundary_match_offset);
+                    
                     parser->parser_state = parser->stored_state;
-                    parser->check_for_boundary_start = 0;
-                    htp_multipart_parse(parser, parser->boundary + parser->boundary_match_offset, parser->boundary_match_pos - parser->boundary_match_offset);
-                    parser->check_for_boundary_start = 1;
+                    
+                    if (local_boundary_bytes < parser->boundary_match_pos - parser->boundary_match_offset) {
+                        size_t backtrack_len = parser->boundary_match_pos - parser->boundary_match_offset - local_boundary_bytes;
+                        fprint_raw_data(stdout, "BACKTRACK", parser->boundary + parser->boundary_match_offset, backtrack_len);
+                        htp_multipart_parse_ex(parser, parser->boundary + parser->boundary_match_offset, backtrack_len, backtrack_len);
+                    }
+
+                    backtrack_pos = pos;
+                    pos = pos - local_boundary_bytes;
+
                     continue;
                 }
                 break;
@@ -339,18 +369,15 @@ htp_status_t htp_multipart_parse(htp_multipart_parser_t *parser, const void *_da
                 } else if (c == LF) {
                     // LF line ending; we're done with the boundary.
                     pos++;
-                    parser->parser_state = STATE_DATA;
-                    parser->check_for_boundary_start = 1;
+                    parser->parser_state = STATE_DATA_INIT;                    
                 } else {
                     if (htp_is_lws(c)) {
-                        // Linear white space is allowed here.
-                        // XXX
-                        // parser->multipart.flags |= HTP_MULTIPART_BBOUNDARY_LWS_AFTER;
+                        // Linear white space is allowed here.                        
+                        parser->flags |= HTP_MULTIPART_BBOUNDARY_LWS_AFTER;
                         pos++;
                     } else {
-                        // Unexpected byte; consume, but remain in the same state.
-                        // XXX
-                        // parser->multipart.flags |= HTP_MULTIPART_BBOUNDARY_NLWS_AFTER;
+                        // Unexpected byte; consume, but remain in the same state.                        
+                        parser->flags |= HTP_MULTIPART_BBOUNDARY_NLWS_AFTER;
                         pos++;
                     }
                 }
@@ -360,8 +387,7 @@ htp_status_t htp_multipart_parse(htp_multipart_parser_t *parser, const void *_da
                 if (c == LF) {
                     // CRLF line ending; we're done with the boundary.
                     pos++;
-                    parser->parser_state = STATE_DATA;
-                    parser->check_for_boundary_start = 1;
+                    parser->parser_state = STATE_DATA_INIT;                    
                 } else {
                     // Expecting LF but got something else; continue until we see the end of the line.
                     // TOOD Flag: invalid boundary termination
@@ -369,14 +395,37 @@ htp_status_t htp_multipart_parse(htp_multipart_parser_t *parser, const void *_da
                 }
                 break;
 
-            default:
+            case STATE_DATA_INIT :
+                data_pos = pos;
+                printf("Data starting at pos: %i\n", pos);
+                parser->parser_state = STATE_DATA;
+                // Fall through.
+                //break;
+
+            case STATE_DATA :
                 printf("Data byte: %i %c\n", c, c);
                 pos++;
                 break;
+
+            default:
+                printf("INVALID STATE\n");
+                return HTP_ERROR;
         }
     }
+    
+    if (parser->parser_state >= STATE_DATA) {
+        // We're currently processing part data; emit the current field.
+        fprint_raw_data(stdout, "DATA1", data + data_pos, len - data_pos);
+    } else if (parser->parser_state < STATE_DATA_INIT) {
+        // We're currently matching a boundary; emit the field data before the candidate boundary began.
+        fprint_raw_data(stdout, "DATA2", data + data_pos, parser->boundary_candidate_pos - data_pos);
+    }  
 
     return HTP_OK;
+}
+
+htp_status_t htp_multipart_parse(htp_multipart_parser_t *parser, const void *_data, size_t len) {
+    return htp_multipart_parse_ex(parser, _data, len, 0);
 }
 
 static void htp_multipart_validate_boundary(bstr *boundary, uint64_t *flags) {

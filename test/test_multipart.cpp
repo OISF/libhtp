@@ -332,7 +332,7 @@ TEST_F(Multipart, TestX_6) {
     char *parts[999];
 
     size_t i = 0;
-    parts[i++] = (char *) "-----------------------------\r\n";
+    parts[i++] = (char *) "XX\r\n-----------------------------\r\n";
     parts[i++] = (char *) "DATA";
     parts[i++] = (char *) "\r\n-----------------------------41184676334--";
     parts[i++] = NULL;
