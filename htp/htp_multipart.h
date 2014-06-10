@@ -228,9 +228,7 @@ typedef struct htp_multipart_parser_t {
 
     int boundary_match_offset;
     
-    size_t boundary_match_pos;
-    
-    size_t boundary_candidate_pos;   
+    size_t boundary_match_pos;    
 } htp_multipart_parser_t;
 
 

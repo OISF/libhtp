@@ -69,8 +69,7 @@ static htp_status_t htp_multipart_init_boundary(htp_multipart_parser_t *parser, 
     parser->parser_state = STATE_BOUNDARY;
     parser->stored_state = STATE_DATA_INIT;    
     parser->boundary_match_offset = 2;
-    parser->boundary_match_pos = 2;
-    parser->boundary_candidate_pos = 0;
+    parser->boundary_match_pos = 2;    
 
     return HTP_OK;
 }
@@ -285,8 +284,7 @@ static htp_status_t htp_multipart_parse_ex(htp_multipart_parser_t *parser, const
             
             if (c == CR) {
                 printf("Boundary CANDIDATE byte MATCH at pos %i: %i %c\n", pos, c, c);
-                parser->stored_state = parser->parser_state;
-                parser->boundary_candidate_pos = pos;
+                parser->stored_state = parser->parser_state;                
                 parser->boundary_match_offset = 0;
                 parser->boundary_match_pos = 1;
                 parser->parser_state = STATE_BOUNDARY;
@@ -295,8 +293,7 @@ static htp_status_t htp_multipart_parse_ex(htp_multipart_parser_t *parser, const
                 continue;
             } else if (c == LF) {
                 printf("Boundary CANDIDATE  byte MATCH at pos %i: %i %c\n", pos, c, c);
-                parser->stored_state = parser->parser_state;
-                parser->boundary_candidate_pos = pos;
+                parser->stored_state = parser->parser_state;                
                 parser->boundary_match_offset = 1;
                 parser->boundary_match_pos = 2;
                 parser->parser_state = STATE_BOUNDARY;
@@ -345,6 +342,7 @@ static htp_status_t htp_multipart_parse_ex(htp_multipart_parser_t *parser, const
             case STATE_BOUNDARY_IS_LAST1 :
                 if (c == '-') {
                     pos++;
+                    local_boundary_bytes++;
                     parser->parser_state = STATE_BOUNDARY_IS_LAST2;
                 } else {
                     parser->parser_state = STATE_BOUNDARY_EAT_LWS;
@@ -354,6 +352,7 @@ static htp_status_t htp_multipart_parse_ex(htp_multipart_parser_t *parser, const
             case STATE_BOUNDARY_IS_LAST2 :
                 if (c == '-') {
                     pos++;
+                    local_boundary_bytes++;
                     // TODO last boundary
                     parser->parser_state = STATE_BOUNDARY_EAT_LWS;
                 } else {
@@ -365,20 +364,24 @@ static htp_status_t htp_multipart_parse_ex(htp_multipart_parser_t *parser, const
             case STATE_BOUNDARY_EAT_LWS:
                 if (c == CR) {
                     pos++;
+                    local_boundary_bytes++;
                     parser->parser_state = STATE_BOUNDARY_EAT_LWS_CR;
                 } else if (c == LF) {
                     // LF line ending; we're done with the boundary.
                     pos++;
+                    local_boundary_bytes++;
                     parser->parser_state = STATE_DATA_INIT;                    
                 } else {
                     if (htp_is_lws(c)) {
                         // Linear white space is allowed here.                        
                         parser->flags |= HTP_MULTIPART_BBOUNDARY_LWS_AFTER;
                         pos++;
+                        local_boundary_bytes++;
                     } else {
                         // Unexpected byte; consume, but remain in the same state.                        
                         parser->flags |= HTP_MULTIPART_BBOUNDARY_NLWS_AFTER;
                         pos++;
+                        local_boundary_bytes++;
                     }
                 }
                 break;
@@ -387,6 +390,7 @@ static htp_status_t htp_multipart_parse_ex(htp_multipart_parser_t *parser, const
                 if (c == LF) {
                     // CRLF line ending; we're done with the boundary.
                     pos++;
+                    local_boundary_bytes++;
                     parser->parser_state = STATE_DATA_INIT;                    
                 } else {
                     // Expecting LF but got something else; continue until we see the end of the line.
@@ -418,7 +422,7 @@ static htp_status_t htp_multipart_parse_ex(htp_multipart_parser_t *parser, const
         fprint_raw_data(stdout, "DATA1", data + data_pos, len - data_pos);
     } else if (parser->parser_state < STATE_DATA_INIT) {
         // We're currently matching a boundary; emit the field data before the candidate boundary began.
-        fprint_raw_data(stdout, "DATA2", data + data_pos, parser->boundary_candidate_pos - data_pos);
+        fprint_raw_data(stdout, "DATA2", data + data_pos, len - data_pos - local_boundary_bytes);
     }  
 
     return HTP_OK;
