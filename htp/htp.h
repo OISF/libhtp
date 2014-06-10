@@ -54,13 +54,13 @@ extern "C" {
 #include "htp_connection_parser.h"
 #include "htp_decompressors.h"
 #include "htp_hooks.h"
+#include "htp_http_parsers.h"
 #include "htp_list.h"
 #include "htp_multipart.h"
 #include "htp_table.h"
 #include "htp_transaction.h"
 #include "htp_urlencoded.h"
 #include "htp_utf8_decoder.h"
-#include "htp_http_parsers.h"
 
 /**
  * Represents a single TCP connection.
@@ -109,7 +109,7 @@ struct htp_conn_t {
  */
 struct htp_file_data_t {    
     /** File information. */
-    htp_multipart_part_t *part;
+    //htp_multipart_part_t *part;
 
     /** Pointer to the data buffer. */
     const unsigned char *data;
@@ -360,7 +360,7 @@ struct htp_tx_t {
      * Request body MULTIPART parser. Available only when the body is in the
      * multipart/form-data format and the parser was configured to run.
      */
-    htp_mpartp_t *request_mpartp;
+    htp_multipart_parser_t *request_mpartp;
 
     /** Request parameters. */
     htp_table_t *request_params;

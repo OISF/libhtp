@@ -43,7 +43,7 @@
 extern "C" {
 #endif
 
-#include "htp_multipart.h"
+#include "htp_multipart_old.h"
 
 #define CD_PARAM_OTHER                  0
 #define CD_PARAM_NAME                   1

@@ -65,7 +65,6 @@ extern "C" {
 #include "htp_connection_parser_private.h"
 #include "htp_connection_private.h"
 #include "htp_list_private.h"
-#include "htp_multipart_private.h"
 #include "htp_table_private.h"
 
 #ifndef CR

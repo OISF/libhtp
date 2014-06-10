@@ -189,17 +189,18 @@ htp_status_t htp_ch_urlencoded_callback_request_line(htp_tx_t *tx) {
  * @return HTP_OK on success, HTP_ERROR on failure.
  */
 htp_status_t htp_ch_multipart_callback_request_body_data(htp_tx_data_t *d) {
+    /* XXX
     htp_tx_t *tx = d->tx;
-
+    
     // Check that we were not invoked again after the finalization.
     if (tx->request_mpartp->gave_up_data == 1) return HTP_ERROR;
 
     if (d->data != NULL) {
-        // Process one chunk of data.
-        htp_mpartp_parse(tx->request_mpartp, d->data, d->len);
+        // Process one chunk of data.        
+        //htp_mpartp_parse(tx->request_mpartp, d->data, d->len);
     } else {
         // Finalize parsing.
-        htp_mpartp_finalize(tx->request_mpartp);
+        //htp_mpartp_finalize(tx->request_mpartp);
 
         htp_multipart_t *body = htp_mpartp_get_multipart(tx->request_mpartp);
 
@@ -227,6 +228,7 @@ htp_status_t htp_ch_multipart_callback_request_body_data(htp_tx_data_t *d) {
         // and values of MULTIPART_PART_TEXT parts.
         tx->request_mpartp->gave_up_data = 1;
     }
+    */
 
     return HTP_OK;
 }
@@ -240,6 +242,8 @@ htp_status_t htp_ch_multipart_callback_request_body_data(htp_tx_data_t *d) {
  *         is not appropriate for this parser, and HTP_ERROR on failure.
  */
 htp_status_t htp_ch_multipart_callback_request_headers(htp_tx_t *tx) {
+    return HTP_ERROR;
+    /* XXX
     #ifdef HTP_DEBUG
     fprintf(stderr, "htp_ch_multipart_callback_request_headers: Need to determine if multipart body is present\n");
     #endif
@@ -263,7 +267,7 @@ htp_status_t htp_ch_multipart_callback_request_headers(htp_tx_t *tx) {
     bstr *boundary = NULL;
     uint64_t flags = 0;
 
-    htp_status_t rc = htp_mpartp_find_boundary(ct->value, &boundary, &flags);
+    htp_status_t rc = htp_multipart_find_boundary(ct->value, &boundary, &flags);
     if (rc != HTP_OK) {
         #ifdef HTP_DEBUG
         if (rc == HTP_DECLINED) {
@@ -288,4 +292,5 @@ htp_status_t htp_ch_multipart_callback_request_headers(htp_tx_t *tx) {
     htp_tx_register_request_body_data(tx, htp_ch_multipart_callback_request_body_data);
 
     return HTP_OK;
+    */
 }
