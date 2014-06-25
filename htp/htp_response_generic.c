@@ -252,29 +252,51 @@ htp_status_t htp_process_response_header_generic(htp_connp_t *connp, unsigned ch
     // Do we already have a header with the same name?
     htp_header_t *h_existing = htp_table_get(connp->out_tx->response_headers, h->name);
     if (h_existing != NULL) {
-        // TODO Do we want to have a list of the headers that are
-        //      allowed to be combined in this way?
+        // Keep track of repeated same-name headers.
+        h_existing->flags |= HTP_FIELD_REPEATED;
+                
+        // Having multiple C-L headers is against the RFC but many
+        // browsers ignore the subsequent headers if the values are the same.
+        if (bstr_cmp_c_nocase(h->name, "Content-Length") == 0) {
+            // Don't use string comparison here because we want to
+            // ignore small formatting differences.
 
-        // Add to the existing header.
-        bstr *new_value = bstr_expand(h_existing->value, bstr_len(h_existing->value) + 2 + bstr_len(h->value));
-        if (new_value == NULL) {
-            bstr_free(h->name);
-            bstr_free(h->value);
-            free(h);
-            return HTP_ERROR;
+            int64_t existing_cl, new_cl;
+
+            existing_cl = htp_parse_content_length(h_existing->value);
+            new_cl = htp_parse_content_length(h->value);
+            if ((existing_cl == -1) || (new_cl == -1) || (existing_cl != new_cl)) {
+                // Ambiguous response C-L value.
+                htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Ambiguous response C-L value");
+
+                bstr_free(h->name);
+                bstr_free(h->value);
+                free(h);
+                
+                return HTP_ERROR;
+            }
+
+            // Ignoring the new C-L header that has the same value as the previous ones.
+        } else {            
+            // Add to the existing header.
+
+            bstr *new_value = bstr_expand(h_existing->value, bstr_len(h_existing->value) + 2 + bstr_len(h->value));
+            if (new_value == NULL) {
+                bstr_free(h->name);
+                bstr_free(h->value);
+                free(h);
+                return HTP_ERROR;
+            }
+
+            h_existing->value = new_value;
+            bstr_add_mem_noex(h_existing->value, (unsigned char *) ", ", 2);
+            bstr_add_noex(h_existing->value, h->value);
         }
-
-        h_existing->value = new_value;
-        bstr_add_mem_noex(h_existing->value, (unsigned char *) ", ", 2);
-        bstr_add_noex(h_existing->value, h->value);
 
         // The new header structure is no longer needed.
         bstr_free(h->name);
         bstr_free(h->value);
-        free(h);
-
-        // Keep track of repeated same-name headers.
-        h_existing->flags |= HTP_FIELD_REPEATED;
+        free(h);       
     } else {
         // Add as a new header.
         if (htp_table_add(connp->out_tx->response_headers, h->name, h) != HTP_OK) {

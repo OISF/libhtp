@@ -1,4 +1,10 @@
 
+0.5.12 (25 June 2014)
+---------------------
+
+- Fixed [#73] Fix double Content-Length issue [Wesley Shields]
+
+
 0.5.11 (5 April 2014)
 ---------------------
 
