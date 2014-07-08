@@ -191,6 +191,9 @@ struct htp_tx_t {
     /** The connection to which this transaction belongs. */
     htp_conn_t *conn;
 
+    /** Transaction index on the connection. */
+    size_t index;
+
     /** The configuration structure associated with this transaction. */
     htp_cfg_t *cfg;
 
