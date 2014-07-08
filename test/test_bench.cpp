@@ -71,8 +71,8 @@ protected:
 };
 
 TEST_F(Benchmark, ConnectionWithManyTransactions) {
-    int rc = test_run_ex(home, "01-get.t", cfg, &connp, 1000);
+    int rc = test_run_ex(home, "01-get.t", cfg, &connp, 2000);
     ASSERT_GE(rc, 0);
 
-    ASSERT_EQ(1000, htp_list_size(connp->conn->transactions));
+    ASSERT_EQ(2000, htp_list_size(connp->conn->transactions));
 }
