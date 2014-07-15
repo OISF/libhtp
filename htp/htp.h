@@ -189,10 +189,7 @@ struct htp_tx_t {
     htp_connp_t *connp;
 
     /** The connection to which this transaction belongs. */
-    htp_conn_t *conn;
-
-    /** Transaction index on the connection. */
-    size_t index;
+    htp_conn_t *conn;   
 
     /** The configuration structure associated with this transaction. */
     htp_cfg_t *cfg;
@@ -553,6 +550,9 @@ struct htp_tx_t {
 
     /** Response progress. */
     enum htp_tx_res_progress_t response_progress;
+
+    /** Transaction index on the connection. */
+    size_t index;
 };
 
 /**

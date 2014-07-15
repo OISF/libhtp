@@ -104,6 +104,8 @@ htp_tx_t *htp_tx_create(htp_connp_t *connp) {
         return NULL;
     }
 
+    htp_list_add(tx->conn->transactions, tx);
+
     return tx;
 }
 
