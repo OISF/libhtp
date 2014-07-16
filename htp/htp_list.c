@@ -67,7 +67,7 @@ htp_list_t *htp_list_array_create(size_t size) {
 void htp_list_array_clear(htp_list_array_t *l) {
     if (l == NULL) return;
 
-    // Continue using already allocate memory; just reset the fields.
+    // Continue using already allocated memory; just reset the fields.
     l->first = 0;
     l->last = 0;
     l->current_size = 0;
@@ -81,24 +81,14 @@ void htp_list_array_destroy(htp_list_array_t *l) {
 }
 
 void *htp_list_array_get(const htp_list_array_t *l, size_t idx) {
-    if (l == NULL) return NULL;
-
-    const void *r = NULL;
-
+    if (l == NULL) return NULL;    
     if (idx + 1 > l->current_size) return NULL;
-
-    size_t i = l->first;
-    r = l->elements[l->first];
-
-    while (idx--) {
-        if (++i == l->max_size) {
-            i = 0;
-        }
-
-        r = l->elements[i];
+    
+    if (l->first + idx < l->max_size) {
+        return (void *) l->elements[l->first + idx];
+    } else {        
+        return (void *) l->elements[idx - (l->max_size - l->first)];
     }
-
-    return (void *) r;
 }
 
 void *htp_list_array_pop(htp_list_array_t *l) {

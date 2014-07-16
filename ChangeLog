@@ -1,4 +1,11 @@
 
+0.5.13 (16 July 2014)
+---------------------
+
+- Fixed [#56] Investigate clean-up performance with a large number of transactions
+  on a single connection
+
+
 0.5.12 (25 June 2014)
 ---------------------
 

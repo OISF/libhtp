@@ -71,6 +71,7 @@ struct test_t {
 };
 
 int test_run(const char *testsdir, const char *testname, htp_cfg_t *cfg, htp_connp_t **connp);
+int test_run_ex(const char *testsdir, const char *testname, htp_cfg_t *cfg, htp_connp_t **connp, int clone_count);
 
 #ifdef __cplusplus
 }

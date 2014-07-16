@@ -185,9 +185,7 @@ htp_tx_t *htp_connp_tx_create(htp_connp_t *connp) {
     htp_tx_t *tx = htp_tx_create(connp);
     if (tx == NULL) return NULL;
 
-    connp->in_tx = tx;
-
-    htp_list_add(connp->conn->transactions, tx);
+    connp->in_tx = tx;   
 
     htp_connp_in_reset(connp);
 

@@ -108,7 +108,7 @@ static int test_is_boundary(test_t *test, int pos) {
  * @param[in] filename
  * @return Non-negative value on success, negative value on error.
  */
-static int test_init(test_t *test, const char *filename) {
+static int test_init(test_t *test, const char *filename, int clone_count) {
     memset(test, 0, sizeof (test_t));
 
     int fd = open(filename, O_RDONLY | O_BINARY);
@@ -119,12 +119,12 @@ static int test_init(test_t *test, const char *filename) {
         return -1;
     }
 
-    test->buf = malloc(buf.st_size);
+    test->buf = malloc(buf.st_size * clone_count + clone_count - 1);
     test->len = 0;
     test->pos = 0;
 
     int bytes_read = 0;
-    while ((bytes_read = read(fd, test->buf + test->len, buf.st_size - test->len)) > 0) {        
+    while ((bytes_read = read(fd, test->buf + test->len, buf.st_size - test->len)) > 0) {
         test->len += bytes_read;
     }
 
@@ -133,7 +133,15 @@ static int test_init(test_t *test, const char *filename) {
         return -2;
     }
 
-    close(fd);   
+    close(fd);
+
+    int i = 1;
+    for (i = 1; i < clone_count; i++) {
+        test->buf[i * buf.st_size + (i-1)] = '\n';
+        memcpy(test->buf + i * buf.st_size + i, test->buf, buf.st_size);
+    }
+    
+    test->len = buf.st_size * clone_count + clone_count - 1;
 
     return 1;
 }
@@ -255,7 +263,7 @@ static int parse_filename(const char *filename, char **remote_addr, int *remote_
  * @return A pointer to the instance of htp_connp_t created during
  *         the test, or NULL if the test failed for some reason.
  */
-int test_run(const char *testsdir, const char *testname, htp_cfg_t *cfg, htp_connp_t **connp) {
+int test_run_ex(const char *testsdir, const char *testname, htp_cfg_t *cfg, htp_connp_t **connp, int clone_count) {
     char filename[1025];
     test_t test;
     struct timeval tv_start, tv_end;
@@ -271,7 +279,7 @@ int test_run(const char *testsdir, const char *testname, htp_cfg_t *cfg, htp_con
 
     // Initinialize test
 
-    rc = test_init(&test, filename);
+    rc = test_init(&test, filename, clone_count);
     if (rc < 0) {
         return rc;
     }
@@ -394,4 +402,8 @@ int test_run(const char *testsdir, const char *testname, htp_cfg_t *cfg, htp_con
     test_destroy(&test);
 
     return 1;
+}
+
+int test_run(const char *testsdir, const char *testname, htp_cfg_t *cfg, htp_connp_t **connp) {
+    test_run_ex(testsdir, testname, cfg, connp, 1);
 }
