@@ -368,7 +368,7 @@ struct uri_test uri_tests[] = {
     {"http://user@host.com",
         {"http", "user", NULL, "host.com", NULL, "", NULL, NULL}},
     {NULL,
-        {}}
+        { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL }}
 };
 
 TEST(UtilTest, HtpParseUri) {

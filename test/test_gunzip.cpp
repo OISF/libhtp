@@ -92,7 +92,8 @@ protected:
             return HTP_ERROR;
         }
 
-        if (read(fd, (void *) d.data, d.len) != d.len) {
+        ssize_t bytes_read = read(fd, (void *) d.data, d.len);
+        if ((bytes_read < 0)||((size_t)bytes_read != d.len)) {        
             //FAIL() << "Reading from test file failed";
             close(fd);
             return HTP_ERROR;

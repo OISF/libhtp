@@ -66,7 +66,7 @@ protected:
         }
 
         char buf[32];
-        snprintf(buf, sizeof (buf), "Content-Length: %ld\r\n", bodyLen);
+        snprintf(buf, sizeof (buf), "Content-Length: %zu\r\n", bodyLen);
         htp_connp_req_data(connp, NULL, buf, strlen(buf));
 
         htp_connp_req_data(connp, NULL, (void *) "\r\n", 2);
