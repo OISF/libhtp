@@ -15,6 +15,7 @@
 *.a
 *.pdf
 htp-*.tar.gz
+htp-*.sig
 compile
 .cproject
 /Makefile
