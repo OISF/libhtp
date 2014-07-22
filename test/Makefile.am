@@ -1,6 +1,12 @@
 LDADD = $(top_builddir)/htp/libhtp.la -lz @LIBICONV@ 
-AM_CFLAGS = -g -std=gnu99
-AM_CPPFLAGS = -I$(top_srcdir) -I$(top_builddir)/htp -Wno-write-strings -DGTEST_USE_OWN_TR1_TUPLE=1
+
+AM_CFLAGS = -D_GNU_SOURCE -g -Wall -Wextra -std=gnu99 -pedantic \
+	-Wextra -Wno-missing-field-initializers -Wshadow -Wpointer-arith \
+        -Wstrict-prototypes -Wmissing-prototypes -Wno-unused-parameter
+        
+AM_CPPFLAGS = -I$(top_srcdir) -I$(top_builddir)/htp -Wno-write-strings -DGTEST_USE_OWN_TR1_TUPLE=1 \
+	-D_GNU_SOURCE -g -Wall -Wextra -Wno-unused-parameter
+
 AUTOMAKE_OPTIONS = subdir-objects
 EXTRA_DIST = files
 check_PROGRAMS = test_all

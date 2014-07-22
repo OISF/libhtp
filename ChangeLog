@@ -1,4 +1,13 @@
 
+0.5.14 (22 July 2014)
+---------------------
+
+- Fixed the tests sometimes not returning the correct status code. Increased the
+  the compiler warnings for the tests.
+
+- Fixed [#77] Fix compiler warnings in the tests
+
+
 0.5.13 (16 July 2014)
 ---------------------
 

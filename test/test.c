@@ -68,7 +68,7 @@ static void test_destroy(test_t *test) {
  *         was found, and a negative value on error (e.g., not enough data
  *         to determine if a boundary is present).
  */
-static int test_is_boundary(test_t *test, int pos) {
+static int test_is_boundary(test_t *test, size_t pos) {
     // Check that there's enough room
     if (pos + 3 >= test->len) return -1;
 
@@ -146,7 +146,7 @@ static int test_init(test_t *test, const char *filename, int clone_count) {
     return 1;
 }
 
-void test_start(test_t *test) {
+static void test_start(test_t *test) {
     test->pos = 0;
 }
 
@@ -300,8 +300,8 @@ int test_run_ex(const char *testsdir, const char *testname, htp_cfg_t *cfg, htp_
     // Does the filename contain connection metdata?
     if (strncmp(testname, "stream", 6) == 0) {
         // It does; use it
-        char *remote_addr, *local_addr;
-        int remote_port, local_port;
+        char *remote_addr = NULL, *local_addr = NULL;
+        int remote_port = -1, local_port = -1;
 
         parse_filename(testname, &remote_addr, &remote_port, &local_addr, &local_port);
         htp_connp_open(*connp, (const char *) remote_addr, remote_port, (const char *) local_addr, local_port, &tv_start);
@@ -314,14 +314,14 @@ int test_run_ex(const char *testsdir, const char *testname, htp_cfg_t *cfg, htp_
 
     // Find all chunks and feed them to the parser
     int in_data_other = 0;
-    char *in_data;
-    size_t in_data_len;
-    size_t in_data_offset;
+    char *in_data = NULL;
+    size_t in_data_len = 0;
+    size_t in_data_offset = 0;
 
     int out_data_other = 0;
-    char *out_data;
-    size_t out_data_len;
-    size_t out_data_offset;
+    char *out_data = NULL;
+    size_t out_data_len = 0;
+    size_t out_data_offset = 0;
 
     for (;;) {
         if (test_next_chunk(&test) <= 0) {
@@ -335,7 +335,7 @@ int test_run_ex(const char *testsdir, const char *testname, htp_cfg_t *cfg, htp_
                 return -1;
             }
             
-            int rc = htp_connp_req_data(*connp, &tv_start, test.chunk, test.chunk_len);
+            rc = htp_connp_req_data(*connp, &tv_start, test.chunk, test.chunk_len);
             if (rc == HTP_STREAM_ERROR) {
                 test_destroy(&test);
                 return -101;
@@ -350,15 +350,16 @@ int test_run_ex(const char *testsdir, const char *testname, htp_cfg_t *cfg, htp_
             }
         } else {
             if (out_data_other) {
-                int rc = htp_connp_res_data(*connp, &tv_start, out_data + out_data_offset, out_data_len - out_data_offset);
+                rc = htp_connp_res_data(*connp, &tv_start, out_data + out_data_offset, out_data_len - out_data_offset);
                 if (rc == HTP_STREAM_ERROR) {
                     test_destroy(&test);
                     return -104;
                 }
+                
                 out_data_other = 0;
             }
 
-            int rc = htp_connp_res_data(*connp, &tv_start, test.chunk, test.chunk_len);
+            rc = htp_connp_res_data(*connp, &tv_start, test.chunk, test.chunk_len);
             if (rc == HTP_STREAM_ERROR) {
                 test_destroy(&test);
                 return -102;
@@ -374,18 +375,19 @@ int test_run_ex(const char *testsdir, const char *testname, htp_cfg_t *cfg, htp_
             }
 
             if (in_data_other) {
-                int rc = htp_connp_req_data(*connp, &tv_start, in_data + in_data_offset, in_data_len - in_data_offset);
+                rc = htp_connp_req_data(*connp, &tv_start, in_data + in_data_offset, in_data_len - in_data_offset);
                 if (rc == HTP_STREAM_ERROR) {
                     test_destroy(&test);
                     return -103;
                 }
+                
                 in_data_other = 0;
             }
         }
     }
 
     if (out_data_other) {
-        int rc = htp_connp_res_data(*connp, &tv_start, out_data + out_data_offset, out_data_len - out_data_offset);
+        rc = htp_connp_res_data(*connp, &tv_start, out_data + out_data_offset, out_data_len - out_data_offset);
         if (rc == HTP_STREAM_ERROR) {
             test_destroy(&test);
             return -104;
@@ -405,5 +407,5 @@ int test_run_ex(const char *testsdir, const char *testname, htp_cfg_t *cfg, htp_
 }
 
 int test_run(const char *testsdir, const char *testname, htp_cfg_t *cfg, htp_connp_t **connp) {
-    test_run_ex(testsdir, testname, cfg, connp, 1);
+    return test_run_ex(testsdir, testname, cfg, connp, 1);
 }
