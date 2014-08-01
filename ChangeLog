@@ -1,4 +1,11 @@
 
+0.5.15 (1 August 2014)
+----------------------
+
+- Fixed [#78] Make a case-insensitive comparision for the pattern "chunked"
+  for "Transfer-Encoding" [Anoop Saldanha]
+
+
 0.5.14 (22 July 2014)
 ---------------------
 

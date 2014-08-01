@@ -555,7 +555,7 @@ htp_status_t htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
         // 2. If a Transfer-Encoding header field (section 14.40) is present and
         //   indicates that the "chunked" transfer coding has been applied, then
         //   the length is defined by the chunked encoding (section 3.6).
-        if ((te != NULL) && (bstr_cmp_c(te->value, "chunked") == 0)) {
+        if ((te != NULL) && (bstr_cmp_c_nocase(te->value, "chunked") == 0)) {
             // If the T-E header is present we are going to use it.
             connp->out_tx->response_transfer_coding = HTP_CODING_CHUNKED;
 
