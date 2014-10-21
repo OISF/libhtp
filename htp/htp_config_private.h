@@ -117,6 +117,12 @@ typedef struct htp_decoder_cfg_t {
 
     /** The replacement byte used when there is no best-fit mapping. */
     unsigned char bestfit_replacement_byte;
+
+    // Request Line parsing options.
+
+    /** Reaction to leading whitespace on the request line */
+    enum htp_unwanted_t requestline_leading_whitespace_unwanted;
+
 } htp_decoder_cfg_t;
 
 struct htp_cfg_t {
