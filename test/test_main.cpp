@@ -1876,3 +1876,29 @@ TEST_F(ConnectionParsing, IncorrectHostAmbiguousWarning) {
    
     ASSERT_FALSE(tx->flags & HTP_HOST_AMBIGUOUS);
 }
+
+TEST_F(ConnectionParsing, GetWhitespace) {
+    int rc = test_run(home, "89-get-whitespace.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+
+    ASSERT_EQ(1, htp_list_size(connp->conn->transactions));
+
+    htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+
+    ASSERT_EQ(0, bstr_cmp_c(tx->request_method, " GET"));
+
+    ASSERT_EQ(0, bstr_cmp_c(tx->request_uri, "/?p=%20"));
+
+    ASSERT_TRUE(tx->parsed_uri != NULL);
+
+    ASSERT_TRUE(tx->parsed_uri->query != NULL);
+
+    ASSERT_EQ(0, bstr_cmp_c(tx->parsed_uri->query, "p=%20"));
+
+    htp_param_t *p = htp_tx_req_get_param(tx, "p", 1);
+    ASSERT_TRUE(p != NULL);
+
+    ASSERT_EQ(0, bstr_cmp_c(p->value, " "));
+}
+
