@@ -559,6 +559,7 @@ int htp_config_set_server_personality(htp_cfg_t *cfg, enum htp_server_personalit
             htp_config_set_convert_lowercase(cfg, HTP_DECODER_URL_PATH, 1);
             htp_config_set_utf8_convert_bestfit(cfg, HTP_DECODER_URL_PATH, 1);
             htp_config_set_u_encoding_decode(cfg, HTP_DECODER_URL_PATH, 1);
+            htp_config_set_requestline_leading_whitespace_unwanted(cfg, HTP_DECODER_DEFAULTS, HTP_UNWANTED_IGNORE);
             break;
 
         case HTP_SERVER_APACHE_2:
@@ -575,6 +576,7 @@ int htp_config_set_server_personality(htp_cfg_t *cfg, enum htp_server_personalit
             htp_config_set_url_encoding_invalid_handling(cfg, HTP_DECODER_URL_PATH, HTP_URL_DECODE_PRESERVE_PERCENT);
             htp_config_set_url_encoding_invalid_unwanted(cfg, HTP_DECODER_URL_PATH, HTP_UNWANTED_400);
             htp_config_set_control_chars_unwanted(cfg, HTP_DECODER_URL_PATH, HTP_UNWANTED_IGNORE);
+            htp_config_set_requestline_leading_whitespace_unwanted(cfg, HTP_DECODER_DEFAULTS, HTP_UNWANTED_400);
             break;
 
         case HTP_SERVER_IIS_5_1:
@@ -590,6 +592,7 @@ int htp_config_set_server_personality(htp_cfg_t *cfg, enum htp_server_personalit
 
             htp_config_set_url_encoding_invalid_handling(cfg, HTP_DECODER_URL_PATH, HTP_URL_DECODE_PRESERVE_PERCENT);
             htp_config_set_control_chars_unwanted(cfg, HTP_DECODER_URL_PATH, HTP_UNWANTED_IGNORE);
+            htp_config_set_requestline_leading_whitespace_unwanted(cfg, HTP_DECODER_DEFAULTS, HTP_UNWANTED_IGNORE);
             break;
 
         case HTP_SERVER_IIS_6_0:
@@ -606,6 +609,7 @@ int htp_config_set_server_personality(htp_cfg_t *cfg, enum htp_server_personalit
             htp_config_set_url_encoding_invalid_handling(cfg, HTP_DECODER_URL_PATH, HTP_URL_DECODE_PRESERVE_PERCENT);
             htp_config_set_u_encoding_unwanted(cfg, HTP_DECODER_URL_PATH, HTP_UNWANTED_400);
             htp_config_set_control_chars_unwanted(cfg, HTP_DECODER_URL_PATH, HTP_UNWANTED_400);
+            htp_config_set_requestline_leading_whitespace_unwanted(cfg, HTP_DECODER_DEFAULTS, HTP_UNWANTED_IGNORE);
             break;
 
         case HTP_SERVER_IIS_7_0:
@@ -623,6 +627,7 @@ int htp_config_set_server_personality(htp_cfg_t *cfg, enum htp_server_personalit
             htp_config_set_url_encoding_invalid_handling(cfg, HTP_DECODER_URL_PATH, HTP_URL_DECODE_PRESERVE_PERCENT);
             htp_config_set_url_encoding_invalid_unwanted(cfg, HTP_DECODER_URL_PATH, HTP_UNWANTED_400);
             htp_config_set_control_chars_unwanted(cfg, HTP_DECODER_URL_PATH, HTP_UNWANTED_400);
+            htp_config_set_requestline_leading_whitespace_unwanted(cfg, HTP_DECODER_DEFAULTS, HTP_UNWANTED_IGNORE);
             break;
 
         default:
@@ -882,4 +887,10 @@ void htp_config_set_utf8_invalid_unwanted(htp_cfg_t *cfg, enum htp_decoder_ctx_t
             cfg->decoder_cfgs[i].utf8_invalid_unwanted = unwanted;
         }
     }
+}
+
+void htp_config_set_requestline_leading_whitespace_unwanted(htp_cfg_t *cfg, enum htp_decoder_ctx_t ctx, enum htp_unwanted_t unwanted) {
+    if (ctx >= HTP_DECODER_CONTEXTS_MAX) return;
+
+    cfg->requestline_leading_whitespace_unwanted = unwanted;
 }

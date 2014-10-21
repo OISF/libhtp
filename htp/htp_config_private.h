@@ -117,6 +117,7 @@ typedef struct htp_decoder_cfg_t {
 
     /** The replacement byte used when there is no best-fit mapping. */
     unsigned char bestfit_replacement_byte;
+
 } htp_decoder_cfg_t;
 
 struct htp_cfg_t {
@@ -330,6 +331,14 @@ struct htp_cfg_t {
      * Opaque user data associated with this configuration structure.
      */
     void *user_data;
+
+    // Request Line parsing options.
+
+    // TODO this was added here to maintain a stable ABI, once we can break that
+    // we may want to move this into htp_decoder_cfg_t (VJ)
+
+    /** Reaction to leading whitespace on the request line */
+    enum htp_unwanted_t requestline_leading_whitespace_unwanted;
 };
 
 #ifdef	__cplusplus

@@ -1886,7 +1886,7 @@ TEST_F(ConnectionParsing, GetWhitespace) {
     htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
     ASSERT_TRUE(tx != NULL);
 
-    ASSERT_EQ(0, bstr_cmp_c(tx->request_method, "GET"));
+    ASSERT_EQ(0, bstr_cmp_c(tx->request_method, " GET"));
 
     ASSERT_EQ(0, bstr_cmp_c(tx->request_uri, "/?p=%20"));
 

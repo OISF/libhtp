@@ -638,6 +638,14 @@ void htp_config_set_utf8_convert_bestfit(htp_cfg_t *cfg, enum htp_decoder_ctx_t 
  */
 void htp_config_set_utf8_invalid_unwanted(htp_cfg_t *cfg, enum htp_decoder_ctx_t ctx, enum htp_unwanted_t unwanted);
 
+/**
+ * Configures how the server reacts to leading whitespace on the request line.
+ *
+ * @param[in] cfg
+ * @param[in] ctx
+ * @param[in] unwanted
+ */
+void htp_config_set_requestline_leading_whitespace_unwanted(htp_cfg_t *cfg, enum htp_decoder_ctx_t ctx, enum htp_unwanted_t unwanted);
 
 #ifdef	__cplusplus
 }

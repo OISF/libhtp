@@ -272,6 +272,13 @@ htp_status_t htp_parse_request_line_generic_ex(htp_connp_t *connp, int nul_termi
     if (pos) {
         htp_log(connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Request line: leading whitespace");
         mstart = pos;
+
+        if (connp->cfg->requestline_leading_whitespace_unwanted != HTP_UNWANTED_IGNORE) {
+            // reset mstart so that we copy the whitespace into the method
+            mstart = 0;
+            // set expected response code to this anomaly
+            tx->response_status_expected_number = connp->cfg->requestline_leading_whitespace_unwanted;
+        }
     }
 
     // The request method starts at the beginning of the
