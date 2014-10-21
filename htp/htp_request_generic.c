@@ -251,6 +251,7 @@ htp_status_t htp_parse_request_line_generic_ex(htp_connp_t *connp, int nul_termi
     unsigned char *data = bstr_ptr(tx->request_line);
     size_t len = bstr_len(tx->request_line);
     size_t pos = 0;
+    size_t mstart = 0;
 
     if (nul_terminates) {
         // The line ends with the first NUL byte.
@@ -266,13 +267,20 @@ htp_status_t htp_parse_request_line_generic_ex(htp_connp_t *connp, int nul_termi
         pos = 0;
     }
 
+    // skip past leading whitespace. IIS allows this
+    while ((pos < len) && htp_is_space(data[pos])) pos++;
+    if (pos) {
+        htp_log(connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Request line: leading whitespace");
+        mstart = pos;
+    }
+
     // The request method starts at the beginning of the
     // line and ends with the first whitespace character.
     while ((pos < len) && (!htp_is_space(data[pos]))) pos++;
 
     // No, we don't care if the method is empty.
 
-    tx->request_method = bstr_dup_mem(data, pos);
+    tx->request_method = bstr_dup_mem(data + mstart, pos - mstart);
     if (tx->request_method == NULL) return HTP_ERROR;
 
     #ifdef HTP_DEBUG
