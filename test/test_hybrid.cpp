@@ -789,7 +789,7 @@ TEST_F(HybridParsing, TestRepeatCallbacks)
     ASSERT_EQ(1, user_data.callback_REQUEST_START_invoked);
 
     // Request line data
-    htp_tx_req_set_line(tx, "GET / HTTP/1.0", 14    , HTP_ALLOC_COPY);
+    htp_tx_req_set_line(tx, "GET / HTTP/1.0", 14, HTP_ALLOC_COPY);
 
     // Request line complete
     htp_tx_state_request_line(tx);
