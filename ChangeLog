@@ -1,3 +1,12 @@
+0.5.17 (28 January 2015)
+------------------------
+
+- Fixed [#86] Fixing buffer overrun that was failing clang -fsanitize=address checks [Sam Baskinger]
+
+- Add strlcpy/strlcat functions [Giuseppe Longo]
+
+- Replace strcat by strlcat and sprintf by snprintf [Giuseppe Longo]
+
 0.5.16 (11 December 2014)
 -------------------------
 
