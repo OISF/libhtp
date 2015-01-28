@@ -81,6 +81,9 @@ AC_PROG_CXX
 AM_PROG_LIBTOOL
 AM_SANITY_CHECK
 
+# Checks for library functions
+AC_CHECK_FUNCS([strlcpy strlcat])
+
 dnl -----------------------------------------------
 dnl Checks for libs.
 dnl -----------------------------------------------
