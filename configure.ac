@@ -77,6 +77,7 @@ dnl Checks for programs.
 dnl -----------------------------------------------
 
 AC_PROG_CC
+AM_PROG_CC_C_O
 AC_PROG_CXX
 AM_PROG_LIBTOOL
 AM_SANITY_CHECK
