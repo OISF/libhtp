@@ -2063,34 +2063,34 @@ void fprint_raw_data_ex(FILE *stream, const char *name, const void *_data, size_
     while (offset < len) {
         size_t i;
 
-        sprintf(buf, "%08" PRIx64, (uint64_t) offset);
-        strcat(buf + strlen(buf), "  ");
+        snprintf(buf, sizeof(buf), "%08" PRIx64, (uint64_t) offset);
+        strlcat(buf, "  ", sizeof(buf));
 
         i = 0;
         while (i < 8) {
             if (offset + i < len) {
-                sprintf(buf + strlen(buf), "%02x ", data[offset + i]);
+                snprintf(buf + strlen(buf), sizeof(buf), "%02x ", data[offset + i]);
             } else {
-                strcat(buf + strlen(buf), "   ");
+                strlcat(buf, "   ", sizeof(buf));
             }
 
             i++;
         }
 
-        strcat(buf + strlen(buf), " ");
+        strlcat(buf, " ", sizeof(buf));
 
         i = 8;
         while (i < 16) {
             if (offset + i < len) {
-                sprintf(buf + strlen(buf), "%02x ", data[offset + i]);
+                snprintf(buf + strlen(buf), sizeof(buf), "%02x ", data[offset + i]);
             } else {
-                strcat(buf + strlen(buf), "   ");
+                strlcat(buf, "   ", sizeof(buf));
             }
 
             i++;
         }
 
-        strcat(buf + strlen(buf), " |");
+        strlcat(buf, " |", sizeof(buf));
 
         i = 0;
         char *p = buf + strlen(buf);
