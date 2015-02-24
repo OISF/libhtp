@@ -87,6 +87,7 @@ extern "C" {
 
 htp_status_t htp_connp_REQ_IDLE(htp_connp_t *connp);
 htp_status_t htp_connp_REQ_LINE(htp_connp_t *connp);
+htp_status_t htp_connp_REQ_LINE_complete(htp_connp_t *connp);
 htp_status_t htp_connp_REQ_PROTOCOL(htp_connp_t *connp);
 htp_status_t htp_connp_REQ_HEADERS(htp_connp_t *connp);
 htp_status_t htp_connp_REQ_CONNECT_CHECK(htp_connp_t *connp);
