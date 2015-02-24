@@ -1848,7 +1848,7 @@ TEST_F(ConnectionParsing, PartialRequestTimeout) {
     htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
     ASSERT_TRUE(tx != NULL);
 
-    ASSERT_EQ(HTP_REQUEST_LINE, tx->request_progress);
+    ASSERT_EQ(HTP_REQUEST_COMPLETE, tx->request_progress);
     ASSERT_EQ(HTP_RESPONSE_COMPLETE, tx->response_progress);
 }
 
@@ -1902,3 +1902,15 @@ TEST_F(ConnectionParsing, GetWhitespace) {
     ASSERT_EQ(0, bstr_cmp_c(p->value, " "));
 }
 
+TEST_F(ConnectionParsing, RequestUriTooLarge) {
+    int rc = test_run(home, "90-request-uri-too-large.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+
+    ASSERT_EQ(1, htp_list_size(connp->conn->transactions));
+
+    htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+
+    ASSERT_EQ(HTP_REQUEST_COMPLETE, tx->request_progress);
+    ASSERT_EQ(HTP_RESPONSE_COMPLETE, tx->response_progress);
+}

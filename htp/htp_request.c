@@ -723,6 +723,55 @@ htp_status_t htp_connp_REQ_PROTOCOL(htp_connp_t *connp) {
 }
 
 /**
+ * Parse the request line.
+ *
+ * @param[in] connp
+ * @returns HTP_OK on succesful parse, HTP_ERROR on error.
+ */
+htp_status_t htp_connp_REQ_LINE_complete(htp_connp_t *connp) {
+    unsigned char *data;
+    size_t len;
+
+    if (htp_connp_req_consolidate_data(connp, &data, &len) != HTP_OK) {
+        return HTP_ERROR;
+    }
+
+    #ifdef HTP_DEBUG
+    fprint_raw_data(stderr, __FUNCTION__, data, len);
+    #endif
+
+    // Is this a line that should be ignored?
+    if (htp_connp_is_line_ignorable(connp, data, len)) {
+        // We have an empty/whitespace line, which we'll note, ignore and move on.
+        connp->in_tx->request_ignored_lines++;
+
+        htp_connp_req_clear_buffer(connp);
+
+        return HTP_OK;
+    }
+
+    // Process request line.
+
+    htp_chomp(data, &len);
+
+    connp->in_tx->request_line = bstr_dup_mem(data, len);
+    if (connp->in_tx->request_line == NULL)
+        return HTP_ERROR;
+
+    if (connp->cfg->parse_request_line(connp) != HTP_OK)
+        return HTP_ERROR;
+
+    // Finalize request line parsing.
+
+    if (htp_tx_state_request_line(connp->in_tx) != HTP_OK)
+        return HTP_ERROR;
+
+    htp_connp_req_clear_buffer(connp);
+
+    return HTP_OK;
+}
+
+/**
  * Parses request line.
  *
  * @param[in] connp
@@ -735,43 +784,7 @@ htp_status_t htp_connp_REQ_LINE(htp_connp_t *connp) {
 
         // Have we reached the end of the line?
         if (connp->in_next_byte == LF) {
-            unsigned char *data;
-            size_t len;
-
-            if (htp_connp_req_consolidate_data(connp, &data, &len) != HTP_OK) {
-                return HTP_ERROR;
-            }
-
-            #ifdef HTP_DEBUG
-            fprint_raw_data(stderr, __FUNCTION__, data, len);
-            #endif
-
-            // Is this a line that should be ignored?
-            if (htp_connp_is_line_ignorable(connp, data, len)) {
-                // We have an empty/whitespace line, which we'll note, ignore and move on.
-                connp->in_tx->request_ignored_lines++;
-
-                htp_connp_req_clear_buffer(connp);
-
-                return HTP_OK;
-            }
-
-            // Process request line.
-
-            htp_chomp(data, &len);
-
-            connp->in_tx->request_line = bstr_dup_mem(data, len);
-            if (connp->in_tx->request_line == NULL) return HTP_ERROR;
-
-            if (connp->cfg->parse_request_line(connp) != HTP_OK) return HTP_ERROR;
-
-            // Finalize request line parsing.
-
-            if (htp_tx_state_request_line(connp->in_tx) != HTP_OK) return HTP_ERROR;
-
-            htp_connp_req_clear_buffer(connp);
-
-            return HTP_OK;
+            return htp_connp_REQ_LINE_complete(connp);
         }
     }
 
