@@ -1,3 +1,20 @@
+0.5.17 (25 February 2015)
+-------------------------
+
+- Fix URI parsing for non-std 'space' chars [Victor Julien] 
+
+- Fixing buffer overrun that was failing clang
+  -fsanitize=address checks [Sam Baskinger]
+
+- Replace strcat/sprintf by strlcat/snprintf [Giuseppe Longo]
+
+- Fix autogen on CentOS 5.11 [Victor Julien]
+
+- Fix dereferencing type-punned pointer on CentOS 5.11 [Giuseppe Longo]
+
+- Fix warning on OpenBSD [Giuseppe Longo]
+
+
 0.5.16 (11 December 2014)
 -------------------------
 
