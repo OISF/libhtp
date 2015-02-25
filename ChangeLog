@@ -1,3 +1,28 @@
+0.5.17 (25 February 2015)
+-------------------------
+
+- Add strlcpy/strlcat functions [Giuseppe Longo]
+
+- Replace strcat/sprintf by strlcat/snprintf [Giuseppe Longo]
+
+- Fixing buffer overrun that was failing clang
+  -fsanitize=address checks [Sam Baskinger]
+
+- Fix whitespace [Giuseppe Longo]
+
+- Fix autogen on CentOS 5.11 [Victor Julien]
+
+- strlcpy/strlcat: specify argument types [Giuseppe Longo]
+
+- Fix dereferencing type-punned pointer on CentOS 5.11 [Giuseppe Longo]
+
+- Include config.h header [Giuseppe Longo]
+
+- Fix warning on OpenBSD [Giuseppe Longo]
+
+- Fix URI parsing for non-std 'space' chars [Victor Julien] 
+
+
 0.5.16 (11 December 2014)
 -------------------------
 
