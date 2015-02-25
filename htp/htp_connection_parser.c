@@ -36,6 +36,8 @@
  * @author Ivan Ristic <ivanr@webkreator.com>
  */
 
+#include "htp_config_auto.h"
+
 #include "htp_private.h"
 
 void htp_connp_clear_error(htp_connp_t *connp) {

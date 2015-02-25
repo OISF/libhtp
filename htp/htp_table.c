@@ -36,6 +36,8 @@
  * @author Ivan Ristic <ivanr@webkreator.com>
  */
 
+#include "htp_config_auto.h"
+
 #include "htp_private.h"
 
 static htp_status_t _htp_table_add(htp_table_t *table, const bstr *key, const void *element) {

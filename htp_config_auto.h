@@ -1,12 +1,11 @@
 /***************************************************************************
  * Copyright (c) 2009-2010 Open Information Security Foundation
- * Copyright (c) 2010-2013 Qualys, Inc.
  * All rights reserved.
- *
+ * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
  * met:
- *
+ * 
  * - Redistributions of source code must retain the above copyright
  *   notice, this list of conditions and the following disclaimer.
 
@@ -17,7 +16,7 @@
  * - Neither the name of the Qualys, Inc. nor the names of its
  *   contributors may be used to endorse or promote products derived from
  *   this software without specific prior written permission.
- *
+ * 
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -33,32 +32,20 @@
 
 /**
  * @file
- * @author Ivan Ristic <ivanr@webkreator.com>
- */
-
-#include "htp_config_auto.h"
-
-#include "htp_private.h"
-
-/**
- * Extract one request header. A header can span multiple lines, in
- * which case they will be folded into one before parsing is attempted.
  *
- * @param[in] connp
- * @param[in] data
- * @param[in] len
- * @return HTP_OK or HTP_ERROR
- */
-htp_status_t htp_process_request_header_apache_2_2(htp_connp_t *connp, unsigned char *data, size_t len) {
-    return htp_process_request_header_generic(connp, data, len);
-}
-
-/**
- * Parse request line as Apache 2.2 does.
+ * This file wraps the generated autoconf header to provide define
+ * blocks to prevent issue when included more than once.
  *
- * @param[in] connp
- * @return HTP_OK or HTP_ERROR
+ * @warning Only include this in source files.
+ *
+ * @author Brian Rectanus <brectanus@qualys.com>
  */
-htp_status_t htp_parse_request_line_apache_2_2(htp_connp_t *connp) {
-    return htp_parse_request_line_generic_ex(connp, 1 /* NUL terminates line */);
-}
+
+#ifndef _HTP_CONFIG_AUTO_H
+#define _HTP_CONFIG_AUTO_H
+
+#ifdef HAVE_CONFIG_H
+#include "htp_config_auto_gen.h"
+#endif
+
+#endif /* _HTP_CONFIG_AUTO_H */
