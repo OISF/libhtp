@@ -36,6 +36,8 @@
  * @author Ivan Ristic <ivanr@webkreator.com>
  */
 
+#include "htp_config_auto.h"
+
 #include "htp_private.h"
 
 static bstr *copy_or_wrap_mem(const void *data, size_t len, enum htp_alloc_strategy_t alloc) {

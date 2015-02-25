@@ -49,10 +49,6 @@ extern "C" {
 #define __STDC_FORMAT_MACROS
 #endif
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include <ctype.h>
 #include <errno.h>
 #include <iconv.h>

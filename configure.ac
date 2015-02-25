@@ -6,7 +6,7 @@ dnl ----------------------
 AC_INIT([LibHTP], m4_esyscmd([./get-version.sh VERSION]))
 AM_INIT_AUTOMAKE()
 
-AC_CONFIG_HEADERS([config.h])
+AC_CONFIG_HEADERS([htp_config_auto_gen.h])
 AC_CONFIG_FILES([htp/htp_version.h])
 
 

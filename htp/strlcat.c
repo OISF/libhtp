@@ -27,11 +27,9 @@
 
 /* $Id: strlcatu.c,v 1.4 2003/10/20 15:03:27 chrisgreen Exp $ */
 
-#include "htp_private.h"
+#include "htp_config_auto.h"
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include "htp_private.h"
 
 #ifndef HAVE_STRLCAT
 
