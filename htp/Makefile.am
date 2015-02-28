@@ -5,7 +5,7 @@ h_sources = bstr.h bstr_builder.h htp.h htp_base64.h htp_config.h htp_connection
     htp_urlencoded.h htp_utf8_decoder.h htp_version.h
 
 h_sources_private = htp_config_private.h htp_connection_private.h htp_connection_parser_private.h htp_list_private.h \
-    htp_multipart_private.h htp_private.h htp_table_private.h
+    htp_multipart_private.h htp_private.h htp_table_private.h htp_config_auto.h
 
 c_sources = bstr.c bstr_builder.c htp_base64.c htp_config.c htp_connection.c htp_connection_parser.c \
     htp_content_handlers.c htp_cookies.c htp_decompressors.c htp_hooks.c  htp_list.c htp_multipart.c htp_parsers.c \
