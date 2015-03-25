@@ -194,6 +194,9 @@ static htp_status_t htp_connp_req_buffer(htp_connp_t *connp) {
     unsigned char *data = connp->in_current_data + connp->in_current_consume_offset;
     size_t len = connp->in_current_read_offset - connp->in_current_consume_offset;
 
+    if (len == 0)
+        return HTP_OK;
+
     // Check the hard (buffering) limit.
    
     size_t newlen = connp->in_buf_size + len;
