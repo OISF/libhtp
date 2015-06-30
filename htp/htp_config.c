@@ -156,8 +156,9 @@ htp_cfg_t *htp_config_create(void) {
     cfg->parse_request_cookies = 1;
     cfg->parse_request_auth = 1;
     cfg->extract_request_files = 0;
-    cfg->extract_request_files_limit = -1; // Use the parser default.   
-        
+    cfg->extract_request_files_limit = -1; // Use the parser default.
+    cfg->response_decompression_layer_limit = 2; // 2 layers seem fairly common
+
     // Default settings for URL-encoded data.
 
     htp_config_set_bestfit_map(cfg, HTP_DECODER_DEFAULTS, bestfit_1252);
@@ -895,4 +896,9 @@ void htp_config_set_requestline_leading_whitespace_unwanted(htp_cfg_t *cfg, enum
     if (ctx >= HTP_DECODER_CONTEXTS_MAX) return;
 
     cfg->requestline_leading_whitespace_unwanted = unwanted;
+}
+
+void htp_config_set_response_decompression_layer_limit(htp_cfg_t *cfg, int limit) {
+    if (cfg == NULL) return;
+    cfg->response_decompression_layer_limit = limit;
 }

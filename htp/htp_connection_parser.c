@@ -97,11 +97,8 @@ void htp_connp_destroy(htp_connp_t *connp) {
     if (connp->out_buf != NULL) {
         free(connp->out_buf);
     }
-        
-    if (connp->out_decompressor != NULL) {
-        connp->out_decompressor->destroy(connp->out_decompressor);
-        connp->out_decompressor = NULL;
-    }
+
+    htp_connp_destroy_decompressors(connp);
 
     if (connp->put_file != NULL) {
         bstr_free(connp->put_file->filename);
