@@ -749,6 +749,22 @@ htp_status_t htp_tx_res_set_headers_clear(htp_tx_t *tx) {
     return HTP_OK;
 }
 
+/** \internal
+ *
+ * Clean up decompressor(s).
+ *
+ * @param[in] tx
+ */
+static void htp_tx_res_destroy_decompressors(htp_tx_t *tx) {
+    htp_decompressor_t *comp = tx->connp->out_decompressor;
+    while (comp) {
+        htp_decompressor_t *next = comp->next;
+        comp->destroy(comp);
+        comp = next;
+    }
+    tx->connp->out_decompressor = NULL;
+}
+
 static htp_status_t htp_tx_res_process_body_data_decompressor_callback(htp_tx_data_t *d) {
     if (d == NULL) return HTP_ERROR;
 
@@ -803,8 +819,7 @@ htp_status_t htp_tx_res_process_body_data_ex(htp_tx_t *tx, const void *data, siz
 
             if (data == NULL) {
                 // Shut down the decompressor, if we used one.
-                tx->connp->out_decompressor->destroy(tx->connp->out_decompressor);
-                tx->connp->out_decompressor = NULL;
+                htp_tx_res_destroy_decompressors(tx);
             }
             break;
 
@@ -1077,16 +1092,22 @@ htp_status_t htp_tx_state_response_headers(htp_tx_t *tx) {
 
     // Determine content encoding.
 
+    int ce_multi_comp = 0;
     tx->response_content_encoding = HTP_COMPRESSION_NONE;
-
     htp_header_t *ce = htp_table_get_c(tx->response_headers, "content-encoding");
     if (ce != NULL) {
+        /* fast paths: regular gzip and friends */
         if ((bstr_cmp_c_nocase(ce->value, "gzip") == 0) || (bstr_cmp_c_nocase(ce->value, "x-gzip") == 0)) {
             tx->response_content_encoding = HTP_COMPRESSION_GZIP;
         } else if ((bstr_cmp_c_nocase(ce->value, "deflate") == 0) || (bstr_cmp_c_nocase(ce->value, "x-deflate") == 0)) {
             tx->response_content_encoding = HTP_COMPRESSION_DEFLATE;
-        } else if (bstr_cmp_c_nocase(ce->value, "inflate") != 0) {
+        } else if (bstr_cmp_c_nocase(ce->value, "inflate") == 0) {
+        } else if (bstr_chr(ce->value, ',') == -1) {
+            /* unknown value, but no list of values */
             htp_log(tx->connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Unknown response content encoding");
+        } else {
+            /* exceptional cases: enter slow path */
+            ce_multi_comp = 1;
         }
     }
 
@@ -1116,16 +1137,71 @@ htp_status_t htp_tx_state_response_headers(htp_tx_t *tx) {
     // 3. Decompression is disabled and we do not attempt to enable it, but the user
     //    forces decompression by setting response_content_encoding to one of the
     //    supported algorithms.
-    if ((tx->response_content_encoding_processing == HTP_COMPRESSION_GZIP) || (tx->response_content_encoding_processing == HTP_COMPRESSION_DEFLATE)) {
+    if ((tx->response_content_encoding_processing == HTP_COMPRESSION_GZIP) ||
+        (tx->response_content_encoding_processing == HTP_COMPRESSION_DEFLATE) ||
+         ce_multi_comp)
+    {
         if (tx->connp->out_decompressor != NULL) {
-            tx->connp->out_decompressor->destroy(tx->connp->out_decompressor);
-            tx->connp->out_decompressor = NULL;
+            htp_tx_res_destroy_decompressors(tx);
         }
 
-        tx->connp->out_decompressor = htp_gzip_decompressor_create(tx->connp, tx->response_content_encoding_processing);
-        if (tx->connp->out_decompressor == NULL) return HTP_ERROR;
-        
-        tx->connp->out_decompressor->callback = htp_tx_res_process_body_data_decompressor_callback;
+        /* normal case */
+        if (!ce_multi_comp) {
+            tx->connp->out_decompressor = htp_gzip_decompressor_create(tx->connp, tx->response_content_encoding_processing);
+            if (tx->connp->out_decompressor == NULL) return HTP_ERROR;
+
+            tx->connp->out_decompressor->callback = htp_tx_res_process_body_data_decompressor_callback;
+
+        /* multiple ce value case */
+        } else {
+            const char *ce_str = (const char *)bstr_ptr(ce->value);
+            char *input = strdup(ce_str);
+            if (input == NULL)
+                return HTP_ERROR;
+
+            htp_decompressor_t *comp = NULL;
+            char *saveptr = NULL;
+            char *tok = strtok_r(input, " ,", &saveptr);
+            while (tok) {
+                enum htp_content_encoding_t cetype = HTP_COMPRESSION_NONE;
+
+                if (strcasecmp(tok, "gzip") == 0 || strcasecmp(tok, "x-gzip") == 0) {
+                    cetype = HTP_COMPRESSION_GZIP;
+                } else if (strcasecmp(tok, "deflate") == 0 ||
+                           strcasecmp(tok, "x-deflate") == 0) {
+                    cetype = HTP_COMPRESSION_DEFLATE;
+                } else if (strcasecmp(tok, "inflate") == 0) {
+                    cetype = HTP_COMPRESSION_NONE;
+                } else {
+                    free(input);
+                    return HTP_ERROR;
+                }
+
+                if (cetype != HTP_COMPRESSION_NONE) {
+                    if (tx->connp->out_decompressor == NULL) {
+                        tx->response_content_encoding_processing = cetype;
+                        tx->connp->out_decompressor = htp_gzip_decompressor_create(tx->connp, tx->response_content_encoding_processing);
+                        if (tx->connp->out_decompressor == NULL) {
+                            free(input);
+                            return HTP_ERROR;
+                        }
+                        tx->connp->out_decompressor->callback = htp_tx_res_process_body_data_decompressor_callback;
+                        comp = tx->connp->out_decompressor;
+                    } else {
+                        comp->next = htp_gzip_decompressor_create(tx->connp, cetype);
+                        if (comp->next == NULL) {
+                            free(input);
+                            return HTP_ERROR;
+                        }
+                        comp->next->callback = htp_tx_res_process_body_data_decompressor_callback;
+                        comp = comp->next;
+                    }
+                }
+
+                tok = strtok_r(NULL, " ,", &saveptr);
+            }
+            free(input);
+        }
     } else if (tx->response_content_encoding_processing != HTP_COMPRESSION_NONE) {
         return HTP_ERROR;
     }

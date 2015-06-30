@@ -42,6 +42,7 @@
 
 /**
  * Decompress a chunk of gzip-compressed data.
+ * If we have more than one decompressor, call this function recursively.
  *
  * @param[in] drec
  * @param[in] d
@@ -59,13 +60,17 @@ static htp_status_t htp_gzip_decompressor_decompress(htp_decompressor_gzip_t *dr
         dout.data = NULL;
         dout.len = 0;
 
-        // Send decompressed data to the callback.
-        htp_status_t callback_rc = drec->super.callback(&dout);
-        if (callback_rc != HTP_OK) {
-            inflateEnd(&drec->stream);
-            drec->zlib_initialized = 0;
+        if (drec->super.next != NULL) {
+            return htp_gzip_decompressor_decompress((htp_decompressor_gzip_t *)drec->super.next, &dout);
+        } else {
+            // Send decompressed data to the callback.
+            htp_status_t callback_rc = drec->super.callback(&dout);
+            if (callback_rc != HTP_OK) {
+                inflateEnd(&drec->stream);
+                drec->zlib_initialized = 0;
 
-            return callback_rc;
+                return callback_rc;
+            }
         }
 
         return HTP_OK;
@@ -88,13 +93,21 @@ static htp_status_t htp_gzip_decompressor_decompress(htp_decompressor_gzip_t *dr
             d2.data = drec->buffer;
             d2.len = GZIP_BUF_SIZE;
 
-            // Send decompressed data to callback.
-            htp_status_t callback_rc = drec->super.callback(&d2);
-            if (callback_rc != HTP_OK) {
-                inflateEnd(&drec->stream);
-                drec->zlib_initialized = 0;
-                
-                return callback_rc;
+            if (drec->super.next != NULL) {
+                htp_tx_data_t d3;
+                d3.tx = d->tx;
+                d3.data = drec->buffer;
+                d3.len = GZIP_BUF_SIZE;
+                return htp_gzip_decompressor_decompress((htp_decompressor_gzip_t *)drec->super.next, &d3);
+            } else {
+                // Send decompressed data to callback.
+                htp_status_t callback_rc = drec->super.callback(&d2);
+                if (callback_rc != HTP_OK) {
+                    inflateEnd(&drec->stream);
+                    drec->zlib_initialized = 0;
+
+                    return callback_rc;
+                }
             }
 
             drec->stream.next_out = drec->buffer;
@@ -116,15 +129,23 @@ static htp_status_t htp_gzip_decompressor_decompress(htp_decompressor_gzip_t *dr
             d2.data = drec->buffer;
             d2.len = len;
 
-            // Send decompressed data to the callback.
-            htp_status_t callback_rc = drec->super.callback(&d2);
-            if (callback_rc != HTP_OK) {
-                inflateEnd(&drec->stream);
-                drec->zlib_initialized = 0;
-                
-                return callback_rc;
-            }
+            if (drec->super.next != NULL) {
+                htp_tx_data_t d3;
+                d3.tx = d->tx;
+                d3.data = drec->buffer;
+                d3.len = len;
+                return htp_gzip_decompressor_decompress((htp_decompressor_gzip_t *)drec->super.next, &d3);
 
+            } else {
+                // Send decompressed data to the callback.
+                htp_status_t callback_rc = drec->super.callback(&d2);
+                if (callback_rc != HTP_OK) {
+                    inflateEnd(&drec->stream);
+                    drec->zlib_initialized = 0;
+
+                    return callback_rc;
+                }
+            }
             // TODO Handle trailer.
 
             return HTP_OK;
@@ -173,6 +194,7 @@ htp_decompressor_t *htp_gzip_decompressor_create(htp_connp_t *connp, enum htp_co
 
     drec->super.decompress = (int (*)(htp_decompressor_t *, htp_tx_data_t *))htp_gzip_decompressor_decompress;
     drec->super.destroy = (void (*)(htp_decompressor_t *))htp_gzip_decompressor_destroy;
+    drec->super.next = NULL;
 
     drec->buffer = malloc(GZIP_BUF_SIZE);
     if (drec->buffer == NULL) {
