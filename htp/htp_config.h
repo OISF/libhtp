@@ -647,6 +647,14 @@ void htp_config_set_utf8_invalid_unwanted(htp_cfg_t *cfg, enum htp_decoder_ctx_t
  */
 void htp_config_set_requestline_leading_whitespace_unwanted(htp_cfg_t *cfg, enum htp_decoder_ctx_t ctx, enum htp_unwanted_t unwanted);
 
+/**
+ * Configures many layers of compression we try to decompress.
+ *
+ * @param[in] cfg
+ * @param[in] limit 0 disables limit
+ */
+void htp_config_set_response_decompression_layer_limit(htp_cfg_t *cfg, int limit);
+
 #ifdef	__cplusplus
 }
 #endif
