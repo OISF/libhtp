@@ -1159,11 +1159,21 @@ htp_status_t htp_tx_state_response_headers(htp_tx_t *tx) {
             if (input == NULL)
                 return HTP_ERROR;
 
+            int layers = 0;
             htp_decompressor_t *comp = NULL;
             char *saveptr = NULL;
             char *tok = strtok_r(input, " ,", &saveptr);
             while (tok) {
                 enum htp_content_encoding_t cetype = HTP_COMPRESSION_NONE;
+
+                /* check depth limit (0 means no limit) */
+                if ((tx->connp->cfg->response_decompression_layer_limit != 0) &&
+                    ((++layers) > tx->connp->cfg->response_decompression_layer_limit))
+                {
+                    htp_log(tx->connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0,
+                            "Too many response content encoding layers");
+                    break;
+                }
 
                 if (strcasecmp(tok, "gzip") == 0 || strcasecmp(tok, "x-gzip") == 0) {
                     cetype = HTP_COMPRESSION_GZIP;
