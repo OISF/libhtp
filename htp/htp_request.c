@@ -304,6 +304,72 @@ htp_status_t htp_connp_REQ_CONNECT_CHECK(htp_connp_t *connp) {
 }
 
 /**
+ * Determines whether inbound parsing needs to continue or stop. In
+ * case the data appears to be plain text HTTP, we try to continue.
+ *
+ * @param[in] connp
+ * @return HTP_OK if the parser can resume parsing, HTP_DATA_BUFFER if
+ *         we need more data.
+ */
+htp_status_t htp_connp_REQ_CONNECT_PROBE_DATA(htp_connp_t *connp) {
+    for (;;) {//;i < max_read; i++) {
+        IN_PEEK_NEXT(connp);
+        // Have we reached the end of the line? For some reason
+        // we can't test after IN_COPY_BYTE_OR_RETURN */
+        if (connp->in_next_byte == LF || connp->in_next_byte == 0x00)
+            break;
+
+        IN_COPY_BYTE_OR_RETURN(connp);
+
+    }
+
+    unsigned char *data;
+    size_t len;
+    if (htp_connp_req_consolidate_data(connp, &data, &len) != HTP_OK) {
+        fprintf(stderr, "htp_connp_req_consolidate_data fail");
+        return HTP_ERROR;
+    }
+#ifdef HTP_DEBUG
+    fprint_raw_data(stderr, "PROBING", data, len);
+#endif
+
+    size_t pos = 0;
+    size_t mstart = 0;
+    // skip past leading whitespace. IIS allows this
+    while ((pos < len) && htp_is_space(data[pos]))
+        pos++;
+    if (pos)
+        mstart = pos;
+    // The request method starts at the beginning of the
+    // line and ends with the first whitespace character.
+    while ((pos < len) && (!htp_is_space(data[pos])))
+        pos++;
+
+    int methodi = HTP_M_UNKNOWN;
+    bstr *method = bstr_dup_mem(data + mstart, pos - mstart);
+    if (method) {
+        methodi = htp_convert_method_to_number(method);
+        bstr_free(method);
+    }
+    if (methodi != HTP_M_UNKNOWN) {
+#ifdef HTP_DEBUG
+        fprint_raw_data(stderr, "htp_connp_REQ_CONNECT_PROBE_DATA: tunnel contains plain text HTTP", data, len);
+#endif
+        connp->in_state = htp_connp_REQ_IDLE;
+    } else {
+#ifdef HTP_DEBUG
+        fprint_raw_data(stderr, "htp_connp_REQ_CONNECT_PROBE_DATA: tunnel is not HTTP", data, len);
+#endif
+        connp->in_status = HTP_STREAM_TUNNEL;
+        connp->out_status = HTP_STREAM_TUNNEL;
+    }
+
+    // not calling htp_connp_req_clear_buffer, we're not consuming the data
+
+    return HTP_OK;
+}
+
+/**
  * Determines whether inbound parsing, which was suspended after
  * encountering a CONNECT transaction, can proceed (after receiving
  * the response).
@@ -324,9 +390,9 @@ htp_status_t htp_connp_REQ_CONNECT_WAIT_RESPONSE(htp_connp_t *connp) {
         // TODO Check that the server did not accept a connection to itself.
 
         // The requested tunnel was established: we are going
-        // to ignore the remaining data on this stream
-        connp->in_status = HTP_STREAM_TUNNEL;
-        connp->in_state = htp_connp_REQ_FINALIZE;
+        // to probe the remaining data on this stream to see
+        // if we need to ignore it or parse it
+        connp->in_state = htp_connp_REQ_CONNECT_PROBE_DATA;
     } else {
         // No tunnel; continue to the next transaction
         connp->in_state = htp_connp_REQ_FINALIZE;

@@ -91,6 +91,7 @@ htp_status_t htp_connp_REQ_PROTOCOL(htp_connp_t *connp);
 htp_status_t htp_connp_REQ_HEADERS(htp_connp_t *connp);
 htp_status_t htp_connp_REQ_CONNECT_CHECK(htp_connp_t *connp);
 htp_status_t htp_connp_REQ_CONNECT_WAIT_RESPONSE(htp_connp_t *connp);
+htp_status_t htp_connp_REQ_CONNECT_PROBE_DATA(htp_connp_t *connp);
 htp_status_t htp_connp_REQ_BODY_DETERMINE(htp_connp_t *connp);
 htp_status_t htp_connp_REQ_BODY_IDENTITY(htp_connp_t *connp);
 htp_status_t htp_connp_REQ_BODY_CHUNKED_LENGTH(htp_connp_t *connp);
