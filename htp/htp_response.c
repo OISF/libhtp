@@ -474,10 +474,11 @@ htp_status_t htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
         if ((connp->out_tx->response_status_number >= 200)
                 && (connp->out_tx->response_status_number <= 299)) {
             // This is a successful CONNECT stream, which means
-            // we need to switch into tunneling mode.
-            connp->in_status = HTP_STREAM_TUNNEL;
-            connp->out_status = HTP_STREAM_TUNNEL;
-            connp->out_state = htp_connp_RES_FINALIZE;
+            // we need to switch into tunneling mode: on the
+            // request side we'll now probe the tunnel data to see
+            // if we need to parse or ignore it. So on the response
+            // side we wait.
+            connp->out_state = htp_connp_RES_IDLE;
             return HTP_OK;
         } else {
             // This is a failed CONNECT stream, which means that
