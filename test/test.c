@@ -128,7 +128,7 @@ static int test_init(test_t *test, const char *filename, int clone_count) {
         test->len += bytes_read;
     }
 
-    if (test->len != buf.st_size) {
+    if ((int)test->len != buf.st_size) {
         free(test->buf);
         return -2;
     }
