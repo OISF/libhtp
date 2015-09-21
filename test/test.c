@@ -36,6 +36,7 @@
  * @author Ivan Ristic <ivanr@webkreator.com>
  */
 
+#include <assert.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdio.h>
@@ -122,6 +123,9 @@ static int test_init(test_t *test, const char *filename, int clone_count) {
     test->buf = malloc(buf.st_size * clone_count + clone_count - 1);
     test->len = 0;
     test->pos = 0;
+
+    // Check that we received our memory.
+    assert(test->buf != NULL);
 
     int bytes_read = 0;
     while ((bytes_read = read(fd, test->buf + test->len, buf.st_size - test->len)) > 0) {
