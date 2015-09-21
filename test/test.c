@@ -116,6 +116,7 @@ static int test_init(test_t *test, const char *filename, int clone_count) {
 
     struct stat buf;
     if (fstat(fd, &buf) < 0) {
+        close(fd);
         return -1;
     }
 
@@ -130,6 +131,7 @@ static int test_init(test_t *test, const char *filename, int clone_count) {
 
     if (test->len != buf.st_size) {
         free(test->buf);
+        close(fd);
         return -2;
     }
 
