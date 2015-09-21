@@ -248,6 +248,7 @@ static int parse_filename(const char *filename, char **remote_addr, int *remote_
                 break;
             case 4:
                 *local_addr = strdup(p);
+                break;
             case 5:
                 *local_port = atoi(p);
                 break;
