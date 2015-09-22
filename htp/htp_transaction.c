@@ -787,6 +787,7 @@ htp_status_t htp_tx_res_process_body_data_ex(htp_tx_t *tx, const void *data, siz
     d.tx = tx;
     d.data = (unsigned char *) data;
     d.len = len;
+    d.is_last = 0;
 
     // Keep track of body size before decompression.
     tx->response_message_len += d.len;
