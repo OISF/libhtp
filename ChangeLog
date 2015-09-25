@@ -1,3 +1,33 @@
+0.5.18 (25 September 2015)
+--------------------------
+
+- Fixed [#120] Trigger request line parsing on
+  incomplete request [Victor Julien]
+
+- Fixed [#119] Fix uninitialized htp_tx_t::is_last value
+  in in htp_tx_res_process_body_data_ex() [Fedor Sakharov]
+
+- Fixed [#118] Coverity-identified missing break in switch [Sam Baskinger]
+
+- Fixed [#117] Coverity-identified issue of not checking
+  malloc() return value [Sam Baskinger]
+
+- Fixed [#116] Fix coverity-identified leaked file descriptors
+  in unit test [Sam Baskinger]
+
+- Fixed [#113] fix pkgconfig include dir [Eric Leblond]
+
+- Fixed [#111] Connect plain http [Victor Julien]
+
+- Fixed [#105] Do not invoke callbacks in htp_req_run_hook_body_data()
+  when there is no tx running. [Sam Baskinger]
+
+- Fixed [#104] Modifiying HTTP methods to be rfc3253 compliant [Andreas Moe]
+
+- Fixed [#103] Fixes [Victor Julien]
+
+- Fixed [#101] Make including the autoconf config header safer [Brian Rectanus]
+
 0.5.17 (25 February 2015)
 -------------------------
 
