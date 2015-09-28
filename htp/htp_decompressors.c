@@ -58,6 +58,7 @@ static htp_status_t htp_gzip_decompressor_decompress(htp_decompressor_gzip_t *dr
         dout.tx = d->tx;
         dout.data = NULL;
         dout.len = 0;
+        dout.is_last = d->is_last;
 
         // Send decompressed data to the callback.
         htp_status_t callback_rc = drec->super.callback(&dout);
@@ -87,6 +88,7 @@ static htp_status_t htp_gzip_decompressor_decompress(htp_decompressor_gzip_t *dr
             d2.tx = d->tx;
             d2.data = drec->buffer;
             d2.len = GZIP_BUF_SIZE;
+            d2.is_last = d->is_last;
 
             // Send decompressed data to callback.
             htp_status_t callback_rc = drec->super.callback(&d2);
@@ -115,6 +117,7 @@ static htp_status_t htp_gzip_decompressor_decompress(htp_decompressor_gzip_t *dr
             d2.tx = d->tx;
             d2.data = drec->buffer;
             d2.len = len;
+            d2.is_last = d->is_last;
 
             // Send decompressed data to the callback.
             htp_status_t callback_rc = drec->super.callback(&d2);
