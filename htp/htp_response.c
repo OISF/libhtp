@@ -479,7 +479,10 @@ htp_status_t htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
             // if we need to parse or ignore it. So on the response
             // side we wrap up the tx and wait.
             connp->out_state = htp_connp_RES_FINALIZE;
-            return HTP_OK;
+
+            // we may have response headers
+            htp_status_t rc = htp_tx_state_response_headers(connp->out_tx);
+            return rc;
         } else {
             // This is a failed CONNECT stream, which means that
             // we can unblock request parsing
