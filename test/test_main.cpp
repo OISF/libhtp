@@ -1914,3 +1914,43 @@ TEST_F(ConnectionParsing, RequestUriTooLarge) {
     ASSERT_EQ(HTP_REQUEST_COMPLETE, tx->request_progress);
     ASSERT_EQ(HTP_RESPONSE_COMPLETE, tx->response_progress);
 }
+
+
+
+static std::string collected_req;
+static int collect_raw_reqest(htp_tx_data_t *d) {
+    collected_req += std::string((const char*)d->data, d->len);
+    return HTP_OK;
+}
+
+static std::string collected_resp;
+static int collect_raw_response(htp_tx_data_t *d) {
+    collected_resp += std::string((const char*)d->data, d->len);
+    return HTP_OK;
+}
+
+
+TEST_F(ConnectionParsing, RawBodyHooks) {
+
+    collected_req.clear();
+    collected_resp.clear();
+    htp_config_register_request_raw_body_data(cfg, collect_raw_reqest);
+    htp_config_register_response_raw_body_data(cfg, collect_raw_response);
+
+    int rc = test_run(home, "91-both-body-chunked.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+
+    ASSERT_EQ(1, htp_list_size(connp->conn->transactions));
+
+    htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+
+    ASSERT_EQ(HTP_REQUEST_COMPLETE, tx->request_progress);
+    ASSERT_EQ(HTP_RESPONSE_COMPLETE, tx->response_progress);
+
+    ASSERT_EQ("3\r\nqwe\r\n3\r\nasd\r\n0\r\n", collected_req);
+    ASSERT_EQ("3\r\nxxx\r\n3\r\nyyy\r\n0\r\n", collected_resp);
+
+    collected_req.clear();
+    collected_resp.clear();
+}

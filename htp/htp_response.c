@@ -168,6 +168,14 @@ static htp_status_t htp_res_handle_state_change(htp_connp_t *connp) {
         if (rc != HTP_OK) return rc;
     }
 
+    // instead of check that connp->in_state == htp_connp_RES_BODY*
+    if (connp->out_tx != NULL && connp->out_tx->response_progress == HTP_RESPONSE_BODY) {
+        htp_status_t rc;
+        rc = htp_connp_res_receiver_set(connp, connp->out_tx->cfg->hook_response_raw_body_data);
+        if (rc != HTP_OK)
+            return rc;
+    }
+
     // Same comment as in htp_req_handle_state_change(). Below is a copy.
 
     // Initially, I had the finalization of raw data sending here, but that
