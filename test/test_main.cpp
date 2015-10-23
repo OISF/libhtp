@@ -1954,3 +1954,44 @@ TEST_F(ConnectionParsing, RawBodyHooks) {
     collected_req.clear();
     collected_resp.clear();
 }
+
+TEST_F(ConnectionParsing, FullDataReconstruction) {
+    collected_req.clear();
+    collected_resp.clear();
+
+    htp_config_register_request_header_data(cfg, collect_raw_reqest);
+    htp_config_register_request_raw_body_data(cfg, collect_raw_reqest);
+    htp_config_register_request_trailer_data(cfg, collect_raw_reqest);
+
+    htp_config_register_response_header_data(cfg, collect_raw_response);
+    htp_config_register_response_raw_body_data(cfg, collect_raw_response);
+    htp_config_register_response_trailer_data(cfg, collect_raw_response);
+
+    int rc = test_run(home, "91-both-body-chunked.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+
+    ASSERT_EQ(1, htp_list_size(connp->conn->transactions));
+
+    htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+
+    ASSERT_EQ(HTP_REQUEST_COMPLETE, tx->request_progress);
+    ASSERT_EQ(HTP_RESPONSE_COMPLETE, tx->response_progress);
+
+    ASSERT_EQ("User-Agent: test-suite\r\n"
+              "Content-Type: text/plain\r\n"
+              "Transfer-Encoding: chunked\r\n"
+              "Host: example.com\r\n\r\n"
+              "3\r\nqwe\r\n3\r\nasd\r\n0\r\n"
+              "X-trailer: 42\r\n\r\n",
+              collected_req);
+    ASSERT_EQ("Server: test-suite\r\n"
+              "Content-Type: text/plain\r\n"
+              "Transfer-Encoding: chunked\r\n\r\n"
+              "3\r\nxxx\r\n3\r\nyyy\r\n0\r\n"
+              "X-trailer: 69\r\n\r\n",
+              collected_resp);
+
+    collected_req.clear();
+    collected_resp.clear();
+}
