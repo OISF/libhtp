@@ -168,6 +168,14 @@ static htp_status_t htp_res_handle_state_change(htp_connp_t *connp) {
         if (rc != HTP_OK) return rc;
     }
 
+    // instead of check that connp->in_state == htp_connp_RES_BODY*
+    if (connp->out_tx != NULL && connp->out_tx->response_progress == HTP_RESPONSE_BODY) {
+        htp_status_t rc;
+        rc = htp_connp_res_receiver_set(connp, connp->out_tx->cfg->hook_response_raw_body_data);
+        if (rc != HTP_OK)
+            return rc;
+    }
+
     // Same comment as in htp_req_handle_state_change(). Below is a copy.
 
     // Initially, I had the finalization of raw data sending here, but that
@@ -479,7 +487,10 @@ htp_status_t htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
             // if we need to parse or ignore it. So on the response
             // side we wrap up the tx and wait.
             connp->out_state = htp_connp_RES_FINALIZE;
-            return HTP_OK;
+
+            // we may have response headers
+            htp_status_t rc = htp_tx_state_response_headers(connp->out_tx);
+            return rc;
         } else {
             // This is a failed CONNECT stream, which means that
             // we can unblock request parsing
