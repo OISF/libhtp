@@ -81,6 +81,8 @@ if ((X)->out_current_read_offset < (X)->out_current_len) { \
     return HTP_DATA_BUFFER; \
 }
 
+#define REQUEST_URI_NOT_SEEN "/libhtp::request_uri_not_seen"
+
 /**
  * Sends outstanding connection data to the currently active data receiver hook.
  *
@@ -981,6 +983,7 @@ htp_status_t htp_connp_RES_FINALIZE(htp_connp_t *connp) {
  * @returns HTP_OK on state change, HTP_ERROR on error, or HTP_DATA when more data is needed.
  */
 htp_status_t htp_connp_RES_IDLE(htp_connp_t *connp) {
+
     // We want to start parsing the next response (and change
     // the state from IDLE) only if there's at least one
     // byte of data available. Otherwise we could be creating
@@ -991,19 +994,33 @@ htp_status_t htp_connp_RES_IDLE(htp_connp_t *connp) {
     // Parsing a new response
 
     // Find the next outgoing transaction
+    // If there is none, we just create one so that responses without
+    // request can still be processed.
     connp->out_tx = htp_list_get(connp->conn->transactions, connp->out_next_tx_index);
     if (connp->out_tx == NULL) {
         htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Unable to match response to request");
-        return HTP_ERROR;
+        connp->out_tx = htp_connp_tx_create(connp);
+        if (connp->out_tx == NULL) {
+            return HTP_ERROR;
+        }
+        connp->out_tx->parsed_uri = htp_uri_alloc();
+        if (connp->out_tx->parsed_uri == NULL) {
+            return HTP_ERROR;
+        }
+        connp->out_tx->parsed_uri->path = bstr_alloc(strlen(REQUEST_URI_NOT_SEEN));
+        if (connp->out_tx->parsed_uri->path == NULL) {
+            return HTP_ERROR;
+        }
+        bstr_add_c(connp->out_tx->parsed_uri->path, REQUEST_URI_NOT_SEEN);
+    } else {
+        // We've used one transaction
+        connp->out_next_tx_index++;
+
+        // TODO Detect state mismatch
+
+        connp->out_content_length = -1;
+        connp->out_body_data_left = -1;
     }
-
-    // We've used one transaction
-    connp->out_next_tx_index++;
-
-    // TODO Detect state mismatch
-
-    connp->out_content_length = -1;
-    connp->out_body_data_left = -1;
 
     htp_status_t rc = htp_tx_state_response_start(connp->out_tx);
     if (rc != HTP_OK) return rc;
