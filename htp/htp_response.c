@@ -865,6 +865,12 @@ htp_status_t htp_connp_RES_FINALIZE(htp_connp_t *connp) {
     return htp_tx_state_response_complete_ex(connp->out_tx, 0 /* not hybrid mode */);
 }
 
+static inline long long _get_current_time_in_seconds() {
+    struct timeval time;
+    gettimeofday(&time, NULL);
+    return (long long)((time.tv_sec * 1e6 + time.tv_usec) / (1e6));    /* in seconds */
+}
+
 /**
  * The response idle state will initialize response processing, as well as
  * finalize each transactions after we are done with it.
@@ -873,6 +879,8 @@ htp_status_t htp_connp_RES_FINALIZE(htp_connp_t *connp) {
  * @returns HTP_OK on state change, HTP_ERROR on error, or HTP_DATA when more data is needed.
  */
 htp_status_t htp_connp_RES_IDLE(htp_connp_t *connp) {
+    char buffer[128] = {0};
+
     // We want to start parsing the next response (and change
     // the state from IDLE) only if there's at least one
     // byte of data available. Otherwise we could be creating
@@ -883,19 +891,34 @@ htp_status_t htp_connp_RES_IDLE(htp_connp_t *connp) {
     // Parsing a new response
 
     // Find the next outgoing transaction
+    // If there is none, we just create one so that responses without
+    // request can still be processed. We also create a random parsed_uri.
     connp->out_tx = htp_list_get(connp->conn->transactions, connp->out_next_tx_index);
     if (connp->out_tx == NULL) {
         htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Unable to match response to request");
-        return HTP_ERROR;
+        connp->out_tx = htp_connp_tx_create(connp);
+        if (connp->out_tx == NULL) {
+            return HTP_ERROR;
+        }
+        connp->out_tx->parsed_uri = htp_uri_alloc();
+        if (connp->out_tx->parsed_uri == NULL) {
+            return HTP_ERROR;
+        }
+        snprintf(buffer, 128, "/resp-%lld", _get_current_time_in_seconds());
+        connp->out_tx->parsed_uri->path = bstr_alloc(strlen(buffer));
+        if (connp->out_tx->parsed_uri->path == NULL) {
+            return HTP_ERROR;
+        }
+        bstr_add_c(connp->out_tx->parsed_uri->path, buffer);
+    } else {
+        // We've used one transaction
+        connp->out_next_tx_index++;
+
+        // TODO Detect state mismatch
+
+        connp->out_content_length = -1;
+        connp->out_body_data_left = -1;
     }
-
-    // We've used one transaction
-    connp->out_next_tx_index++;
-
-    // TODO Detect state mismatch
-
-    connp->out_content_length = -1;
-    connp->out_body_data_left = -1;
 
     htp_status_t rc = htp_tx_state_response_start(connp->out_tx);
     if (rc != HTP_OK) return rc;
