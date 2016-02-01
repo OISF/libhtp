@@ -371,6 +371,10 @@ htp_status_t htp_connp_RES_BODY_CHUNKED_LENGTH(htp_connp_t *connp) {
             
             htp_connp_res_clear_buffer(connp);
 
+            // empty chunk length line, lets try to continue
+            if (connp->out_chunked_length == -1004)
+                continue;
+
             // Handle chunk length
             if (connp->out_chunked_length > 0) {
                 // More data available                
