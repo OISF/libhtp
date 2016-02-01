@@ -264,6 +264,31 @@ int64_t htp_parse_content_length(bstr *b) {
  * @return Chunk length, or a negative number on error.
  */
 int64_t htp_parse_chunked_length(unsigned char *data, size_t len) {
+    // skip leading line feeds and other control chars
+    while (len) {
+        unsigned char c = *data;
+        if (!(c == 0x0d || c == 0x0a || c == 0x20 || c == 0x09 || c == 0x0b || c == 0x0c))
+            break;
+        data++;
+        len--;
+    }
+    if (len == 0)
+        return -1004;
+
+    // find how much of the data is correctly formatted
+    size_t i = 0;
+    while (i < len) {
+        unsigned char c = data[i];
+        if (!(isdigit(c) ||
+            (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')))
+            break;
+        i++;
+    }
+    // cut off trailing junk
+    if (i != len) {
+        len = i;
+    }
+
     int64_t chunk_len = htp_parse_positive_integer_whitespace(data, len, 16);
     if (chunk_len < 0) return chunk_len;
     if (chunk_len > INT32_MAX) return -1;
