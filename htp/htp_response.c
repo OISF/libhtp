@@ -611,7 +611,12 @@ htp_status_t htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
         // 2. If a Transfer-Encoding header field (section 14.40) is present and
         //   indicates that the "chunked" transfer coding has been applied, then
         //   the length is defined by the chunked encoding (section 3.6).
-        if ((te != NULL) && (bstr_cmp_c_nocase(te->value, "chunked") == 0)) {
+        if ((te != NULL) && (bstr_index_of_c_nocase(te->value, "chunked") != -1)) {
+            if (bstr_cmp_c_nocase(te->value, "chunked") != 0) {
+                htp_log(connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0,
+                        "Transfer-encoding has abnormal chunked value");
+            }
+
             // spec says chunked is HTTP/1.1 only, but some browsers accept it
             // with 1.0 as well
             if (connp->out_tx->response_protocol_number < HTP_PROTOCOL_1_1) {
