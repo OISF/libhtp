@@ -341,6 +341,39 @@ htp_status_t htp_connp_RES_BODY_CHUNKED_DATA(htp_connp_t *connp) {
 }
 
 /**
+ * Peeks ahead into the data to try to see if it starts with a valid Chunked
+ * length field.
+ *
+ * @returns 1 if it looks valid, 0 if it looks invalid
+ */
+static inline int data_probe_chunk_length(htp_connp_t *connp) {
+    if (connp->out_current_read_offset - connp->out_current_consume_offset < 8) {
+        // not enough data so far, consider valid still
+        return 1;
+    }
+
+    unsigned char *data = connp->out_current_data + connp->out_current_consume_offset;
+    size_t len = connp->out_current_read_offset - connp->out_current_consume_offset;
+
+    size_t i = 0;
+    while (i < len) {
+        unsigned char c = data[i];
+
+        if (c == 0x0d || c == 0x0a || c == 0x20 || c == 0x09 || c == 0x0b || c == 0x0c) {
+            // ctl char, still good.
+        } else if (isdigit(c) || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')) {
+            // real chunklen char
+            return 1;
+        } else {
+            // leading junk, bad
+            return 0;
+        }
+        i++;
+    }
+    return 1;
+}
+
+/**
  * Extracts chunk length.
  *
  * @param[in] connp
@@ -349,9 +382,9 @@ htp_status_t htp_connp_RES_BODY_CHUNKED_DATA(htp_connp_t *connp) {
 htp_status_t htp_connp_RES_BODY_CHUNKED_LENGTH(htp_connp_t *connp) {
     for (;;) {
         OUT_COPY_BYTE_OR_RETURN(connp);
-        
-        // Have we reached the end of the line?
-        if (connp->out_next_byte == LF) {
+
+        // Have we reached the end of the line? Or is this not chunked after all?
+        if (connp->out_next_byte == LF || !data_probe_chunk_length(connp)) {
             unsigned char *data;
             size_t len;
 
@@ -365,29 +398,39 @@ htp_status_t htp_connp_RES_BODY_CHUNKED_LENGTH(htp_connp_t *connp) {
             fprint_raw_data(stderr, "Chunk length line", data, len);
             #endif
 
-            htp_chomp(data, &len);
-            
             connp->out_chunked_length = htp_parse_chunked_length(data, len);
-            
-            htp_connp_res_clear_buffer(connp);
 
             // empty chunk length line, lets try to continue
             if (connp->out_chunked_length == -1004)
                 continue;
+            if (connp->out_chunked_length < 0) {
+                // reset out_current_read_offset so htp_connp_RES_BODY_IDENTITY_STREAM_CLOSE
+                // doesn't miss the first bytes
+
+                if (len > (size_t)connp->out_current_read_offset) {
+                    connp->out_current_read_offset = 0;
+                } else {
+                    connp->out_current_read_offset -= len;
+                }
+
+                connp->out_state = htp_connp_RES_BODY_IDENTITY_STREAM_CLOSE;
+                connp->out_tx->response_transfer_coding = HTP_CODING_IDENTITY;
+
+                htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
+                        "Response chunk encoding: Invalid chunk length: %d",
+                        connp->out_chunked_length);
+                return HTP_OK;
+            }
+            htp_connp_res_clear_buffer(connp);
 
             // Handle chunk length
             if (connp->out_chunked_length > 0) {
-                // More data available                
+                // More data available
                 connp->out_state = htp_connp_RES_BODY_CHUNKED_DATA;
             } else if (connp->out_chunked_length == 0) {
                 // End of data
                 connp->out_state = htp_connp_RES_HEADERS;
                 connp->out_tx->response_progress = HTP_RESPONSE_TRAILER;
-            } else {
-                // Invalid chunk length
-                htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
-                        "Response chunk encoding: Invalid chunk length: %d", connp->out_chunked_length);
-                return HTP_ERROR;
             }
 
             return HTP_OK;
@@ -445,6 +488,9 @@ htp_status_t htp_connp_RES_BODY_IDENTITY_STREAM_CLOSE(htp_connp_t *connp) {
     // Consume all data from the input buffer.
     size_t bytes_to_consume = connp->out_current_len - connp->out_current_read_offset;
 
+    #ifdef HTP_DEBUG
+    fprintf(stderr, "bytes_to_consume %u", (uint)bytes_to_consume);
+    #endif
     if (bytes_to_consume != 0) {
         htp_status_t rc = htp_tx_res_process_body_data_ex(connp->out_tx, connp->out_current_data + connp->out_current_read_offset, bytes_to_consume);
         if (rc != HTP_OK) return rc;
@@ -566,6 +612,13 @@ htp_status_t htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
         //   indicates that the "chunked" transfer coding has been applied, then
         //   the length is defined by the chunked encoding (section 3.6).
         if ((te != NULL) && (bstr_cmp_c_nocase(te->value, "chunked") == 0)) {
+            // spec says chunked is HTTP/1.1 only, but some browsers accept it
+            // with 1.0 as well
+            if (connp->out_tx->response_protocol_number < HTP_PROTOCOL_1_1) {
+                htp_log(connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0,
+                        "Chunked transfer-encoding on HTTP/0.9 or HTTP/1.0");
+            }
+
             // If the T-E header is present we are going to use it.
             connp->out_tx->response_transfer_coding = HTP_CODING_CHUNKED;
 
