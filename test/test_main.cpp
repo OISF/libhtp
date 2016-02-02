@@ -1600,7 +1600,7 @@ TEST_F(ConnectionParsing, LongResponseHeader) {
 
 TEST_F(ConnectionParsing, ResponseInvalidChunkLength) {
     int rc = test_run(home, "70-response-invalid-chunk-length.t", cfg, &connp);
-    ASSERT_LT(rc, 0); // Expect error.
+    ASSERT_EQ(rc, 1); // Expect success as we're very liberal
 }
 
 TEST_F(ConnectionParsing, ResponseSplitChunk) {
