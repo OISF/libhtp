@@ -709,7 +709,17 @@ htp_status_t htp_connp_RES_HEADERS(htp_connp_t *connp) {
         OUT_COPY_BYTE_OR_RETURN(connp);
 
         // Have we reached the end of the line?
-        if (connp->out_next_byte == LF) {
+        if (connp->out_next_byte == LF || connp->out_next_byte == CR) {
+
+            if (connp->out_next_byte == CR) {
+                OUT_PEEK_NEXT(connp);
+                if (connp->out_next_byte == -1) {
+                    return HTP_DATA_BUFFER;
+                } else if (connp->out_next_byte == LF) {
+                    OUT_COPY_BYTE_OR_RETURN(connp);
+                }
+            }
+
             unsigned char *data;
             size_t len;
 
