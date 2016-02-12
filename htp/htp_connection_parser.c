@@ -108,6 +108,14 @@ void htp_connp_destroy(htp_connp_t *connp) {
         free(connp->put_file);
     }
 
+    if (connp->in_header) {
+        bstr_free(connp->in_header);
+        connp->in_header = NULL;
+    }
+    if (connp->out_header) {
+        bstr_free(connp->out_header);
+        connp->out_header = NULL;
+    }
     free(connp);
 }
 
