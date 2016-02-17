@@ -83,7 +83,11 @@ AM_PROG_LIBTOOL
 AM_SANITY_CHECK
 
 # Checks for library functions
-AC_CHECK_FUNCS([strlcpy strlcat])
+#AC_CHECK_FUNCS([strlcpy strlcat])
+    OCFLAGS=$CFLAGS
+    CFLAGS=""
+    AC_CHECK_FUNCS([strlcpy strlcat])
+    CFLAGS=$OCFLAGS
 
 dnl -----------------------------------------------
 dnl Checks for libs.
