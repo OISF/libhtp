@@ -18332,18 +18332,27 @@ AssertionResult CmpHelperEQ(const char* expected_expression,
                             const char* actual_expression,
                             const T1& expected,
                             const T2& actual) {
+
+// Saves the current warning state.
+// Temporarily disables warning on
+// signed/unsigned mismatch.
 #ifdef _MSC_VER
-# pragma warning(push)          // Saves the current warning state.
-# pragma warning(disable:4389)  // Temporarily disables warning on
-                               // signed/unsigned mismatch.
+# pragma warning(push)
+# pragma warning(disable:4389)
+#elif __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsign-compare"
 #endif
 
   if (expected == actual) {
     return AssertionSuccess();
   }
 
+// Restores the warning state.
 #ifdef _MSC_VER
-# pragma warning(pop)          // Restores the warning state.
+# pragma warning(pop)
+#elif __GNUC__
+#pragma GCC diagnostic pop
 #endif
 
   return EqFailure(expected_expression,

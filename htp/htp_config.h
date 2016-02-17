@@ -198,6 +198,14 @@ void htp_config_register_request_start(htp_cfg_t *cfg, int (*callback_fn)(htp_tx
 void htp_config_register_request_body_data(htp_cfg_t *cfg, int (*callback_fn)(htp_tx_data_t *));
 
 /**
+ * Registers a REQUEST_RAW_BODY_DATA callback.
+ *
+ * @param[in] cfg
+ * @param[in] callback_fn
+ */
+void htp_config_register_request_raw_body_data(htp_cfg_t *cfg, int (*callback_fn)(htp_tx_data_t *));
+
+/**
  * Registers a REQUEST_COMPLETE callback.
  *
  * @param[in] cfg
@@ -268,6 +276,14 @@ void htp_config_register_request_trailer_data(htp_cfg_t *cfg, int (*callback_fn)
  * @param[in] callback_fn
  */
 void htp_config_register_response_body_data(htp_cfg_t *cfg, int (*callback_fn)(htp_tx_data_t *));
+
+/**
+ * Registers a RESPONSE_RAW_BODY_DATA callback.
+ *
+ * @param[in] cfg
+ * @param[in] callback_fn
+ */
+void htp_config_register_response_raw_body_data(htp_cfg_t *cfg, int (*callback_fn)(htp_tx_data_t *));
 
 /**
  * Registers a RESPONSE_COMPLETE callback.
