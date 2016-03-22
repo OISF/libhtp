@@ -1,3 +1,14 @@
+0.5.19 (22 March 2016)
+----------------------
+
+- configure: improve strlcpy/strlcat checks [Victor Julien]
+
+- Fix uninitialized htp_tx_t::is_last value in htp_decompressors.c [Fedor Sakharov]
+
+- headers: fix memory leak on malformed headers [Victor Julien]
+
+- connect: handle response headers with 200 response [Victor Julien]
+
 0.5.18 (25 September 2015)
 --------------------------
 
