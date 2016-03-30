@@ -339,6 +339,9 @@ struct htp_cfg_t {
 
     /** Reaction to leading whitespace on the request line */
     enum htp_unwanted_t requestline_leading_whitespace_unwanted;
+
+    /** How many layers of compression we will decompress (0 => no limit). */
+    int response_decompression_layer_limit;
 };
 
 #ifdef	__cplusplus

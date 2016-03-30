@@ -57,6 +57,7 @@ struct htp_decompressor_t {
     htp_status_t (*decompress)(htp_decompressor_t *, htp_tx_data_t *);
     htp_status_t (*callback)(htp_tx_data_t *);
     void (*destroy)(htp_decompressor_t *);
+    struct htp_decompressor_t *next;
 };
 
 struct htp_decompressor_gzip_t {
