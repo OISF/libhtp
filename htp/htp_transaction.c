@@ -773,7 +773,7 @@ static htp_status_t htp_tx_res_process_body_data_decompressor_callback(htp_tx_da
     if (d == NULL) return HTP_ERROR;
 
     #if HTP_DEBUG
-    fprint_raw_data(stderr, __FUNCTION__, d->data, d->len);
+    fprint_raw_data(stderr, __func__, d->data, d->len);
     #endif
 
     // Keep track of actual response body length.
@@ -799,7 +799,7 @@ htp_status_t htp_tx_res_process_body_data_ex(htp_tx_t *tx, const void *data, siz
     // used to indicate the end of response body.
 
     #ifdef HTP_DEBUG
-    fprint_raw_data(stderr, __FUNCTION__, data, len);
+    fprint_raw_data(stderr, __func__, data, len);
     #endif
 
     htp_tx_data_t d;
