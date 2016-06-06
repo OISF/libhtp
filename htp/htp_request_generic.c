@@ -295,7 +295,7 @@ htp_status_t htp_parse_request_line_generic_ex(htp_connp_t *connp, int nul_termi
     if (tx->request_method == NULL) return HTP_ERROR;
 
     #ifdef HTP_DEBUG
-    fprint_raw_data(stderr, __FUNCTION__, bstr_ptr(tx->request_method), bstr_len(tx->request_method));
+    fprint_raw_data(stderr, __func__, bstr_ptr(tx->request_method), bstr_len(tx->request_method));
     #endif
 
     tx->request_method_number = htp_convert_method_to_number(tx->request_method);
@@ -352,7 +352,7 @@ htp_status_t htp_parse_request_line_generic_ex(htp_connp_t *connp, int nul_termi
     if (tx->request_uri == NULL) return HTP_ERROR;
 
     #ifdef HTP_DEBUG
-    fprint_raw_data(stderr, __FUNCTION__, bstr_ptr(tx->request_uri), bstr_len(tx->request_uri));
+    fprint_raw_data(stderr, __func__, bstr_ptr(tx->request_uri), bstr_len(tx->request_uri));
     #endif
 
     // Ignore whitespace after URI.
@@ -375,7 +375,7 @@ htp_status_t htp_parse_request_line_generic_ex(htp_connp_t *connp, int nul_termi
     tx->request_protocol_number = htp_parse_protocol(tx->request_protocol);
 
     #ifdef HTP_DEBUG
-    fprint_raw_data(stderr, __FUNCTION__, bstr_ptr(tx->request_protocol), bstr_len(tx->request_protocol));
+    fprint_raw_data(stderr, __func__, bstr_ptr(tx->request_protocol), bstr_len(tx->request_protocol));
     #endif
 
     return HTP_OK;

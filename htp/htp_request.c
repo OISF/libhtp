@@ -627,7 +627,7 @@ htp_status_t htp_connp_REQ_HEADERS(htp_connp_t *connp) {
             }
 
             #ifdef HTP_DEBUG
-            fprint_raw_data(stderr, __FUNCTION__, data, len);
+            fprint_raw_data(stderr, __func__, data, len);
             #endif           
 
             // Should we terminate headers?
@@ -737,7 +737,7 @@ htp_status_t htp_connp_REQ_LINE_complete(htp_connp_t *connp) {
     }
 
     #ifdef HTP_DEBUG
-    fprint_raw_data(stderr, __FUNCTION__, data, len);
+    fprint_raw_data(stderr, __func__, data, len);
     #endif
 
     // Is this a line that should be ignored?
@@ -848,7 +848,7 @@ size_t htp_connp_req_data_consumed(htp_connp_t *connp) {
 int htp_connp_req_data(htp_connp_t *connp, const htp_time_t *timestamp, const void *data, size_t len) {
     #ifdef HTP_DEBUG
     fprintf(stderr, "htp_connp_req_data(connp->in_status %x)\n", connp->in_status);
-    fprint_raw_data(stderr, __FUNCTION__, data, len);
+    fprint_raw_data(stderr, __func__, data, len);
     #endif
 
     // Return if the connection is in stop state.
