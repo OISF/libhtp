@@ -1,3 +1,16 @@
+0.5.20 (7 June 2016)
+--------------------
+
+- compression: support multiple layers of compressed content [#133]
+
+- compression: opportunistic decompression [#137]
+
+- compression: implement rfc1950 deflate [#136]
+
+- chunked: handle mismatch between header and body [#135]
+
+- chunked: handle malformed chunked lengths [#134]
+
 0.5.19 (22 March 2016)
 ----------------------
 
