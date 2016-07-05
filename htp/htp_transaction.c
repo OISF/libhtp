@@ -1176,6 +1176,7 @@ htp_status_t htp_tx_state_response_headers(htp_tx_t *tx) {
         tx->response_content_encoding_processing = tx->response_content_encoding;
     } else {
         tx->response_content_encoding_processing = HTP_COMPRESSION_NONE;
+        ce_multi_comp = 0;
     }
 
     // Finalize sending raw header data.
