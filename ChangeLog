@@ -1,3 +1,9 @@
+0.5.21 (13 July 2016)
+---------------------
+
+- compression: fixed 'response_decompression_enabled' being
+  ignored in case of multiple encodings [#140]
+
 0.5.20 (7 June 2016)
 --------------------
 
