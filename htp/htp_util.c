@@ -2085,7 +2085,7 @@ void fprint_raw_data_ex(FILE *stream, const char *name, const void *_data, size_
     char buf[160];
     size_t len = offset + printlen;
 
-    fprintf(stream, "\n%s: ptr %p offset %" PRIu64 " len %" PRIu64"\n", name, data, (uint64_t) offset, (uint64_t) len);
+    fprintf(stream, "\n%s: ptr %p offset %" PRIu64 " len %" PRIu64"\n", name, (void*) data, (uint64_t) offset, (uint64_t) len);
 
     while (offset < len) {
         size_t i;
