@@ -545,6 +545,23 @@ htp_status_t htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
         }
     }
 
+    // Check for "101 Switching Protocol" response.
+    // If it's seen, it means that traffic after empty line following headers
+    // is no longer HTTP. We can treat it similarly to CONNECT.
+    // Unlike CONNECT, however, upgrades from HTTP to HTTP seem
+    // rather unlikely, so don't try to probe tunnel for nested HTTP,
+    // and switch to tunnel mode right away.
+    if (connp->out_tx->response_status_number == 101) {
+        connp->out_state = htp_connp_RES_FINALIZE;
+
+        connp->in_status = HTP_STREAM_TUNNEL;
+        connp->out_status = HTP_STREAM_TUNNEL;
+
+        // we may have response headers
+        htp_status_t rc = htp_tx_state_response_headers(connp->out_tx);
+        return rc;
+    }
+
     // Check for an interim "100 Continue" response. Ignore it if found, and revert back to RES_LINE.
     if (connp->out_tx->response_status_number == 100) {
         if (connp->out_tx->seen_100continue != 0) {
