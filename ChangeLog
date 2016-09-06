@@ -1,3 +1,10 @@
+0.5.22 (06 September 2016)
+--------------------------
+
+- on "101 Switching Protocols", treat connection as a tunnel [#141]
+
+-  Fix warning on OS X. [#142]
+
 0.5.21 (13 July 2016)
 ---------------------
 
