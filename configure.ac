@@ -114,14 +114,12 @@ case "$OS" in
         FreeBSD*)
                 AC_MSG_RESULT(FreeBSD)
                 OS_FREEBSD="true"
-                NO_STACK_PROTECTOR="true"
                 CPPFLAGS="${CPPFLAGS} -I/usr/local/include"
                 LDFLAGS="${LDFLAGS} -L/usr/local/lib"
         ;;
         OpenBSD*)
                 AC_MSG_RESULT(OpenBSD)
                 OS_OPENBSD="true"
-                NO_STACK_PROTECTOR="true"
                 CPPFLAGS="${CPPFLAGS} -I/usr/local/include"
                 LDFLAGS="${LDFLAGS} -L/usr/local/lib"
         ;;
