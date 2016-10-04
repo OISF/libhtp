@@ -195,6 +195,15 @@ if test "$gcc_have_format_security" != "yes"; then
     CFLAGS="${TMPCFLAGS}"
 fi
 
+AC_MSG_CHECKING(for gcc support of -fPIC)
+TMPCFLAGS="${CFLAGS}"
+CFLAGS="${CFLAGS} -fPIC"
+AC_TRY_COMPILE(,,[gcc_have_fpic=yes],[gcc_have_fpic=no])
+AC_MSG_RESULT($gcc_have_fpic)
+if test "$gcc_have_fpic" != "yes"; then
+    CFLAGS="${TMPCFLAGS}"
+fi
+
 dnl -----------------------------------------------
 dnl Check for doxygen
 dnl -----------------------------------------------
