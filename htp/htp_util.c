@@ -2353,19 +2353,18 @@ bstr *htp_unparse_uri_noencode(htp_uri_t *uri) {
  * line parsing. In most cases they will only look for the
  * words "http" at the beginning.
  *
- * @param[in] tx
+ * @param[in] data pointer to bytearray
+ * @param[in] len length in bytes of data
  * @return 1 for good enough or 0 for not good enough
  */
-int htp_treat_response_line_as_body(htp_tx_t *tx) {
+int htp_treat_response_line_as_body(const uint8_t *data, size_t len) {
     // Browser behavior:
     //      Firefox 3.5.x: (?i)^\s*http
     //      IE: (?i)^\s*http\s*/
     //      Safari: ^HTTP/\d+\.\d+\s+\d{3}
 
-    if (tx->response_protocol == NULL) return 1;
-    if (bstr_len(tx->response_protocol) < 4) return 1;
-
-    unsigned char *data = bstr_ptr(tx->response_protocol);
+    if (data == NULL) return 1;
+    if (len < 4) return 1;
 
     if ((data[0] != 'H') && (data[0] != 'h')) return 1;
     if ((data[1] != 'T') && (data[1] != 't')) return 1;

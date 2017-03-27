@@ -912,16 +912,11 @@ htp_status_t htp_connp_RES_LINE(htp_connp_t *connp) {
 
             int chomp_result = htp_chomp(data, &len);
 
-            connp->out_tx->response_line = bstr_dup_mem(data, len);
-            if (connp->out_tx->response_line == NULL) return HTP_ERROR;
-
-            if (connp->cfg->parse_response_line(connp) != HTP_OK) return HTP_ERROR;
-
             // If the response line is invalid, determine if it _looks_ like
             // a response line. If it does not look like a line, process the
             // data as a response body because that is what browsers do.
            
-            if (htp_treat_response_line_as_body(connp->out_tx)) {
+            if (htp_treat_response_line_as_body(data, len)) {
                 connp->out_tx->response_content_encoding_processing = HTP_COMPRESSION_NONE;
 
                 htp_status_t rc = htp_tx_res_process_body_data_ex(connp->out_tx, data, len + chomp_result);
@@ -950,6 +945,11 @@ htp_status_t htp_connp_RES_LINE(htp_connp_t *connp) {
 
                 return HTP_OK;
             }
+
+            connp->out_tx->response_line = bstr_dup_mem(data, len);
+            if (connp->out_tx->response_line == NULL) return HTP_ERROR;
+
+            if (connp->cfg->parse_response_line(connp) != HTP_OK) return HTP_ERROR;
 
             htp_status_t rc = htp_tx_state_response_line(connp->out_tx);
             if (rc != HTP_OK) return rc;
@@ -1007,11 +1007,21 @@ htp_status_t htp_connp_RES_IDLE(htp_connp_t *connp) {
         if (connp->out_tx->parsed_uri == NULL) {
             return HTP_ERROR;
         }
-        connp->out_tx->parsed_uri->path = bstr_alloc(strlen(REQUEST_URI_NOT_SEEN));
+        connp->out_tx->parsed_uri->path = bstr_dup_c(REQUEST_URI_NOT_SEEN);
         if (connp->out_tx->parsed_uri->path == NULL) {
             return HTP_ERROR;
         }
-        bstr_add_c(connp->out_tx->parsed_uri->path, REQUEST_URI_NOT_SEEN);
+        connp->out_tx->request_uri = bstr_dup_c(REQUEST_URI_NOT_SEEN);
+        if (connp->out_tx->request_uri == NULL) {
+            return HTP_ERROR;
+        }
+
+        connp->in_state = htp_connp_REQ_FINALIZE;
+#ifdef HTP_DEBUG
+        fprintf(stderr, "picked up response w/o request");
+#endif
+        // We've used one transaction
+        connp->out_next_tx_index++;
     } else {
         // We've used one transaction
         connp->out_next_tx_index++;

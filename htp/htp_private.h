@@ -190,7 +190,7 @@ char *htp_tx_response_progress_as_string(htp_tx_t *tx);
 
 bstr *htp_unparse_uri_noencode(htp_uri_t *uri);
 
-int htp_treat_response_line_as_body(htp_tx_t *tx);
+int htp_treat_response_line_as_body(const uint8_t *data, size_t len);
 
 htp_status_t htp_req_run_hook_body_data(htp_connp_t *connp, htp_tx_data_t *d);
 htp_status_t htp_res_run_hook_body_data(htp_connp_t *connp, htp_tx_data_t *d);

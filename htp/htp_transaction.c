@@ -684,11 +684,18 @@ htp_status_t htp_tx_state_response_line(htp_tx_t *tx) {
     #endif
 
     // Is the response line valid?
-    if ((tx->response_protocol_number == HTP_PROTOCOL_INVALID)
-            || (tx->response_status_number == HTP_STATUS_INVALID)
+    if (tx->response_protocol_number == HTP_PROTOCOL_INVALID) {
+        htp_log(tx->connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0,
+                "Invalid response line: invalid protocol");
+        tx->flags |= HTP_STATUS_LINE_INVALID;
+    }
+    if ((tx->response_status_number == HTP_STATUS_INVALID)
             || (tx->response_status_number < HTP_VALID_STATUS_MIN)
             || (tx->response_status_number > HTP_VALID_STATUS_MAX)) {
-        htp_log(tx->connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Invalid response line.");
+        htp_log(tx->connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0,
+                "Invalid response line: invalid response status %d.",
+                tx->response_status_number);
+        tx->response_status_number = HTP_STATUS_INVALID;
         tx->flags |= HTP_STATUS_LINE_INVALID;
     }
 
