@@ -358,7 +358,7 @@ htp_status_t htp_connp_REQ_CONNECT_PROBE_DATA(htp_connp_t *connp) {
 #ifdef HTP_DEBUG
         fprint_raw_data(stderr, "htp_connp_REQ_CONNECT_PROBE_DATA: tunnel contains plain text HTTP", data, len);
 #endif
-        connp->in_state = htp_connp_REQ_IDLE;
+        connp->in_state = htp_connp_REQ_FINALIZE;
     } else {
 #ifdef HTP_DEBUG
         fprint_raw_data(stderr, "htp_connp_REQ_CONNECT_PROBE_DATA: tunnel is not HTTP", data, len);
