@@ -489,7 +489,7 @@ htp_status_t htp_connp_RES_BODY_IDENTITY_STREAM_CLOSE(htp_connp_t *connp) {
     size_t bytes_to_consume = connp->out_current_len - connp->out_current_read_offset;
 
     #ifdef HTP_DEBUG
-    fprintf(stderr, "bytes_to_consume %u", (uint)bytes_to_consume);
+    fprintf(stderr, "bytes_to_consume %"PRIuMAX, (uintmax_t)bytes_to_consume);
     #endif
     if (bytes_to_consume != 0) {
         htp_status_t rc = htp_tx_res_process_body_data_ex(connp->out_tx, connp->out_current_data + connp->out_current_read_offset, bytes_to_consume);

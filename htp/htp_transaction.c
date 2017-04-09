@@ -1099,7 +1099,7 @@ static int get_token(const unsigned char *in, size_t in_len, const char *seps,
     unsigned char **ret_tok_ptr, size_t *ret_tok_len)
 {
     #if HTP_DEBUG
-    fprintf(stderr, "INPUT %u", (uint)in_len);
+    fprintf(stderr, "INPUT %"PRIuMAX, (uintmax_t)in_len);
     fprint_raw_data(stderr, __func__, in, in_len);
     #endif
 
@@ -1127,7 +1127,7 @@ static int get_token(const unsigned char *in, size_t in_len, const char *seps,
     in_len -= i;
 
     #if HTP_DEBUG
-    fprintf(stderr, "INPUT (POST SEP STRIP) %u", (uint)in_len);
+    fprintf(stderr, "INPUT (POST SEP STRIP) %"PRIuMAX, (uintmax_t)in_len);
     fprint_raw_data(stderr, __func__, in, in_len);
     #endif
 
@@ -1225,7 +1225,7 @@ htp_status_t htp_tx_state_response_headers(htp_tx_t *tx) {
             size_t input_len = bstr_len(ce->value);
 
             #if HTP_DEBUG
-            fprintf(stderr, "INPUT %u", (uint)input_len);
+            fprintf(stderr, "INPUT %"PRIuMAX, (uintmax_t)input_len);
             fprint_raw_data(stderr, __func__, input, input_len);
             #endif
 
@@ -1233,7 +1233,7 @@ htp_status_t htp_tx_state_response_headers(htp_tx_t *tx) {
                    get_token(input, input_len, ", ", &tok, &tok_len))
             {
                 #if HTP_DEBUG
-                fprintf(stderr, "TOKEN %u", (uint)tok_len);
+                fprintf(stderr, "TOKEN %"PRIuMAX, (uintmax_t)tok_len);
                 fprint_raw_data(stderr, __func__, tok, tok_len);
                 #endif
                 enum htp_content_encoding_t cetype = HTP_COMPRESSION_NONE;

@@ -113,6 +113,11 @@ fi
 AC_MSG_CHECKING([OS])
 OS=`uname -s`
 case "$OS" in
+        MINGW*)
+                AC_MSG_RESULT(MinGW)
+                OS_WINDOWS="true"
+                NO_STACK_PROTECTOR="true"
+        ;;
         CYGWIN*)
                 AC_MSG_RESULT(Cygwin)
                 OS_CYGWIN="true"
