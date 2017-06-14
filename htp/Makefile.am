@@ -26,4 +26,4 @@ libhtp_c_la_SOURCES = $(h_sources) $(h_sources_private) $(c_sources)
 lib_LTLIBRARIES = libhtp.la
 libhtp_la_SOURCES =
 libhtp_la_LIBADD = libhtp-c.la
-libhtp_la_LDFLAGS = -version-info $(GENERIC_LIBRARY_VERSION) -release $(GENERIC_RELEASE)
+libhtp_la_LDFLAGS = -version-info $(GENERIC_LIBRARY_VERSION)
