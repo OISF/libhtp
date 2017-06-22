@@ -4,7 +4,8 @@ ACLOCAL_AMFLAGS = -I m4
 SUBDIRS = htp test docs
 
 DIST_SUBDIRS = htp test docs
-EXTRA_DIST = LICENSE NOTICE docs/doxygen.conf docs/QUICK_START VERSION get-version.sh
+EXTRA_DIST = LICENSE NOTICE docs/doxygen.conf docs/QUICK_START VERSION get-version.sh \
+		docs/COMPATIBILITY_CHANGES
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = htp.pc
@@ -33,4 +34,4 @@ clean-local:
 	rm -rf $(top_builddir)/docs/doxygen
 	rm -rf $(top_builddir)/docs/lcov
 	find $(top_builddir) -type f \( -name '*.gcda' -o -name '*.gcno' -o -name '*.gcov' \) -exec rm '{}' ';'
-	   
+
