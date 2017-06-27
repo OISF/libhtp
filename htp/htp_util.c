@@ -2552,7 +2552,10 @@ int htp_validate_hostname(bstr *hostname) {
             unsigned char c = data[pos];
             // According to the RFC, the underscore is not allowed in a label, but
             // we allow it here because we think it's often seen in practice.
-            if (!(((c >= 'a') && (c <= 'z')) || ((c >= 'A') && (c <= 'Z')) || ((c >= '0') && (c <= '9')) || (c == '-'))) {
+            if (!(((c >= 'a') && (c <= 'z')) || ((c >= 'A') && (c <= 'Z')) ||
+                        ((c >= '0') && (c <= '9')) ||
+                         (c == '-') || (c == '_')))
+            {
                 return 0;
             }
 
