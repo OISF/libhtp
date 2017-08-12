@@ -97,17 +97,22 @@ void htp_connp_destroy(htp_connp_t *connp) {
     if (connp->out_buf != NULL) {
         free(connp->out_buf);
     }
-        
-    if (connp->out_decompressor != NULL) {
-        connp->out_decompressor->destroy(connp->out_decompressor);
-        connp->out_decompressor = NULL;
-    }
+
+    htp_connp_destroy_decompressors(connp);
 
     if (connp->put_file != NULL) {
         bstr_free(connp->put_file->filename);
         free(connp->put_file);
     }
 
+    if (connp->in_header) {
+        bstr_free(connp->in_header);
+        connp->in_header = NULL;
+    }
+    if (connp->out_header) {
+        bstr_free(connp->out_header);
+        connp->out_header = NULL;
+    }
     free(connp);
 }
 

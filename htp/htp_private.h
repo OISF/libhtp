@@ -235,6 +235,8 @@ htp_status_t htp_tx_res_process_body_data_ex(htp_tx_t *tx, const void *data, siz
 htp_status_t htp_tx_urldecode_uri_inplace(htp_tx_t *tx, bstr *input);
 htp_status_t htp_tx_urldecode_params_inplace(htp_tx_t *tx, bstr *input);
 
+void htp_connp_destroy_decompressors(htp_connp_t *connp);
+
 #ifndef HAVE_STRLCAT
 size_t strlcat(char *dst, const char *src, size_t size);
 #endif

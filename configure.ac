@@ -16,12 +16,19 @@ dnl -----------------------------------------------
 
 GENERIC_LIBRARY_NAME=htp
 
-# API version
-GENERIC_API_VERSION=1.0
-AC_SUBST(GENERIC_API_VERSION)
-
-# Shared library versioning
-GENERIC_LIBRARY_VERSION=1:0:0
+# This is _NOT_ the library release version, it's an API version.
+GENERIC_LIBRARY_VERSION=2:0:0
+#			| | |
+#		 +------+ | +---+
+#		 |        |     |
+#		current:revision:age
+#		 |        |     |
+#		 |        |     +- increment if interfaces have been added
+#		 |        |	   set to zero if interfaces have been removed
+#		 |	  |	   or changed
+#		 |	  +- increment if source code has changed
+#		 |	     set to zero if current is incremented
+#		 +- increment if interfaces have been added, removed or changed
 AC_SUBST(GENERIC_LIBRARY_VERSION)
 
 dnl --------------------------------
@@ -83,7 +90,11 @@ AM_PROG_LIBTOOL
 AM_SANITY_CHECK
 
 # Checks for library functions
-AC_CHECK_FUNCS([strlcpy strlcat])
+#AC_CHECK_FUNCS([strlcpy strlcat])
+    OCFLAGS=$CFLAGS
+    CFLAGS=""
+    AC_CHECK_FUNCS([strlcpy strlcat])
+    CFLAGS=$OCFLAGS
 
 dnl -----------------------------------------------
 dnl Checks for libs.
@@ -110,14 +121,12 @@ case "$OS" in
         FreeBSD*)
                 AC_MSG_RESULT(FreeBSD)
                 OS_FREEBSD="true"
-                NO_STACK_PROTECTOR="true"
                 CPPFLAGS="${CPPFLAGS} -I/usr/local/include"
                 LDFLAGS="${LDFLAGS} -L/usr/local/lib"
         ;;
         OpenBSD*)
                 AC_MSG_RESULT(OpenBSD)
                 OS_OPENBSD="true"
-                NO_STACK_PROTECTOR="true"
                 CPPFLAGS="${CPPFLAGS} -I/usr/local/include"
                 LDFLAGS="${LDFLAGS} -L/usr/local/lib"
         ;;
@@ -188,6 +197,15 @@ CFLAGS="${CFLAGS} -Wformat -Wformat-security"
 AC_TRY_COMPILE(,,[gcc_have_format_security=yes],[gcc_have_format_security=no])
 AC_MSG_RESULT($gcc_have_format_security)
 if test "$gcc_have_format_security" != "yes"; then
+    CFLAGS="${TMPCFLAGS}"
+fi
+
+AC_MSG_CHECKING(for gcc support of -fPIC)
+TMPCFLAGS="${CFLAGS}"
+CFLAGS="${CFLAGS} -fPIC"
+AC_TRY_COMPILE(,,[gcc_have_fpic=yes],[gcc_have_fpic=no])
+AC_MSG_RESULT($gcc_have_fpic)
+if test "$gcc_have_fpic" != "yes"; then
     CFLAGS="${TMPCFLAGS}"
 fi
 

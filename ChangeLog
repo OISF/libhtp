@@ -1,3 +1,59 @@
+0.5.25 (28 June 2017)
+---------------------
+
+- underscore in htp_validate_hostname [#149]
+
+- fix SONAME issue [#151]
+
+- remove unrelated docbook code from tree [#153]
+
+0.5.24 (07 June 2017)
+---------------------
+
+- fix HTTP connect handling issue [#150]
+
+0.5.23 (01 November 2016)
+--------------------------
+
+- enable -fPIC by default if supported and enable stack protection options on *BSD [#145]
+
+0.5.22 (06 September 2016)
+--------------------------
+
+- on "101 Switching Protocols", treat connection as a tunnel [#141]
+
+-  Fix warning on OS X. [#142]
+
+0.5.21 (13 July 2016)
+---------------------
+
+- compression: fixed 'response_decompression_enabled' being
+  ignored in case of multiple encodings [#140]
+
+0.5.20 (7 June 2016)
+--------------------
+
+- compression: support multiple layers of compressed content [#133]
+
+- compression: opportunistic decompression [#137]
+
+- compression: implement rfc1950 deflate [#136]
+
+- chunked: handle mismatch between header and body [#135]
+
+- chunked: handle malformed chunked lengths [#134]
+
+0.5.19 (22 March 2016)
+----------------------
+
+- configure: improve strlcpy/strlcat checks [Victor Julien]
+
+- Fix uninitialized htp_tx_t::is_last value in htp_decompressors.c [Fedor Sakharov]
+
+- headers: fix memory leak on malformed headers [Victor Julien]
+
+- connect: handle response headers with 200 response [Victor Julien]
+
 0.5.18 (25 September 2015)
 --------------------------
 

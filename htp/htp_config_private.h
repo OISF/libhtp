@@ -351,6 +351,9 @@ struct htp_cfg_t {
      * that terminates list of response headers.
      */
     htp_hook_t *hook_response_raw_body_data;
+
+    /** How many layers of compression we will decompress (0 => no limit). */
+    int response_decompression_layer_limit;
 };
 
 #ifdef	__cplusplus

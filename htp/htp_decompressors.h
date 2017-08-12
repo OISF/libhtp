@@ -57,6 +57,7 @@ struct htp_decompressor_t {
     htp_status_t (*decompress)(htp_decompressor_t *, htp_tx_data_t *);
     htp_status_t (*callback)(htp_tx_data_t *);
     void (*destroy)(htp_decompressor_t *);
+    struct htp_decompressor_t *next;
 };
 
 struct htp_decompressor_gzip_t {
@@ -67,6 +68,8 @@ struct htp_decompressor_gzip_t {
     int zlib_initialized;
     uint8_t header[10];
     uint8_t header_len;
+    uint8_t restart;    /**< deflate restarted to try rfc1950 instead of 1951 */
+    uint8_t passthrough;    /**< decompression failed, pass through raw data */
     z_stream stream;
     unsigned char *buffer;
     unsigned long crc;    
