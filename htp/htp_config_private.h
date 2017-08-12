@@ -340,6 +340,18 @@ struct htp_cfg_t {
     /** Reaction to leading whitespace on the request line */
     enum htp_unwanted_t requestline_leading_whitespace_unwanted;
 
+    /**
+     * Receives raw request body data, starting immediatelly after empty line
+     * that terminates list of request headers.
+     */
+    htp_hook_t *hook_request_raw_body_data;
+
+    /**
+     * Receives raw response body data, starting immediatelly after empty line
+     * that terminates list of response headers.
+     */
+    htp_hook_t *hook_response_raw_body_data;
+
     /** How many layers of compression we will decompress (0 => no limit). */
     int response_decompression_layer_limit;
 };

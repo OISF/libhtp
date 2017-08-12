@@ -168,6 +168,14 @@ static htp_status_t htp_req_handle_state_change(htp_connp_t *connp) {
         if (rc != HTP_OK) return rc;
     }
 
+    // instead of check that connp->in_state == htp_connp_REQ_BODY*
+    if (connp->in_tx != NULL && connp->in_tx->request_progress == HTP_REQUEST_BODY) {
+        htp_status_t rc;
+        rc = htp_connp_req_receiver_set(connp, connp->in_tx->cfg->hook_request_raw_body_data);
+        if (rc != HTP_OK)
+            return rc;
+    }
+
     // Initially, I had the finalization of raw data sending here, but that
     // caused the last REQUEST_HEADER_DATA hook to be invoked after the
     // REQUEST_HEADERS hook -- which I thought made no sense. For that reason,
