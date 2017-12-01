@@ -930,6 +930,19 @@ htp_status_t htp_connp_RES_LINE(htp_connp_t *connp) {
                 connp->out_state = htp_connp_RES_BODY_IDENTITY_STREAM_CLOSE;               
                 connp->out_body_data_left = -1;
 
+		// Clean response line allocations when processed as body
+		bstr_free(connp->out_tx->response_line);
+		connp->out_tx->response_line = NULL;
+
+		bstr_free(connp->out_tx->response_protocol);
+		connp->out_tx->response_protocol = NULL;
+
+		bstr_free(connp->out_tx->response_status);
+		connp->out_tx->response_status = NULL;
+
+		bstr_free(connp->out_tx->response_message);
+		connp->out_tx->response_message = NULL;
+
                 return HTP_OK;
             }
 
