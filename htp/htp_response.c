@@ -533,6 +533,9 @@ htp_status_t htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
             // we may have response headers
             htp_status_t rc = htp_tx_state_response_headers(connp->out_tx);
             return rc;
+        } else if (connp->out_tx->response_status_number == 407) {
+            // proxy telling us to auth
+            connp->in_status = HTP_STREAM_DATA;
         } else {
             // This is a failed CONNECT stream, which means that
             // we can unblock request parsing
