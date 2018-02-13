@@ -1,3 +1,14 @@
+0.5.26 (13 February 2018)
+-------------------------
+
+- allow missing requests [#128, #163]
+
+- fix memory leak when response line is body [#161]
+
+- fix build on MinGW [#162]
+
+- fix gcc7 compiler warnings [#157]
+
 0.5.25 (28 June 2017)
 ---------------------
 
