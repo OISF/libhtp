@@ -51,15 +51,15 @@ dnl --------------------------------
 dnl Options
 dnl --------------------------------
 
-AC_ARG_ENABLE(debug, [  --enable-debug  Enable debug mode], [ enable_debug=yes ])
-if test "$enable_debug" = "yes"; then
+AC_ARG_ENABLE(debug, [  --enable-debug  Enable debug mode],, [ enable_debug=no ])
+if test "x$enable_debug" = "xyes"; then
     CFLAGS="${CFLAGS} -DHTP_DEBUG"
     echo "Debug mode enabled"
 fi
 
 OLEVEL=2
 
-AC_ARG_ENABLE(devmode, [  --enable-devmode  Enable development mode], [ enable_devmode=yes ])
+AC_ARG_ENABLE(devmode, [  --enable-devmode  Enable development mode],, [ enable_devmode=no ])
 if test "$enable_devmode" = "yes"; then
     OLEVEL=0
     CFLAGS="${CFLAGS} -Werror -Wfatal-errors"
@@ -67,7 +67,7 @@ if test "$enable_devmode" = "yes"; then
     echo "Development mode enabled"
 fi
 
-AC_ARG_ENABLE(gcov, [  --enable-gcov  Enable gcov support], [ enable_gcov=yes ])
+AC_ARG_ENABLE(gcov, [  --enable-gcov  Enable gcov support],, [ enable_gcov=no ])
 if test "$enable_gcov" = "yes"; then
     OLEVEL=0
     CFLAGS="${CFLAGS} --coverage -fprofile-arcs -ftest-coverage"
