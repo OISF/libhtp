@@ -151,6 +151,7 @@ htp_status_t htp_parse_response_header_generic(htp_connp_t *connp, htp_header_t 
         // as a header with an empty name. That will increase the probability
         // that the content will be inspected.
         colon_pos = 0;
+        (void)colon_pos; // suppress scan-build warning
         name_end = 0;
         value_start = 0;
     } else {
