@@ -105,6 +105,7 @@ int htp_parse_authorization_digest(htp_connp_t *connp, htp_header_t *auth_header
 
     // Ignore whitespace
     while ((pos < len) && (isspace((int) data[pos]))) pos++;   
+    if (pos == len) return HTP_DECLINED;
 
     if (data[pos] != '"') return HTP_DECLINED;
 
