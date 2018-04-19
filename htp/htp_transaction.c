@@ -1281,7 +1281,6 @@ htp_status_t htp_tx_state_response_headers(htp_tx_t *tx) {
                         tx->response_content_encoding_processing = cetype;
                         tx->connp->out_decompressor = htp_gzip_decompressor_create(tx->connp, tx->response_content_encoding_processing);
                         if (tx->connp->out_decompressor == NULL) {
-                            free(input);
                             return HTP_ERROR;
                         }
                         tx->connp->out_decompressor->callback = htp_tx_res_process_body_data_decompressor_callback;
@@ -1289,7 +1288,6 @@ htp_status_t htp_tx_state_response_headers(htp_tx_t *tx) {
                     } else {
                         comp->next = htp_gzip_decompressor_create(tx->connp, cetype);
                         if (comp->next == NULL) {
-                            free(input);
                             return HTP_ERROR;
                         }
                         comp->next->callback = htp_tx_res_process_body_data_decompressor_callback;
