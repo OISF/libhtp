@@ -56,7 +56,7 @@ TEST(BstrTest, ExpandLocal) {
 
     p1 = bstr_alloc(10);
     p2 = bstr_expand(p1, 100);
-    ASSERT_NE(reinterpret_cast<bstr*>(NULL), p2);
+    ASSERT_NE((void *)NULL, p2);
     EXPECT_EQ(100, bstr_size(p2));
     EXPECT_EQ(0, bstr_len(p2));
 
