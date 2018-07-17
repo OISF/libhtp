@@ -1,3 +1,14 @@
+0.5.27 (18 July 2018)
+---------------------
+
+- Folded header field can be parsed as separate if there are no data available to peek into [#159]
+
+- libhtp crash at deal multiple decompression [#158]
+
+- Fix configure flag handling
+
+- Fix auth/digist header parsing out of bounds read
+
 0.5.26 (13 February 2018)
 -------------------------
 
