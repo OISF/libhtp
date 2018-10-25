@@ -2096,7 +2096,9 @@ void fprint_raw_data_ex(FILE *stream, const char *name, const void *_data, size_
         i = 0;
         while (i < 8) {
             if (offset + i < len) {
-                snprintf(buf + strlen(buf), sizeof(buf), "%02x ", data[offset + i]);
+                char step[4];
+                snprintf(step, sizeof(step), "%02x ", data[offset + i]);
+                strlcat(buf, step, sizeof(buf));
             } else {
                 strlcat(buf, "   ", sizeof(buf));
             }
@@ -2109,7 +2111,9 @@ void fprint_raw_data_ex(FILE *stream, const char *name, const void *_data, size_
         i = 8;
         while (i < 16) {
             if (offset + i < len) {
-                snprintf(buf + strlen(buf), sizeof(buf), "%02x ", data[offset + i]);
+                char step[4];
+                snprintf(step, sizeof(step), "%02x ", data[offset + i]);
+                strlcat(buf, step, sizeof(buf));
             } else {
                 strlcat(buf, "   ", sizeof(buf));
             }
