@@ -93,7 +93,11 @@ htp_status_t htp_process_request_header_generic(htp_connp_t *connp, unsigned cha
         h_existing->flags |= HTP_FIELD_REPEATED;
     } else {
         // Add as a new header.
-        htp_table_add(connp->in_tx->request_headers, h->name, h);
+        if (htp_table_add(connp->in_tx->request_headers, h->name, h) != HTP_OK) {
+            bstr_free(h->name);
+            bstr_free(h->value);
+            free(h);
+        }
     }
 
     return HTP_OK;
