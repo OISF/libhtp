@@ -1569,6 +1569,8 @@ htp_status_t htp_mpartp_find_boundary(bstr *content_type, bstr **boundary, uint6
     // Check for a zero-length boundary.
     if (bstr_len(*boundary) == 0) {
         *flags |= HTP_MULTIPART_HBOUNDARY_INVALID;
+        bstr_free(*boundary);
+        *boundary = NULL;
         return HTP_DECLINED;
     }
 
