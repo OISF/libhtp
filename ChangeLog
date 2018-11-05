@@ -1,3 +1,10 @@
+0.5.28 (5 November 2018)
+------------------------
+
+- Fix potential memory leaks
+
+- Fix string truncation compile warning
+
 0.5.27 (18 July 2018)
 ---------------------
 
