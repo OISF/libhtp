@@ -164,7 +164,7 @@ static void test_start(test_t *test) {
  *         success, test->chunk will point to the beginning of the chunk, while
  *         test->chunk_len will contain its length.
  */
-static int test_next_chunk(test_t *test) {
+int test_next_chunk(test_t *test) {
     if (test->pos >= test->len) {
         return 0;
     }
