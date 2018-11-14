@@ -183,7 +183,13 @@ int test_next_chunk(test_t *test) {
 
             // Move over the boundary
             test->pos += 4;
+            if (test->pos >= test->len) {
+                return 0;
+            }
             if (test->buf[test->pos] == '\n') test->pos++;
+            if (test->pos >= test->len) {
+                return 0;
+            }
 
             // Start new chunk
             test->chunk = test->buf + test->pos;
@@ -205,6 +211,9 @@ int test_next_chunk(test_t *test) {
 
                 // Position at the next boundary line
                 test->pos++;
+                if (test->pos >= test->len) {
+                    return 0;
+                }
 
                 return 1;
             }
