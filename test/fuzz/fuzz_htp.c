@@ -16,7 +16,7 @@
 
 #include "htp/htp.h"
 #include "test/test.h"
-
+#include "fuzz_htp.h"
 
 FILE * logfile = NULL;
 
@@ -80,7 +80,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
     htp_connp_set_user_data(connp, (void *) 0x02);
     htp_connp_open(connp, (const char *) "192.168.2.3", 12345, (const char *) "192.168.2.2", 80, NULL);
 
-    test.buf = Data;
+    test.buf = (char *)Data;
     test.len = Size;
     test.pos = 0;
     test.chunk = NULL;

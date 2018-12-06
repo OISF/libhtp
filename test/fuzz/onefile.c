@@ -1,9 +1,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
-
-int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size);
-void fuzz_openFile(const char * name);
+#include "fuzz_htp.h"
 
 int main(int argc, char** argv)
 {
