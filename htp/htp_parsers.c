@@ -82,10 +82,15 @@ int htp_parse_protocol(bstr *protocol) {
  * Determines the numerical value of a response status given as a string.
  *
  * @param[in] status
- * @return Status code on success, or -1 on error.
+ * @return Status code on success, or HTP_STATUS_INVALID on error.
  */
 int htp_parse_status(bstr *status) {
-    return htp_parse_positive_integer_whitespace((unsigned char *) bstr_ptr(status), bstr_len(status), 10);
+    int64_t r = htp_parse_positive_integer_whitespace((unsigned char *) bstr_ptr(status), bstr_len(status), 10);
+    if (r >= HTP_VALID_STATUS_MIN && r <= HTP_VALID_STATUS_MAX) {
+        return (int)r;
+    } else {
+        return HTP_STATUS_INVALID;
+    }
 }
 
 /**
