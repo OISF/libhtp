@@ -424,6 +424,11 @@ int64_t bstr_util_mem_to_pint(const void *_data, size_t len, int base, size_t *l
         }
 
         if (tflag) {
+            if (((INT64_MAX - d) / base) < rval) {
+                // Overflow
+                return -2;
+            }
+
             rval *= base;
 
             if (tval > rval) {

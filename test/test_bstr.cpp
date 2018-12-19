@@ -494,6 +494,7 @@ TEST(BstrTest, ToPint) {
     EXPECT_EQ(-2, bstr_util_mem_to_pint("fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", 40, 16, &lastlen));
     EXPECT_EQ(0x7fffffffffffffffLL, bstr_util_mem_to_pint("7fffffffffffffff", 16, 16, &lastlen));
     EXPECT_EQ(-2, bstr_util_mem_to_pint("9223372036854775808", 19, 10, &lastlen));
+    EXPECT_EQ(-2, bstr_util_mem_to_pint("555555555555555555555555555555", 30, 10, &lastlen));
     EXPECT_EQ(0xabc, bstr_util_mem_to_pint("abc", 3, 16, &lastlen));
     EXPECT_EQ(4, lastlen);
     EXPECT_EQ(0xabc, bstr_util_mem_to_pint("ABC", 3, 16, &lastlen));
