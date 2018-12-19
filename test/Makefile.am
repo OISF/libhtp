@@ -5,7 +5,7 @@ AM_CFLAGS = -D_GNU_SOURCE -g -Wall -Wextra -std=gnu99 -pedantic \
         -Wstrict-prototypes -Wmissing-prototypes -Wno-unused-parameter
         
 AM_CPPFLAGS = -I$(top_srcdir) -I$(top_builddir)/htp -Wno-write-strings -DGTEST_USE_OWN_TR1_TUPLE=1 \
-	-D_GNU_SOURCE -g -Wall -Wextra -Wno-unused-parameter
+	-D_GNU_SOURCE -g -Wall -Wextra -Wno-unused-parameter -Wno-sign-compare
 
 AUTOMAKE_OPTIONS = subdir-objects
 EXTRA_DIST = files
