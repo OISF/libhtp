@@ -390,7 +390,7 @@ int bstr_util_cmp_mem_nocase(const void *_data1, size_t len1, const void *_data2
 
 int64_t bstr_util_mem_to_pint(const void *_data, size_t len, int base, size_t *lastlen) {
     const unsigned char *data = (unsigned char *) _data;
-    int64_t rval = 0, tval = 0, tflag = 0;
+    int64_t rval = 0, tflag = 0;
     size_t i = 0;
 
     *lastlen = i;
@@ -424,23 +424,15 @@ int64_t bstr_util_mem_to_pint(const void *_data, size_t len, int base, size_t *l
         }
 
         if (tflag) {
+            if (((INT64_MAX - d) / base) < rval) {
+                // Overflow
+                return -2;
+            }
+
             rval *= base;
-
-            if (tval > rval) {
-                // Overflow
-                return -2;
-            }
-
             rval += d;
-
-            if (tval > rval) {
-                // Overflow
-                return -2;
-            }
-
-            tval = rval;
         } else {
-            tval = rval = d;
+            rval = d;
             tflag = 1;
         }
     }
