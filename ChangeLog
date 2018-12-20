@@ -1,3 +1,12 @@
+0.5.29 (21 December 2018)
+-------------------------
+
+- prepare for oss-fuzz integration, by Philippe Antoine
+
+- fix undefined behavior signed int overflow
+
+- make status code parsing more robust
+
 0.5.28 (5 November 2018)
 ------------------------
 
