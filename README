@@ -43,6 +43,8 @@ INSTALLATION
 Assuming you're using an already packaged version of LibHTP, the installation
 process should be as simple as:
 
+  $ sudo chmod u+x autogen.sh
+  $ ./autogen.sh
   $ ./configure
   $ make
   $ sudo make install
