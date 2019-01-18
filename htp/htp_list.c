@@ -172,18 +172,7 @@ htp_status_t htp_list_array_replace(htp_list_array_t *l, size_t idx, void *e) {
 
     if (idx + 1 > l->current_size) return HTP_DECLINED;
 
-    size_t i;
-    // Do we need to check for this integer overflow ?
-    if (l->first > SIZE_MAX - idx) {
-        // l->first + idx > SIZE_MAX =>
-        // l->first + idx > l->max_size =>
-        // idx > l->max_size - l->first
-        i = idx - (l->max_size - l->first);
-    } else {
-        i = (l->first + idx) % l->max_size;
-    }
-
-    l->elements[i] = e;
+    l->elements[(l->first + idx) % l->max_size] = e;
 
     return HTP_OK;
 }
