@@ -15,10 +15,10 @@ matrix:
           compiler: clang
           os: linux
         - name: fuzzm
-          env: CXXFLAGS="-DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION -fsanitize=memory" CFLAGS="-DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION -fsanitize=memory" LDFLAGS="-fsanitize=memory"
+          env: CXX="clang++" CXXFLAGS="-DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION -fsanitize=memory" CFLAGS="-DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION -fsanitize=memory" LDFLAGS="-fsanitize=memory"
           compiler: clang
           os: linux
         - name: fuzzu
-          env: CXXFLAGS="-stdlib=libc++ -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION -fsanitize=undefined" CFLAGS="-DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION -fsanitize=undefined -fno-sanitize-recover=undefined,integer" LDFLAGS="-fsanitize=undefined"
+          env: CXXFLAGS="-DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION -fsanitize=undefined" CFLAGS="-DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION -fsanitize=undefined -fno-sanitize-recover=undefined,integer" LDFLAGS="-fsanitize=undefined"
           compiler: clang
           os: linux
