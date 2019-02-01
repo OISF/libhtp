@@ -26,12 +26,72 @@ FILE * logfile = NULL;
  *
  * @param[in] connp
  */
-static int callback_response(htp_tx_t *out_tx) {
+static int HTPCallbackResponse(htp_tx_t *out_tx) {
     if (out_tx != NULL) {
         char *x = bstr_util_strdup_to_c(out_tx->request_line);
-        fprintf(logfile, "%s\n", x);
+        fprintf(logfile, "HTPCallbackResponse %s\n", x);
         free(x);
     }
+    return 0;
+}
+
+static int HTPCallbackRequestHeaderData(htp_tx_data_t *tx_data)
+{
+    fprintf(logfile, "HTPCallbackRequestHeaderData %d\n", tx_data->len);
+    return 0;
+}
+
+static int HTPCallbackResponseHeaderData(htp_tx_data_t *tx_data)
+{
+    fprintf(logfile, "HTPCallbackResponseHeaderData %d\n", tx_data->len);
+    return 0;
+}
+
+static int HTPCallbackRequestHasTrailer(htp_tx_data_t *tx_data)
+{
+    fprintf(logfile, "HTPCallbackRequestHasTrailer\n");
+    return 0;
+}
+
+static int HTPCallbackResponseHasTrailer(htp_tx_data_t *tx_data)
+{
+    fprintf(logfile, "HTPCallbackResponseHasTrailer\n");
+    return 0;
+}
+
+static int HTPCallbackRequestBodyData(htp_tx_data_t *tx_data)
+{
+    fprintf(logfile, "HTPCallbackRequestBodyData %d\n", tx_data->len);
+    return 0;
+}
+
+static int HTPCallbackResponseBodyData(htp_tx_data_t *tx_data)
+{
+    fprintf(logfile, "HTPCallbackResponseBodyData %d\n", tx_data->len);
+    return 0;
+}
+
+static int HTPCallbackRequestStart(htp_tx_t *tx)
+{
+    fprintf(logfile, "HTPCallbackRequestStart\n");
+    return 0;
+}
+
+static int HTPCallbackRequest(htp_tx_t *tx)
+{
+    fprintf(logfile, "HTPCallbackRequest\n");
+    return 0;
+}
+
+static int HTPCallbackResponseStart(htp_tx_t *tx)
+{
+    fprintf(logfile, "HTPCallbackResponseStart\n");
+    return 0;
+}
+
+static int HTPCallbackRequestLine(htp_tx_t *tx)
+{
+    fprintf(logfile, "HTPCallbackRequestLine\n");
     return 0;
 }
 
@@ -40,8 +100,8 @@ static int callback_response(htp_tx_t *out_tx) {
  *
  * @param[in] log
  */
-static int callback_log(htp_log_t *log) {
-    fprintf(logfile, "[%d][code %d][file %s][line %d] %s\n",
+static int HTPCallbackLog(htp_log_t *log) {
+    fprintf(logfile, "HTPCallbackLog [%d][code %d][file %s][line %d] %s\n",
         log->level, log->code, log->file, log->line, log->msg);
     return 0;
 }
@@ -73,8 +133,20 @@ int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
         htp_config_destroy(cfg);
         return 0;
     }
-    htp_config_register_response_complete(cfg, callback_response);
-    htp_config_register_log(cfg, callback_log);
+    htp_config_register_log(cfg, HTPCallbackLog);
+    htp_config_register_request_header_data(cfg, HTPCallbackRequestHeaderData);
+    htp_config_register_request_trailer_data(cfg, HTPCallbackRequestHeaderData);
+    htp_config_register_response_header_data(cfg, HTPCallbackResponseHeaderData);
+    htp_config_register_response_trailer_data(cfg, HTPCallbackResponseHeaderData);
+    htp_config_register_request_trailer(cfg, HTPCallbackRequestHasTrailer);
+    htp_config_register_response_trailer(cfg, HTPCallbackResponseHasTrailer);
+    htp_config_register_request_body_data(cfg, HTPCallbackRequestBodyData);
+    htp_config_register_response_body_data(cfg, HTPCallbackResponseBodyData);
+    htp_config_register_request_start(cfg, HTPCallbackRequestStart);
+    htp_config_register_request_complete(cfg, HTPCallbackRequest);
+    htp_config_register_response_start(cfg, HTPCallbackResponseStart);
+    htp_config_register_response_complete(cfg, HTPCallbackResponse);
+    htp_config_register_request_line(cfg, HTPCallbackRequestLine);
 
     connp = htp_connp_create(cfg);
     htp_connp_set_user_data(connp, (void *) 0x02);
