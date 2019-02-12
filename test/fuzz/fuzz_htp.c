@@ -91,7 +91,7 @@ static int HTPCallbackResponseStart(htp_tx_t *tx)
 
 static int HTPCallbackRequestLine(htp_tx_t *tx)
 {
-    fprintf(logfile, "HTPCallbackRequestLine %s\n", tx->parsed_uri);
+    fprintf(logfile, "HTPCallbackRequestLine\n");
     return 0;
 }
 
