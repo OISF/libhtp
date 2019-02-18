@@ -10,7 +10,7 @@
 #include <sys/types.h>
 #include <string.h>
 #include <stdio.h>
-
+#include <inttypes.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 
@@ -47,7 +47,7 @@ static int HTPCallbackResponseHeaderData(htp_tx_data_t *tx_data)
     return 0;
 }
 
-static int HTPCallbackRequestHasTrailer(htp_tx__t *tx)
+static int HTPCallbackRequestHasTrailer(htp_tx_t *tx)
 {
     fprintf(logfile, "HTPCallbackRequestHasTrailer\n");
     return 0;
