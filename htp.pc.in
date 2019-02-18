@@ -6,6 +6,6 @@ includedir=@includedir@
 Name: @PACKAGE_NAME@
 Description: A security-aware HTTP parser, designed for use in IDS/IPS and WAF products.
 Version: @PACKAGE_VERSION@
-Libs: -L${libdir} -lhtp
+Libs: -L${libdir} -lhtp @LIBICONV@
 Cflags: -I${includedir} -I${libdir}/htp/include
 
