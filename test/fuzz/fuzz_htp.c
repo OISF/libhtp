@@ -37,23 +37,23 @@ static int HTPCallbackResponse(htp_tx_t *out_tx) {
 
 static int HTPCallbackRequestHeaderData(htp_tx_data_t *tx_data)
 {
-    fprintf(logfile, "HTPCallbackRequestHeaderData %d\n", tx_data->len);
+    fprintf(logfile, "HTPCallbackRequestHeaderData %"PRIuMAX"\n", (uintmax_t)tx_data->len);
     return 0;
 }
 
 static int HTPCallbackResponseHeaderData(htp_tx_data_t *tx_data)
 {
-    fprintf(logfile, "HTPCallbackResponseHeaderData %d\n", tx_data->len);
+    fprintf(logfile, "HTPCallbackResponseHeaderData %"PRIuMAX"\n", (uintmax_t)tx_data->len);
     return 0;
 }
 
-static int HTPCallbackRequestHasTrailer(htp_tx_data_t *tx_data)
+static int HTPCallbackRequestHasTrailer(htp_tx__t *tx)
 {
     fprintf(logfile, "HTPCallbackRequestHasTrailer\n");
     return 0;
 }
 
-static int HTPCallbackResponseHasTrailer(htp_tx_data_t *tx_data)
+static int HTPCallbackResponseHasTrailer(htp_tx_t *tx)
 {
     fprintf(logfile, "HTPCallbackResponseHasTrailer\n");
     return 0;
@@ -61,13 +61,13 @@ static int HTPCallbackResponseHasTrailer(htp_tx_data_t *tx_data)
 
 static int HTPCallbackRequestBodyData(htp_tx_data_t *tx_data)
 {
-    fprintf(logfile, "HTPCallbackRequestBodyData %d\n", tx_data->len);
+    fprintf(logfile, "HTPCallbackRequestBodyData %"PRIuMAX"\n", (uintmax_t)tx_data->len);
     return 0;
 }
 
 static int HTPCallbackResponseBodyData(htp_tx_data_t *tx_data)
 {
-    fprintf(logfile, "HTPCallbackResponseBodyData %d\n", tx_data->len);
+    fprintf(logfile, "HTPCallbackResponseBodyData %"PRIuMAX"\n", (uintmax_t)tx_data->len);
     return 0;
 }
 
