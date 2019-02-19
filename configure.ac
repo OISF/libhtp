@@ -118,6 +118,11 @@ case "$OS" in
                 OS_WINDOWS="true"
                 NO_STACK_PROTECTOR="true"
         ;;
+        MSYS*)
+                AC_MSG_RESULT(MSYS)
+                OS_WINDOWS="true"
+                NO_STACK_PROTECTOR="true"
+        ;;
         CYGWIN*)
                 AC_MSG_RESULT(Cygwin)
                 OS_CYGWIN="true"
