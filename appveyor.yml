@@ -1,0 +1,18 @@
+environment:
+  matrix:
+    - COMPILER: mingw-w64
+      MINGW_DIR: c:\msys64\mingw64
+      MINGW_ARCH: x86_64
+
+    - COMPILER: mingw
+      MINGW_DIR: c:\msys64\mingw32
+      MINGW_ARCH: i686
+
+build_script:
+  - set Path=%MINGW_DIR%\bin;c:\msys64\usr\bin;%Path%
+  - bash autogen.sh
+  - bash configure
+  - make distcheck
+
+#on_finish:
+#  - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
