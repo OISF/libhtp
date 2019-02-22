@@ -256,6 +256,17 @@ htp_status_t htp_process_response_header_generic(htp_connp_t *connp, unsigned ch
     htp_header_t *h_existing = htp_table_get(connp->out_tx->response_headers, h->name);
     if (h_existing != NULL) {
         // Keep track of repeated same-name headers.
+        if (h_existing->flags & HTP_FIELD_REPEATED) {
+            // This is the third occurence for this header.
+            if (!(h_existing->flags & HTP_FIELD_FOLDED)) {
+                htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Third repetition for header");
+                h_existing->flags |= HTP_FIELD_FOLDED;
+            }
+            bstr_free(h->name);
+            bstr_free(h->value);
+            free(h);
+            return HTP_ERROR;
+        }
         h_existing->flags |= HTP_FIELD_REPEATED;
                 
         // Having multiple C-L headers is against the RFC but many
