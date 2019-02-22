@@ -536,6 +536,12 @@ struct htp_tx_t {
 
     /** Transaction index on the connection. */
     size_t index;
+
+    /** Total repetitions for headers in request. */
+    uint16_t req_header_repetitions;
+
+    /** Total repetitions for headers in response. */
+    uint16_t res_header_repetitions;
 };
 
 /**

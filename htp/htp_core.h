@@ -230,6 +230,8 @@ enum htp_file_source_t {
 #define HTP_REQUEST_INVALID_C_L            0x200000000ULL
 #define HTP_AUTH_INVALID                   0x400000000ULL
 
+#define HTP_MAX_HEADERS_REPETITIONS 64
+
 #define HTP_HOST_INVALID ( HTP_HOSTU_INVALID | HTP_HOSTH_INVALID )
 
 // Logging-related constants.
