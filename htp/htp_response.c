@@ -957,6 +957,7 @@ htp_status_t htp_connp_RES_LINE(htp_connp_t *connp) {
             htp_connp_res_clear_buffer(connp);
 
             // Move on to the next phase.
+            connp->out_tx->header_repetitions = 0;
             connp->out_state = htp_connp_RES_HEADERS;
             connp->out_tx->response_progress = HTP_RESPONSE_HEADERS;
 
