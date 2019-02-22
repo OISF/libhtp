@@ -70,6 +70,22 @@ htp_status_t htp_process_request_header_generic(htp_connp_t *connp, unsigned cha
     if (h_existing != NULL) {
         // TODO Do we want to have a list of the headers that are
         //      allowed to be combined in this way?
+        if ((h_existing->flags & HTP_FIELD_REPEATED) == 0) {
+            // This is the second occurence for this header.
+            htp_log(connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Repetition for header");
+        } else {
+            // Hacky : we use most significant bytes
+            // to count the number of header repetitions
+            uint32_t repetitions = h_existing->flags >> 32;
+            if (repetitions > HTP_MAX_HEADERS_REPETITIONS) {
+                bstr_free(h->name);
+                bstr_free(h->value);
+                free(h);
+                return HTP_OK;
+            }
+        }
+        // Keep track of repeated same-name headers.
+        h_existing->flags |= HTP_FIELD_REPEATED;
 
         // Add to the existing header.
         bstr *new_value = bstr_expand(h_existing->value, bstr_len(h_existing->value) + 2 + bstr_len(h->value));
@@ -88,9 +104,6 @@ htp_status_t htp_process_request_header_generic(htp_connp_t *connp, unsigned cha
         bstr_free(h->name);
         bstr_free(h->value);
         free(h);
-
-        // Keep track of repeated same-name headers.
-        h_existing->flags |= HTP_FIELD_REPEATED;
     } else {
         // Add as a new header.
         if (htp_table_add(connp->in_tx->request_headers, h->name, h) != HTP_OK) {
