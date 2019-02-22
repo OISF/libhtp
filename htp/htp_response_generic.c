@@ -256,8 +256,22 @@ htp_status_t htp_process_response_header_generic(htp_connp_t *connp, unsigned ch
     htp_header_t *h_existing = htp_table_get(connp->out_tx->response_headers, h->name);
     if (h_existing != NULL) {
         // Keep track of repeated same-name headers.
+        if ((h_existing->flags & HTP_FIELD_REPEATED) == 0) {
+            // This is the second occurence for this header.
+            htp_log(connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Repetition for header");
+        } else {
+            // For simplicity reasons, we count the repetitions of all headers
+            if (connp->out_tx->res_header_repetitions < HTP_MAX_HEADERS_REPETITIONS) {
+                connp->out_tx->res_header_repetitions++;
+            } else {
+                bstr_free(h->name);
+                bstr_free(h->value);
+                free(h);
+                return HTP_OK;
+            }
+        }
         h_existing->flags |= HTP_FIELD_REPEATED;
-                
+
         // Having multiple C-L headers is against the RFC but many
         // browsers ignore the subsequent headers if the values are the same.
         if (bstr_cmp_c_nocase(h->name, "Content-Length") == 0) {
