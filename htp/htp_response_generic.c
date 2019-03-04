@@ -257,15 +257,12 @@ htp_status_t htp_process_response_header_generic(htp_connp_t *connp, unsigned ch
     if (h_existing != NULL) {
         // Keep track of repeated same-name headers.
         if (h_existing->flags & HTP_FIELD_REPEATED) {
-            // This is the third occurence for this header.
-            if (!(h_existing->flags & HTP_FIELD_FOLDED)) {
-                htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Third repetition for header");
-                h_existing->flags |= HTP_FIELD_FOLDED;
-            }
+            // This is at least the third occurence for this header.
+            htp_log(connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Repetition for header");
             bstr_free(h->name);
             bstr_free(h->value);
             free(h);
-            return HTP_ERROR;
+            return HTP_OK;
         }
         h_existing->flags |= HTP_FIELD_REPEATED;
                 
