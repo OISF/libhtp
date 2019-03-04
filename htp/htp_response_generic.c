@@ -268,19 +268,18 @@ htp_status_t htp_process_response_header_generic(htp_connp_t *connp, unsigned ch
 
             existing_cl = htp_parse_content_length(h_existing->value);
             new_cl = htp_parse_content_length(h->value);
-            if ((existing_cl == -1) || (new_cl == -1) || (existing_cl != new_cl)) {
-                // Ambiguous response C-L value.
-                htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Ambiguous response C-L value");
-
-                bstr_free(h->name);
-                bstr_free(h->value);
-                free(h);
-                
-                return HTP_ERROR;
+            // Ambiguous response C-L value.
+            if (existing_cl == -1 || (existing_cl != new_cl)) {
+                // Pick the new value
+                bstr *tmp = h_existing->value;
+                h_existing->value = h->value;
+                h->value = tmp;
+                htp_log(connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Ambiguous C-L value");
+            } else if (new_cl == -1) {
+                htp_log(connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Ambiguous C-L value");
             }
-
             // Ignoring the new C-L header that has the same value as the previous ones.
-        } else {            
+        } else {
             // Add to the existing header.
 
             bstr *new_value = bstr_expand(h_existing->value, bstr_len(h_existing->value) + 2 + bstr_len(h->value));
