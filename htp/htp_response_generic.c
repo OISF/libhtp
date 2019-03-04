@@ -274,9 +274,9 @@ htp_status_t htp_process_response_header_generic(htp_connp_t *connp, unsigned ch
                 bstr *tmp = h_existing->value;
                 h_existing->value = h->value;
                 h->value = tmp;
-                htp_log(connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Ambiguous C-L value");
+                htp_log(connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Ambiguous response C-L value");
             } else if (new_cl == -1) {
-                htp_log(connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Ambiguous C-L value");
+                htp_log(connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Ambiguous response C-L value");
             }
             // Ignoring the new C-L header that has the same value as the previous ones.
         } else {
