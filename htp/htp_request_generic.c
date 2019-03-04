@@ -71,18 +71,41 @@ htp_status_t htp_process_request_header_generic(htp_connp_t *connp, unsigned cha
         // TODO Do we want to have a list of the headers that are
         //      allowed to be combined in this way?
 
-        // Add to the existing header.
-        bstr *new_value = bstr_expand(h_existing->value, bstr_len(h_existing->value) + 2 + bstr_len(h->value));
-        if (new_value == NULL) {
-            bstr_free(h->name);
-            bstr_free(h->value);
-            free(h);
-            return HTP_ERROR;
-        }
+        // Having multiple C-L headers is against the RFC but
+        // servers may ignore the subsequent headers if the values are the same.
+        if (bstr_cmp_c_nocase(h->name, "Content-Length") == 0) {
+            // Don't use string comparison here because we want to
+            // ignore small formatting differences.
 
-        h_existing->value = new_value;
-        bstr_add_mem_noex(h_existing->value, ", ", 2);
-        bstr_add_noex(h_existing->value, h->value);
+            int64_t existing_cl, new_cl;
+
+            existing_cl = htp_parse_content_length(h_existing->value);
+            new_cl = htp_parse_content_length(h->value);
+            // Ambiguous response C-L value.
+            if (existing_cl == -1 || (existing_cl != new_cl)) {
+                // Pick the new value
+                bstr *tmp = h_existing->value;
+                h_existing->value = h->value;
+                h->value = tmp;
+                htp_log(connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Ambiguous request C-L value");
+            } else if (new_cl == -1) {
+                htp_log(connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Ambiguous request C-L value");
+            }
+            // Ignoring the new C-L header that has the same value as the previous ones.
+        } else {
+            // Add to the existing header.
+            bstr *new_value = bstr_expand(h_existing->value, bstr_len(h_existing->value) + 2 + bstr_len(h->value));
+            if (new_value == NULL) {
+                bstr_free(h->name);
+                bstr_free(h->value);
+                free(h);
+                return HTP_ERROR;
+            }
+
+            h_existing->value = new_value;
+            bstr_add_mem_noex(h_existing->value, ", ", 2);
+            bstr_add_noex(h_existing->value, h->value);
+        }
 
         // The new header structure is no longer needed.
         bstr_free(h->name);
