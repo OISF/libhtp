@@ -1019,9 +1019,9 @@ TEST_F(ConnectionParsing, Http_0_9_MethodOnly) {
     ASSERT_EQ(HTP_REQUEST_COMPLETE, tx->request_progress);
 
     ASSERT_TRUE(tx->request_method != NULL);
-    ASSERT_EQ(0, bstr_cmp_c(tx->request_method, "HELLO"));
+    ASSERT_EQ(0, bstr_cmp_c(tx->request_method, "GET"));
 
-    ASSERT_TRUE(tx->request_uri == NULL);
+    ASSERT_EQ(0, bstr_cmp_c(tx->request_uri, "/"));
 
     ASSERT_EQ(1, tx->is_protocol_0_9);
 }
@@ -1913,4 +1913,23 @@ TEST_F(ConnectionParsing, RequestUriTooLarge) {
 
     ASSERT_EQ(HTP_REQUEST_COMPLETE, tx->request_progress);
     ASSERT_EQ(HTP_RESPONSE_COMPLETE, tx->response_progress);
+}
+
+TEST_F(ConnectionParsing, RequestInvalid) {
+    int rc = test_run(home, "91-request-unexpected-body.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+
+    ASSERT_EQ(2, htp_list_size(connp->conn->transactions));
+
+    htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+    ASSERT_EQ(0, bstr_cmp_c(tx->request_method, "POST"));
+    ASSERT_EQ(HTP_REQUEST_COMPLETE, tx->request_progress);
+    ASSERT_EQ(HTP_RESPONSE_COMPLETE, tx->response_progress);
+
+    tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 1);
+    ASSERT_TRUE(tx != NULL);
+    ASSERT_EQ(0, bstr_cmp_c(tx->request_method, "GET"));
+    ASSERT_EQ(HTP_REQUEST_COMPLETE, tx->request_progress);
+    ASSERT_EQ(HTP_RESPONSE_NOT_STARTED, tx->response_progress);
 }
