@@ -325,6 +325,10 @@ htp_status_t htp_parse_request_line_generic_ex(htp_connp_t *connp, int nul_termi
 
         tx->is_protocol_0_9 = 1;
         tx->request_protocol_number = HTP_PROTOCOL_0_9;
+        if (tx->request_method_number == HTP_M_UNKNOWN) {
+            htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Request line: unknown method only");
+            return HTP_ERROR;
+        }
 
         return HTP_OK;
     }
@@ -368,6 +372,10 @@ htp_status_t htp_parse_request_line_generic_ex(htp_connp_t *connp, int nul_termi
 
         tx->is_protocol_0_9 = 1;
         tx->request_protocol_number = HTP_PROTOCOL_0_9;
+        if (tx->request_method_number == HTP_M_UNKNOWN) {
+            htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Request line: unknown method and no protocol");
+            return HTP_ERROR;
+        }
 
         return HTP_OK;
     }
@@ -377,6 +385,10 @@ htp_status_t htp_parse_request_line_generic_ex(htp_connp_t *connp, int nul_termi
     if (tx->request_protocol == NULL) return HTP_ERROR;
 
     tx->request_protocol_number = htp_parse_protocol(tx->request_protocol);
+    if (tx->request_method_number == HTP_M_UNKNOWN && tx->request_protocol_number == HTP_PROTOCOL_INVALID) {
+        htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Request line: unknown method and invalid protocol");
+        return HTP_ERROR;
+    }
 
     #ifdef HTP_DEBUG
     fprint_raw_data(stderr, __func__, bstr_ptr(tx->request_protocol), bstr_len(tx->request_protocol));
