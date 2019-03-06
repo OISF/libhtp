@@ -155,6 +155,24 @@ sinclude(m4/lib-link.m4)
 sinclude(m4/lib-prefix.m4)
 AM_ICONV
 
+# iconvctl is not standard, it is defined only in GNU libiconv
+AC_MSG_CHECKING(for iconvctl)
+TMPLIBS="${LIBS}"
+LIBS="${LIBS} ${LIBICONV}"
+
+AC_TRY_LINK([#include <stdlib.h>
+             #include <iconv.h>],
+            [int iconv_param = 0;
+             iconv_t cd = iconv_open("","");
+             iconvctl(cd, ICONV_SET_DISCARD_ILSEQ, &iconv_param);
+             iconv_close(cd);],
+            [ac_cv_func_iconvctl=yes])
+AC_MSG_RESULT($ac_cv_func_iconvctl)
+if test "$ac_cv_func_iconvctl" == yes; then
+    AC_DEFINE(HAVE_ICONVCTL,1,"Define to 1 if you have the `iconvctl' function.")
+fi
+LIBS="${TMPLIBS}"
+
 dnl -----------------------------------------------
 dnl Check and enable the GCC opts we want to use.
 dnl We may need to add more checks

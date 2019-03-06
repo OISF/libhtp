@@ -64,7 +64,7 @@ int htp_transcode_params(htp_connp_t *connp, htp_table_t **params, int destroy_o
         return HTP_ERROR;
     }
 
-    #if (_LIBICONV_VERSION >= 0x0108)
+    #if (_LIBICONV_VERSION >= 0x0108 && HAVE_ICONVCTL)
     int iconv_param = 0;
     iconvctl(cd, ICONV_SET_TRANSLITERATE, &iconv_param);
     iconv_param = 1;
