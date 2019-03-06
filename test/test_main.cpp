@@ -1914,3 +1914,51 @@ TEST_F(ConnectionParsing, RequestUriTooLarge) {
     ASSERT_EQ(HTP_REQUEST_COMPLETE, tx->request_progress);
     ASSERT_EQ(HTP_RESPONSE_COMPLETE, tx->response_progress);
 }
+
+TEST_F(ConnectionParsing, CompressedResponseGzipAsDeflate) {
+    int rc = test_run(home, "92-compressed-response-gzipasdeflate.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+
+    ASSERT_EQ(1, htp_list_size(connp->conn->transactions));
+
+    htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+
+    ASSERT_TRUE(htp_tx_is_complete(tx));
+
+    ASSERT_EQ(187, tx->response_message_len);
+
+    ASSERT_EQ(225, tx->response_entity_len);
+}
+
+TEST_F(ConnectionParsing, CompressedResponseDeflateAsGzip) {
+    int rc = test_run(home, "93-compressed-response-deflateasgzip.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+
+    ASSERT_EQ(1, htp_list_size(connp->conn->transactions));
+
+    htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+
+    ASSERT_TRUE(htp_tx_is_complete(tx));
+
+    ASSERT_EQ(755, tx->response_message_len);
+
+    ASSERT_EQ(1433, tx->response_entity_len);
+}
+
+TEST_F(ConnectionParsing, CompressedResponseMultiple) {
+    int rc = test_run(home, "94-compressed-response-multiple.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+
+    ASSERT_EQ(1, htp_list_size(connp->conn->transactions));
+
+    htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+
+    ASSERT_TRUE(htp_tx_is_complete(tx));
+
+    ASSERT_EQ(51, tx->response_message_len);
+
+    ASSERT_EQ(25, tx->response_entity_len);
+}
