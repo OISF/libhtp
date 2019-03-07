@@ -1,3 +1,16 @@
+0.5.30 (07 March 2019)
+----------------------
+
+- array/list handing optimization by Philippe Antoine for an issue found be oss-fuzz
+
+- improved Windows support
+
+- fuzz targets improvements by Philippe Antoine
+
+- packaging improvements by Fabrice Fontaine
+
+- install doc improved by Wenhui Zhang
+
 0.5.29 (21 December 2018)
 -------------------------
 
