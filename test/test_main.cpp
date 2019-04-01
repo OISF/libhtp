@@ -1965,3 +1965,22 @@ TEST_F(ConnectionParsing, Http_0_9_MethodOnly) {
 
     ASSERT_EQ(1, tx->is_protocol_0_9);
 }
+
+#ifdef HAVE_LIBLZMA
+TEST_F(ConnectionParsing, CompressedResponseLzma) {
+    int rc = test_run(home, "93-compressed-response-lzma.t", cfg, &connp);
+
+    ASSERT_GE(rc, 0);
+
+    ASSERT_EQ(1, htp_list_size(connp->conn->transactions));
+
+    htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+
+    ASSERT_TRUE(htp_tx_is_complete(tx));
+
+    ASSERT_EQ(90, tx->response_message_len);
+
+    ASSERT_EQ(68, tx->response_entity_len);
+}
+#endif
