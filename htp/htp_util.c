@@ -2366,14 +2366,17 @@ int htp_treat_response_line_as_body(const uint8_t *data, size_t len) {
     //      Firefox 3.5.x: (?i)^\s*http
     //      IE: (?i)^\s*http\s*/
     //      Safari: ^HTTP/\d+\.\d+\s+\d{3}
+    size_t pos = 0;
 
     if (data == NULL) return 1;
-    if (len < 4) return 1;
+    while ((pos < len) && (htp_is_space(data[pos]) || data[pos] == 0)) pos++;
 
-    if ((data[0] != 'H') && (data[0] != 'h')) return 1;
-    if ((data[1] != 'T') && (data[1] != 't')) return 1;
-    if ((data[2] != 'T') && (data[2] != 't')) return 1;
-    if ((data[3] != 'P') && (data[3] != 'p')) return 1;
+    if (len < pos + 4) return 1;
+
+    if ((data[pos] != 'H') && (data[pos] != 'h')) return 1;
+    if ((data[pos+1] != 'T') && (data[pos+1] != 't')) return 1;
+    if ((data[pos+2] != 'T') && (data[pos+2] != 't')) return 1;
+    if ((data[pos+3] != 'P') && (data[pos+3] != 'p')) return 1;
 
     return 0;
 }
