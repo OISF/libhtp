@@ -207,6 +207,8 @@ static htp_status_t htp_gzip_decompressor_decompress(htp_decompressor_gzip_t *dr
         dout.tx = d->tx;
         dout.data = NULL;
         dout.len = 0;
+        // We should be called for a connection end and do
+        // dout.len = GZIP_BUF_SIZE - drec->stream.avail_out;
         dout.is_last = d->is_last;
         if (drec->super.next != NULL && drec->zlib_initialized) {
             return htp_gzip_decompressor_decompress((htp_decompressor_gzip_t *)drec->super.next, &dout);
@@ -298,6 +300,18 @@ restart:
             }
         } else if (drec->zlib_initialized) {
             rc = inflate(&drec->stream, Z_NO_FLUSH);
+        }
+        if (GZIP_BUF_SIZE > drec->stream.avail_out) {
+            if (rc == Z_DATA_ERROR) {
+                // There is data even if there is an error
+                // So use this data and log a warning
+                htp_log(d->tx->connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "GZip decompressor: inflate failed with %d", rc);
+                rc = Z_STREAM_END;
+            } else if (rc == Z_OK && drec->stream.avail_in == 0) {
+                // There is already data even if it is not complete
+                htp_log(d->tx->connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Inflate did not end with content-length");
+                rc = Z_STREAM_END;
+            }
         }
         if (rc == Z_STREAM_END) {
             // How many bytes do we have?
