@@ -1696,7 +1696,7 @@ TEST_F(ConnectionParsing, ResponseMultipleClMismatch) {
 
 TEST_F(ConnectionParsing, ResponseInvalidCl) {
     int rc = test_run(home, "75-response-invalid-cl.t", cfg, &connp);
-    ASSERT_LT(rc, 0); // Expect error.
+    ASSERT_GE(rc, 0);
 
     ASSERT_EQ(1, htp_list_size(connp->conn->transactions));
 
@@ -1704,7 +1704,7 @@ TEST_F(ConnectionParsing, ResponseInvalidCl) {
     ASSERT_TRUE(tx != NULL);
 
     ASSERT_EQ(HTP_REQUEST_COMPLETE, tx->request_progress);
-    ASSERT_EQ(HTP_RESPONSE_HEADERS, tx->response_progress);
+    ASSERT_EQ(HTP_RESPONSE_COMPLETE, tx->response_progress);
 
     ASSERT_FALSE(tx->flags & HTP_REQUEST_SMUGGLING);
 }
