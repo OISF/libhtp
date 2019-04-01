@@ -677,7 +677,7 @@ htp_status_t htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
             }
 
             // Get body length
-            connp->out_tx->response_content_length = htp_parse_content_length(cl->value);
+            connp->out_tx->response_content_length = htp_parse_content_length(cl->value, connp);
             if (connp->out_tx->response_content_length < 0) {
                 htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Invalid C-L field in response: "PRId64"",
                         connp->out_tx->response_content_length);
