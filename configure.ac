@@ -109,6 +109,17 @@ if test "$ZLIB" = "no"; then
     exit 1
 fi
 
+# liblzma
+AC_CHECK_HEADER(lzma.h,AC_DEFINE([HAVE_LIBLZMA],[1],[liblzma available]),[AC_ERROR(lzma.h not found ...)])
+LIBLZMA=""
+AC_CHECK_LIB(lzma, lzma_alone_decoder,, LIBLZMA="no")
+if test "$LIBLZMA" = "no"; then
+    echo
+    echo "   ERROR! liblzma library not found"
+    echo
+    exit 1
+fi
+
 # Determine the OS 
 AC_MSG_CHECKING([OS])
 OS=`uname -s`
