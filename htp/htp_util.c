@@ -209,15 +209,15 @@ int htp_convert_method_to_number(bstr *method) {
 }
 
 /**
- * Is the given line empty? This function expects the line to have
- * a terminating LF.
+ * Is the given line empty?
  *
  * @param[in] data
  * @param[in] len
  * @return 0 or 1
  */
 int htp_is_line_empty(unsigned char *data, size_t len) {
-    if ((len == 1) || ((len == 2) && (data[0] == CR))) {
+    if ((len == 1) ||
+        ((len == 2) && (data[0] == CR) && (data[1] == LF))) {
         return 1;
     }
 
