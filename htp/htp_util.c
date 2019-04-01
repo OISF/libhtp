@@ -251,7 +251,18 @@ int htp_is_line_whitespace(unsigned char *data, size_t len) {
  * @return Content-Length as a number, or -1 on error.
  */
 int64_t htp_parse_content_length(bstr *b) {
-    return htp_parse_positive_integer_whitespace((unsigned char *) bstr_ptr(b), bstr_len(b), 10);
+    size_t len = bstr_len(b);
+    unsigned char * data = (unsigned char *) bstr_ptr(b);
+    size_t pos = 0;
+
+    if (len == 0) return -1003;
+
+    // Ignore junk before
+    while ((pos < len) && (data[pos] < '0' || data[pos] > '9')) pos++;
+    if (pos == len) return -1001;
+
+    return bstr_util_mem_to_pint(data + pos, len - pos, 10, &pos);
+    // Ok to have junk afterwards
 }
 
 /**
