@@ -171,7 +171,7 @@ void htp_normalize_uri_path_inplace(bstr *s);
 void htp_utf8_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path);
 void htp_utf8_validate_path(htp_tx_t *tx, bstr *path);
 
-int64_t htp_parse_content_length(bstr *b);
+int64_t htp_parse_content_length(bstr *b, htp_connp_t *connp);
 int64_t htp_parse_chunked_length(unsigned char *data, size_t len);
 int64_t htp_parse_positive_integer_whitespace(unsigned char *data, size_t len, int base);
 int htp_parse_status(bstr *status);
