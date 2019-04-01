@@ -972,6 +972,21 @@ size_t htp_connp_res_data_consumed(htp_connp_t *connp) {
 }
 
 htp_status_t htp_connp_RES_FINALIZE(htp_connp_t *connp) {
+    size_t bytes_left = connp->out_current_len - connp->out_current_read_offset;
+    unsigned char * data = connp->out_current_data + connp->out_current_read_offset;
+
+    if (bytes_left > 0 &&
+        htp_treat_response_line_as_body(data, bytes_left)) {
+        // Interpret remaining bytes as body data
+        htp_log(connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Unexpected response body");
+        connp->out_current_read_offset += bytes_left;
+        connp->out_current_consume_offset += bytes_left;
+        connp->out_stream_offset += bytes_left;
+        connp->out_body_data_left -= bytes_left;
+        htp_status_t rc = htp_tx_res_process_body_data_ex(connp->out_tx, data, bytes_left);
+        return rc;
+    }
+
     return htp_tx_state_response_complete_ex(connp->out_tx, 0 /* not hybrid mode */);
 }
 
