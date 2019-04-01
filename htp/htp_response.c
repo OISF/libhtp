@@ -727,18 +727,50 @@ htp_status_t htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
  * @returns HTP_OK on state change, HTP_ERROR on error, or HTP_DATA when more data is needed.
  */
 htp_status_t htp_connp_RES_HEADERS(htp_connp_t *connp) {
+    int endwithCR;
+    int LFCRending = 0;
+
     for (;;) {
         OUT_COPY_BYTE_OR_RETURN(connp);
 
         // Have we reached the end of the line?
-        if (connp->out_next_byte == LF || connp->out_next_byte == CR) {
-
+        if (connp->out_next_byte != LF && connp->out_next_byte != CR) {
+            LFCRending = 0;
+        } else {
+            endwithCR = 0;
             if (connp->out_next_byte == CR) {
                 OUT_PEEK_NEXT(connp);
                 if (connp->out_next_byte == -1) {
                     return HTP_DATA_BUFFER;
                 } else if (connp->out_next_byte == LF) {
                     OUT_COPY_BYTE_OR_RETURN(connp);
+                    if (LFCRending) {
+                        // Handling LFCRCRLFCRLF
+                        // These 6 characters mean only 2 end of lines
+                        OUT_PEEK_NEXT(connp);
+                        if (connp->out_next_byte == CR) {
+                            OUT_COPY_BYTE_OR_RETURN(connp);
+                            connp->out_current_consume_offset++;
+                            OUT_PEEK_NEXT(connp);
+                            if (connp->out_next_byte == LF) {
+                                OUT_COPY_BYTE_OR_RETURN(connp);
+                                connp->out_current_consume_offset++;
+                            }
+                        }
+                    }
+                } else if (connp->out_next_byte == CR) {
+                    continue;
+                }
+                LFCRending = 0;
+                endwithCR = 1;
+            } else {
+                // connp->out_next_byte == LF
+                OUT_PEEK_NEXT(connp);
+                LFCRending = 0;
+                if (connp->out_next_byte == CR) {
+                    // hanldes LF-CR sequence as end of line
+                    OUT_COPY_BYTE_OR_RETURN(connp);
+                    LFCRending = 1;
                 }
             }
 
@@ -747,6 +779,11 @@ htp_status_t htp_connp_RES_HEADERS(htp_connp_t *connp) {
 
             if (htp_connp_res_consolidate_data(connp, &data, &len) != HTP_OK) {
                 return HTP_ERROR;
+            }
+
+            // CRCRLF is not an empty line
+            if (endwithCR && len < 2) {
+                continue;
             }
 
             #ifdef HTP_DEBUG
