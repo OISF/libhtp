@@ -253,8 +253,32 @@ int htp_is_line_whitespace(unsigned char *data, size_t len) {
  * @param[in] b
  * @return Content-Length as a number, or -1 on error.
  */
-int64_t htp_parse_content_length(bstr *b) {
-    return htp_parse_positive_integer_whitespace((unsigned char *) bstr_ptr(b), bstr_len(b), 10);
+int64_t htp_parse_content_length(bstr *b, htp_connp_t *connp) {
+    size_t len = bstr_len(b);
+    unsigned char * data = (unsigned char *) bstr_ptr(b);
+    size_t pos = 0;
+    int64_t r = 0;
+
+    if (len == 0) return -1003;
+
+    // Ignore junk before
+    while ((pos < len) && (data[pos] < '0' || data[pos] > '9')) {
+        if (!htp_is_lws(data[pos]) && connp != NULL && r == 0) {
+            htp_log(connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0,
+                    "C-L value with extra data in the beginnning");
+            r = -1;
+        }
+        pos++;
+    }
+    if (pos == len) return -1001;
+
+    r = bstr_util_mem_to_pint(data + pos, len - pos, 10, &pos);
+    // Ok to have junk afterwards
+    if (pos < len && connp != NULL) {
+        htp_log(connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0,
+                "C-L value with extra data in the end");
+    }
+    return r;
 }
 
 /**

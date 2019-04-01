@@ -220,7 +220,7 @@ TEST(UtilTest, ParsePositiveIntegerWhitespace) {
 TEST(UtilTest, ParseContentLength) {
     bstr *str = bstr_dup_c("134");
 
-    EXPECT_EQ(134, htp_parse_content_length(str));
+    EXPECT_EQ(134, htp_parse_content_length(str, NULL));
 
     bstr_free(str);
 }

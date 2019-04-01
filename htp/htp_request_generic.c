@@ -93,8 +93,8 @@ htp_status_t htp_process_request_header_generic(htp_connp_t *connp, unsigned cha
             // Don't use string comparison here because we want to
             // ignore small formatting differences.
 
-            int64_t existing_cl = htp_parse_content_length(h_existing->value);
-            int64_t new_cl = htp_parse_content_length(h->value);
+            int64_t existing_cl = htp_parse_content_length(h_existing->value, NULL);
+            int64_t new_cl = htp_parse_content_length(h->value, NULL);
             // Ambiguous response C-L value.
             if ((existing_cl == -1) || (new_cl == -1) || (existing_cl != new_cl)) {
                 htp_log(connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Ambiguous request C-L value");

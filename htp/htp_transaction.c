@@ -421,7 +421,7 @@ static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {
         }
 
         // Get the body length.
-        tx->request_content_length = htp_parse_content_length(cl->value);
+        tx->request_content_length = htp_parse_content_length(cl->value, tx->connp);
         if (tx->request_content_length < 0) {
             tx->request_transfer_coding = HTP_CODING_INVALID;
             tx->flags |= HTP_REQUEST_INVALID_C_L;
