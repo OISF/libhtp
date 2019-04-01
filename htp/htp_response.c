@@ -850,10 +850,31 @@ htp_status_t htp_connp_RES_HEADERS(htp_connp_t *connp) {
                     connp->out_header = bstr_dup_mem(data, len);
                     if (connp->out_header == NULL) return HTP_ERROR;
                 } else {
-                    // Add to the existing header.                    
-                    bstr *new_out_header = bstr_add_mem(connp->out_header, data, len);
-                    if (new_out_header == NULL) return HTP_ERROR;
-                    connp->out_header = new_out_header;
+                    size_t colon_pos = 0;
+                    while ((colon_pos < len) && (data[colon_pos] != ':')) colon_pos++;
+
+                    if (colon_pos < len &&
+                        bstr_chr(connp->out_header, ':') >= 0 &&
+                        connp->out_tx->response_protocol_number == HTP_PROTOCOL_1_1) {
+                        // Warn only once per transaction.
+                        if (!(connp->out_tx->flags & HTP_INVALID_FOLDING)) {
+                            connp->out_tx->flags |= HTP_INVALID_FOLDING;
+                            htp_log(connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Invalid response field folding");
+                        }
+                        if (connp->cfg->process_response_header(connp, bstr_ptr(connp->out_header),
+                            bstr_len(connp->out_header)) != HTP_OK)
+                            return HTP_ERROR;
+                        bstr_free(connp->out_header);
+                        connp->out_header = bstr_dup_mem(data+1, len-1);
+                        if (connp->out_header == NULL)
+                            return HTP_ERROR;
+                    } else {
+                        // Add to the existing header.
+                        bstr *new_out_header = bstr_add_mem(connp->out_header, data, len);
+                        if (new_out_header == NULL)
+                            return HTP_ERROR;
+                        connp->out_header = new_out_header;
+                    }
                 }
             }
 
@@ -947,7 +968,7 @@ htp_status_t htp_connp_RES_LINE(htp_connp_t *connp) {
                 // the end of the stream.
                 connp->out_tx->response_transfer_coding = HTP_CODING_IDENTITY;
                 connp->out_tx->response_progress = HTP_RESPONSE_BODY;
-                connp->out_state = htp_connp_RES_BODY_IDENTITY_STREAM_CLOSE;               
+                connp->out_state = htp_connp_RES_BODY_IDENTITY_STREAM_CLOSE;
                 connp->out_body_data_left = -1;
 
                 // Clean response line allocations when processed as body
