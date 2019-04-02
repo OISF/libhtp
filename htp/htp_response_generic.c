@@ -125,6 +125,7 @@ htp_status_t htp_parse_response_header_generic(htp_connp_t *connp, htp_header_t 
     size_t name_start, name_end;
     size_t value_start, value_end;
     size_t prev;
+    size_t nbnull;
 
     htp_chomp(data, &len);
 
@@ -173,7 +174,8 @@ htp_status_t htp_parse_response_header_generic(htp_connp_t *connp, htp_header_t 
 
         // Ignore LWS after field-name.
         prev = name_end;
-        while ((prev > name_start) && (htp_is_lws(data[prev - 1]))) {
+        while ((prev > name_start) &&
+               (htp_is_lws(data[prev - 1]) || data[prev - 1] < 0x20)) {
             prev--;
             name_end--;
 
@@ -217,12 +219,64 @@ htp_status_t htp_parse_response_header_generic(htp_connp_t *connp, htp_header_t 
     }
 
     // Now extract the name and the value.
-    h->name = bstr_dup_mem(data + name_start, name_end - name_start);
-    h->value = bstr_dup_mem(data + value_start, value_end - value_start);
-    if ((h->name == NULL) || (h->value == NULL)) {
-        bstr_free(h->name);
-        bstr_free(h->value);
-        return HTP_ERROR;
+    // Check if there are null characters inside and remove them
+    nbnull = 0;
+    size_t j = 0;
+    for (i = name_start; i < name_end; i++) {
+        if (data[i] == 0) {
+            nbnull++;
+        }
+    }
+    if (nbnull == 0) {
+        // simple case
+        h->name = bstr_dup_mem(data + name_start, name_end - name_start);
+        if (h->name == NULL) {
+            return HTP_ERROR;
+        }
+    } else {
+        htp_log(connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0,
+                "Null character in header line");
+        h->name = bstr_alloc(name_end - name_start - nbnull);
+        if (h->name == NULL) {
+            return HTP_ERROR;
+        }
+        for (i = name_start; i < name_end; i++) {
+            if (data[i] != 0) {
+                bstr_ptr(h->name)[j] = data[i];
+                j++;
+            }
+        }
+        bstr_adjust_len(h->name, name_end - name_start - nbnull);
+    }
+
+    nbnull = 0;
+    j = 0;
+    for (i = value_start; i < value_end; i++) {
+        if (data[i] == 0) {
+            nbnull++;
+        }
+    }
+    if (nbnull == 0) {
+        h->value = bstr_dup_mem(data + value_start, value_end - value_start);
+        if (h->value == NULL) {
+            bstr_free(h->name);
+            return HTP_ERROR;
+        }
+    } else {
+        htp_log(connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0,
+                "Null character in header line");
+        h->value = bstr_alloc(value_end - value_start - nbnull);
+        if (h->value == NULL) {
+            bstr_free(h->name);
+            return HTP_ERROR;
+        }
+        for (i = value_start; i < value_end; i++) {
+            if (data[i] != 0) {
+                bstr_ptr(h->value)[j] = data[i];
+                j++;
+            }
+        }
+        bstr_adjust_len(h->value, value_end - value_start - nbnull);
     }
 
     return HTP_OK;
