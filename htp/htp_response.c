@@ -941,6 +941,15 @@ htp_status_t htp_connp_RES_LINE(htp_connp_t *connp) {
         // Have we reached the end of the line? We treat stream closure as end of line in
         // order to handle the case when the first line of the response is actually response body
         // (and we wish it processed as such).
+        if (connp->out_next_byte == CR) {
+            OUT_PEEK_NEXT(connp);
+            if (connp->out_next_byte == -1) {
+                return HTP_DATA_BUFFER;
+            } else if (connp->out_next_byte == LF) {
+                continue;
+            }
+            connp->out_next_byte = LF;
+        }
         if ((connp->out_next_byte == LF)||(connp->out_status == HTP_STREAM_CLOSED)) {
             unsigned char *data;
             size_t len;
