@@ -501,7 +501,7 @@ int htp_connp_is_line_terminator(htp_connp_t *connp, unsigned char *data, size_t
  * @return 0 or 1
  */
 int htp_connp_is_line_ignorable(htp_connp_t *connp, unsigned char *data, size_t len) {
-    return htp_connp_is_line_terminator(connp, data, len);
+    return htp_is_line_whitespace(data, len);
 }
 
 static htp_status_t htp_parse_port(unsigned char *data, size_t len, int *port, int *invalid) {
