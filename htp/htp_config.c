@@ -158,6 +158,7 @@ htp_cfg_t *htp_config_create(void) {
     cfg->extract_request_files = 0;
     cfg->extract_request_files_limit = -1; // Use the parser default.
     cfg->response_decompression_layer_limit = 2; // 2 layers seem fairly common
+    cfg->allow_space_uri = 0;
 
     // Default settings for URL-encoded data.
 
@@ -525,6 +526,11 @@ void htp_config_set_parse_request_cookies(htp_cfg_t *cfg, int parse_request_cook
 void htp_config_set_response_decompression(htp_cfg_t *cfg, int enabled) {
     if (cfg == NULL) return;
     cfg->response_decompression_enabled = enabled;
+}
+
+void htp_config_set_allow_space_uri(htp_cfg_t *cfg, int allow_space_uri) {
+    if (cfg == NULL) return;
+    cfg->allow_space_uri = allow_space_uri;
 }
 
 int htp_config_set_server_personality(htp_cfg_t *cfg, enum htp_server_personality_t personality) {
