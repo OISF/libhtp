@@ -428,7 +428,7 @@ int htp_connp_is_line_folded(unsigned char *data, size_t len) {
 }
 
 int htp_is_folding_char(int c) {
-    if (htp_is_lws(c)) return 1;
+    if (htp_is_lws(c) || c == 0) return 1;
     else return 0;
 }
 
