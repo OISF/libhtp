@@ -992,6 +992,8 @@ htp_status_t htp_connp_RES_LINE(htp_connp_t *connp) {
             if (htp_treat_response_line_as_body(data, len)) {
                 connp->out_tx->response_content_encoding_processing = HTP_COMPRESSION_NONE;
 
+                connp->out_current_consume_offset = len + chomp_result;
+                connp->out_stream_offset += len + chomp_result;
                 htp_status_t rc = htp_tx_res_process_body_data_ex(connp->out_tx, data, len + chomp_result);
                 if (rc != HTP_OK) return rc;
 
@@ -1000,7 +1002,6 @@ htp_status_t htp_connp_RES_LINE(htp_connp_t *connp) {
                 // the end of the stream.
                 connp->out_tx->response_transfer_coding = HTP_CODING_IDENTITY;
                 connp->out_tx->response_progress = HTP_RESPONSE_BODY;
-                connp->out_state = htp_connp_RES_BODY_IDENTITY_STREAM_CLOSE;
                 connp->out_body_data_left = -1;
 
                 // Clean response line allocations when processed as body
@@ -1015,6 +1016,11 @@ htp_status_t htp_connp_RES_LINE(htp_connp_t *connp) {
 
                 bstr_free(connp->out_tx->response_message);
                 connp->out_tx->response_message = NULL;
+
+                // Have we seen the entire response body?
+                if (connp->out_status == HTP_STREAM_CLOSED) {
+                    connp->out_state = htp_connp_RES_FINALIZE;
+                }
 
                 return HTP_OK;
             }
