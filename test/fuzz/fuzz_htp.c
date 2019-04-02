@@ -220,6 +220,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
         htp_connp_res_data(connp, NULL, out_data + out_data_offset, out_data_len - out_data_offset);
     }
 
+    htp_connp_close(connp, NULL);
     htp_connp_destroy_all(connp);
     // Destroy LibHTP configuration    
     htp_config_destroy(cfg);
