@@ -714,7 +714,27 @@ htp_status_t htp_connp_REQ_PROTOCOL(htp_connp_t *connp) {
         // Switch to request header parsing.
         connp->in_state = htp_connp_REQ_HEADERS;
         connp->in_tx->request_progress = HTP_REQUEST_HEADERS;
-    } else {
+    } else if (connp->in_current_read_offset < connp->in_current_len) {
+        // Let's check if the protocol was simply missing
+        size_t pos = connp->in_current_read_offset;
+        int afterspaces = 0;
+        // Probe if data looks like a header line
+        while (pos < connp->in_current_len) {
+            if (connp->in_current_data[pos] == ':') {
+                htp_log(connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Request line: missing protocol");
+                connp->in_tx->is_protocol_0_9 = 0;
+                // Switch to request header parsing.
+                connp->in_state = htp_connp_REQ_HEADERS;
+                connp->in_tx->request_progress = HTP_REQUEST_HEADERS;
+                return HTP_OK;
+            } else if (htp_is_lws(connp->in_current_data[pos])) {
+                // Allows spaces after header name
+                afterspaces = 1;
+            } else if (htp_is_space(connp->in_current_data[pos]) || afterspaces == 1) {
+                break;
+            }
+            pos++;
+        }
         // We're done with this request.
         connp->in_state = htp_connp_REQ_FINALIZE;
     }
