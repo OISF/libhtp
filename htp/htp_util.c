@@ -455,6 +455,13 @@ int htp_connp_is_line_terminator(htp_connp_t *connp, unsigned char *data, size_t
             if (htp_is_line_empty(data, len)) {
                 return 1;
             }
+            // Only space is terminator if terminator does not follow right away
+            if (len == 2 && htp_is_lws(data[0]) && data[1] == LF) {
+                if (connp->out_current_read_offset < connp->out_current_len &&
+                    connp->out_current_data[connp->out_current_read_offset] != LF) {
+                    return 1;
+                }
+            }
             break;
     }
 
