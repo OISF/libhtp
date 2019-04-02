@@ -978,6 +978,9 @@ htp_status_t htp_connp_RES_LINE(htp_connp_t *connp) {
 
             // Is this a line that should be ignored?
             if (htp_connp_is_line_ignorable(connp, data, len)) {
+                if (connp->out_status == HTP_STREAM_CLOSED) {
+                    connp->out_state = htp_connp_RES_FINALIZE;
+                }
                 // We have an empty/whitespace line, which we'll note, ignore and move on
                 connp->out_tx->response_ignored_lines++;
 
@@ -1022,29 +1025,21 @@ htp_status_t htp_connp_RES_LINE(htp_connp_t *connp) {
             if (htp_treat_response_line_as_body(data, len)) {
                 connp->out_tx->response_content_encoding_processing = HTP_COMPRESSION_NONE;
 
+                connp->out_current_consume_offset = connp->out_current_read_offset;
                 htp_status_t rc = htp_tx_res_process_body_data_ex(connp->out_tx, data, len + chomp_result);
                 if (rc != HTP_OK) return rc;
 
                 // Continue to process response body. Because we don't have
                 // any headers to parse, we assume the body continues until
                 // the end of the stream.
-                connp->out_tx->response_transfer_coding = HTP_CODING_IDENTITY;
-                connp->out_tx->response_progress = HTP_RESPONSE_BODY;
-                connp->out_state = htp_connp_RES_BODY_IDENTITY_STREAM_CLOSE;
-                connp->out_body_data_left = -1;
 
-                // Clean response line allocations when processed as body
-                bstr_free(connp->out_tx->response_line);
-                connp->out_tx->response_line = NULL;
-
-                bstr_free(connp->out_tx->response_protocol);
-                connp->out_tx->response_protocol = NULL;
-
-                bstr_free(connp->out_tx->response_status);
-                connp->out_tx->response_status = NULL;
-
-                bstr_free(connp->out_tx->response_message);
-                connp->out_tx->response_message = NULL;
+                // Have we seen the entire response body?
+                if (connp->out_current_len <= connp->out_current_read_offset) {
+                    connp->out_tx->response_transfer_coding = HTP_CODING_IDENTITY;
+                    connp->out_tx->response_progress = HTP_RESPONSE_BODY;
+                    connp->out_body_data_left = -1;
+                    connp->out_state = htp_connp_RES_FINALIZE;
+                }
 
                 return HTP_OK;
             }
@@ -1075,7 +1070,7 @@ size_t htp_connp_res_data_consumed(htp_connp_t *connp) {
 }
 
 htp_status_t htp_connp_RES_FINALIZE(htp_connp_t *connp) {
-    size_t bytes_left = connp->out_current_len - connp->out_current_read_offset;
+    int bytes_left = connp->out_current_len - connp->out_current_read_offset;
     unsigned char * data = connp->out_current_data + connp->out_current_read_offset;
 
     if (bytes_left > 0 &&
