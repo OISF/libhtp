@@ -193,6 +193,9 @@ struct htp_cfg_t {
     /** How many extracted files are allowed in a single Multipart request? */
     int extract_request_files_limit;
 
+    /** Whether to allow spaces in URI. */
+    int allow_space_uri;
+
     /** The location on disk where temporary files will be created. */
     char *tmpdir;
 
