@@ -523,6 +523,14 @@ void htp_config_set_parse_request_auth(htp_cfg_t *cfg, int parse_request_auth);
 void htp_config_set_parse_request_cookies(htp_cfg_t *cfg, int parse_request_cookies);
 
 /**
+ * Enable or disable spaces in URIs. Disabled by default.
+ *
+ * @param[in] cfg
+ * @param[in] allow_space_uri
+ */
+void htp_config_set_allow_space_uri(htp_cfg_t *cfg, int allow_space_uri);
+
+/**
  * Configures whether consecutive path segment separators will be compressed. When enabled, a path
  * such as "/one//two" will be normalized to "/one/two". Backslash conversion and path segment separator
  * decoding are carried out before compression. For example, the path "/one\\/two\/%5cthree/%2f//four"
