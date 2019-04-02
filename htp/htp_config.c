@@ -163,6 +163,7 @@ htp_cfg_t *htp_config_create(void) {
     cfg->response_lzma_layer_limit = 1; // default is only one layer
     cfg->compression_bomb_limit = HTP_COMPRESSION_BOMB_LIMIT;
     cfg->compression_time_limit = HTP_COMPRESSION_TIME_LIMIT_USEC;
+    cfg->allow_space_uri = 0;
 
     // Default settings for URL-encoded data.
 
@@ -564,6 +565,11 @@ void htp_config_set_response_decompression(htp_cfg_t *cfg, int enabled) {
 void htp_config_set_request_decompression(htp_cfg_t *cfg, int enabled) {
     if (cfg == NULL) return;
     cfg->request_decompression_enabled = enabled;
+}
+
+void htp_config_set_allow_space_uri(htp_cfg_t *cfg, int allow_space_uri) {
+    if (cfg == NULL) return;
+    cfg->allow_space_uri = allow_space_uri;
 }
 
 int htp_config_set_server_personality(htp_cfg_t *cfg, enum htp_server_personality_t personality) {
