@@ -116,7 +116,7 @@ int htp_is_token(int c) {
 }
 
 /**
- * Remove all line terminators (LF or CRLF) from
+ * Remove all line terminators (LF, CR or CRLF) from
  * the end of the line provided as input.
  *
  * @return 0 if nothing was removed, 1 if one or more LF characters were removed, or
@@ -130,15 +130,18 @@ int htp_chomp(unsigned char *data, size_t *len) {
         // Try one LF first
         if (data[*len - 1] == LF) {
             (*len)--;
-            r = 1;
+            r++;
 
             if (*len == 0) return r;
 
             // A CR is allowed before LF
             if (data[*len - 1] == CR) {
                 (*len)--;
-                r = 2;
+                r++;
             }
+        } else if (data[*len - 1] == CR) {
+            (*len)--;
+            r++;
         } else return r;
     }
 
