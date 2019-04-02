@@ -364,29 +364,55 @@ htp_status_t htp_parse_request_line_generic_ex(htp_connp_t *connp, int nul_termi
 
     start = pos;
     bad_delim = 0;
-
-    // The URI ends with the first whitespace.
-    while ((pos < len) && (data[pos] != 0x20)) {
-        if (!bad_delim && htp_is_space(data[pos])) {
-            bad_delim++;
+    if (tx->connp->cfg->allow_space_uri) {
+        pos = len - 1;
+        // Skips the spaces at the end of line (after protocol)
+        while (pos > start && htp_is_space(data[pos])) pos--;
+        // The URI ends with the last whitespace.
+        while ((pos > start) && (data[pos] != 0x20)) {
+            if (!bad_delim && htp_is_space(data[pos])) {
+                bad_delim++;
+            }
+            pos--;
         }
-        pos++;
-    }
-    /* if we've seen some 'bad' delimiters, we retry with those */
-    if (bad_delim && pos == len) {
-        // special case: even though RFC's allow only SP (0x20), many
-        // implementations allow other delimiters, like tab or other
-        // characters that isspace() accepts.
-        pos = start;
-        while ((pos < len) && (!htp_is_space(data[pos]))) pos++;
-    }
-// Too much performance overhead for fuzzing
+        /* if we've seen some 'bad' delimiters, we retry with those */
+        if (bad_delim && pos == start) {
+            // special case: even though RFC's allow only SP (0x20), many
+            // implementations allow other delimiters, like tab or other
+            // characters that isspace() accepts.
+            while ((pos < len) && (!htp_is_space(data[pos]))) pos++;
+        }
+        if (bad_delim) {
 #ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
-    if (bad_delim) {
-        // warn regardless if we've seen non-compliant chars
-        htp_log(connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Request line: URI contains non-compliant delimiter");
-    }
+            // warn regardless if we've seen non-compliant chars
+            htp_log(connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Request line: URI contains non-compliant delimiter");
 #endif
+        } else if (pos == start) {
+            pos = len;
+        }
+    } else {
+        // The URI ends with the first whitespace.
+        while ((pos < len) && (data[pos] != 0x20)) {
+            if (!bad_delim && htp_is_space(data[pos])) {
+                bad_delim++;
+            }
+            pos++;
+        }
+        /* if we've seen some 'bad' delimiters, we retry with those */
+        if (bad_delim && pos == len) {
+            // special case: even though RFC's allow only SP (0x20), many
+            // implementations allow other delimiters, like tab or other
+            // characters that isspace() accepts.
+            pos = start;
+            while ((pos < len) && (!htp_is_space(data[pos]))) pos++;
+        }
+#ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+        if (bad_delim) {
+            // warn regardless if we've seen non-compliant chars
+            htp_log(connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Request line: URI contains non-compliant delimiter");
+        }
+#endif
+    }
 
     tx->request_uri = bstr_dup_mem(data + start, pos - start);
     if (tx->request_uri == NULL) return HTP_ERROR;
