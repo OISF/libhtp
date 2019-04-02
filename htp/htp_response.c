@@ -558,6 +558,9 @@ htp_status_t htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
         }
     }
 
+    htp_header_t *cl = htp_table_get_c(connp->out_tx->response_headers, "content-length");
+    htp_header_t *te = htp_table_get_c(connp->out_tx->response_headers, "transfer-encoding");
+
     // Check for "101 Switching Protocol" response.
     // If it's seen, it means that traffic after empty line following headers
     // is no longer HTTP. We can treat it similarly to CONNECT.
@@ -565,18 +568,22 @@ htp_status_t htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
     // rather unlikely, so don't try to probe tunnel for nested HTTP,
     // and switch to tunnel mode right away.
     if (connp->out_tx->response_status_number == 101) {
-        connp->out_state = htp_connp_RES_FINALIZE;
+        if (te == NULL && cl == NULL) {
+            connp->out_state = htp_connp_RES_FINALIZE;
 
-        connp->in_status = HTP_STREAM_TUNNEL;
-        connp->out_status = HTP_STREAM_TUNNEL;
+            connp->in_status = HTP_STREAM_TUNNEL;
+            connp->out_status = HTP_STREAM_TUNNEL;
 
-        // we may have response headers
-        htp_status_t rc = htp_tx_state_response_headers(connp->out_tx);
-        return rc;
+            // we may have response headers
+            htp_status_t rc = htp_tx_state_response_headers(connp->out_tx);
+            return rc;
+        } else {
+            htp_log(connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Switching Protocol with Content-Length");
+        }
     }
 
     // Check for an interim "100 Continue" response. Ignore it if found, and revert back to RES_LINE.
-    if (connp->out_tx->response_status_number == 100) {
+    if (connp->out_tx->response_status_number == 100 && te == NULL && cl == NULL) {
         if (connp->out_tx->seen_100continue != 0) {
             htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Already seen 100-Continue.");
             return HTP_ERROR;
@@ -609,16 +616,18 @@ htp_status_t htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
     if (((connp->out_tx->response_status_number >= 100) && (connp->out_tx->response_status_number <= 199))
             || (connp->out_tx->response_status_number == 204) || (connp->out_tx->response_status_number == 304)
             || (connp->out_tx->request_method_number == HTP_M_HEAD)) {
-        // There's no response body
-        connp->out_tx->response_transfer_coding = HTP_CODING_NO_BODY;
-        connp->out_state = htp_connp_RES_FINALIZE;
-    } else {
+        // There should be no response body
+        if (te == NULL && cl == NULL) {
+            connp->out_tx->response_transfer_coding = HTP_CODING_NO_BODY;
+            connp->out_state = htp_connp_RES_FINALIZE;
+        } else {
+            htp_log(connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Unexpected Response body");
+        }
+    }
+    // Hack condition to check that we do not assume "no body"
+    if (connp->out_state != htp_connp_RES_FINALIZE) {
         // We have a response body
-
         htp_header_t *ct = htp_table_get_c(connp->out_tx->response_headers, "content-type");
-        htp_header_t *cl = htp_table_get_c(connp->out_tx->response_headers, "content-length");
-        htp_header_t *te = htp_table_get_c(connp->out_tx->response_headers, "transfer-encoding");
-
         if (ct != NULL) {
             connp->out_tx->response_content_type = bstr_dup_lower(ct->value);
             if (connp->out_tx->response_content_type == NULL) return HTP_ERROR;
