@@ -210,7 +210,7 @@ void *htp_table_get_c(const htp_table_t *table, const char *ckey) {
     for (size_t i = 0, n = htp_list_size(table->list); i < n; i += 2) {
         bstr *key_candidate = htp_list_get(table->list, i);
         void *element = htp_list_get(table->list, i + 1);
-        if (bstr_cmp_c_nocase(key_candidate, ckey) == 0) {
+        if (bstr_cmp_c_nocasenorzero(key_candidate, ckey) == 0) {
             return element;
         }
     }
