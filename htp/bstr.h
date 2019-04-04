@@ -314,6 +314,15 @@ int bstr_cmp_c(const bstr *b, const char *cstr);
 int bstr_cmp_c_nocase(const bstr *b, const char *cstr);
 
 /**
+ * Case-insensitive zero-skipping comparison of a bstring with a NUL-terminated string.
+ *
+ * @param[in] b
+ * @param[in] cstr
+ * @return Zero on string match, 1 if b is greater than cstr, and -1 if cstr is greater than b.
+ */
+int bstr_cmp_c_nocasenorzero(const bstr *b, const char *cstr);
+
+/**
  * Performs a case-sensitive comparison of a bstring with a memory region.
  *
  * @param[in] b
@@ -342,6 +351,16 @@ int bstr_cmp_mem_nocase(const bstr *b, const void *data, size_t len);
  *         greater than b1.
  */
 int bstr_cmp_nocase(const bstr *b1, const bstr *b2);
+
+/**
+ * Case-insensitive and zero skipping comparison two bstrings.
+ *
+ * @param[in] b1
+ * @param[in] b2
+ * @return Zero on string match, 1 if b1 is greater than b2, and -1 if b2 is
+ *         greater than b1.
+ */
+int bstr_cmp_nocasenorzero(const bstr *b1, const bstr *b2);
 
 /**
  * Create a new bstring by copying the provided bstring.
@@ -446,6 +465,16 @@ int bstr_index_of_c(const bstr *bhaystack, const char *cneedle);
 int bstr_index_of_c_nocase(const bstr *bhaystack, const char *cneedle);
 
 /**
+ * Find the needle in the haystack, with the needle being a NUL-terminated
+ * string. Ignore case differences. Skip zeroes in haystack
+ *
+ * @param[in] bhaystack
+ * @param[in] cneedle
+ * @return Position of the match, or -1 if the needle could not be found.
+ */
+int bstr_index_of_c_nocasenorzero(const bstr *bhaystack, const char *cneedle);
+
+/**
  * Find the needle in the haystack, with the needle being a memory region.
  *
  * @param[in] bhaystack
@@ -509,6 +538,18 @@ int bstr_util_cmp_mem(const void *data1, size_t len1, const void *data2, size_t 
  int bstr_util_cmp_mem_nocase(const void *data1, size_t len1, const void *data2, size_t len2);
 
 /**
+ * Case-insensitive zero-skipping comparison of two memory regions.
+ *
+ * @param[in] data1
+ * @param[in] len1
+ * @param[in] data2
+ * @param[in] len2
+ * @return Zero if the memory regions are identical, 1 if data1 is greater than
+ *         data2, and -1 if data2 is greater than data1.
+ */
+ int bstr_util_cmp_mem_nocasenorzero(const void *data1, size_t len1, const void *data2, size_t len2);
+
+/**
  * Convert contents of a memory region to a positive integer.
  *
  * @param[in] data
@@ -563,6 +604,17 @@ int bstr_util_mem_index_of_mem(const void *data1, size_t len1, const void *data2
  * @return Index of the first location of the needle on success, or -1 if the needle was not found.
  */
 int bstr_util_mem_index_of_mem_nocase(const void *data1, size_t len1, const void *data2, size_t len2);
+
+/**
+ * Searches the haystack memory block for the needle memory block. Case sensitive. Skips zeroes in data1
+ *
+ * @param data1
+ * @param len1
+ * @param data2
+ * @param len2
+ * @return Index of the first location of the needle on success, or -1 if the needle was not found.
+ */
+int bstr_util_mem_index_of_mem_nocasenorzero(const void *data1, size_t len1, const void *data2, size_t len2);
 
 /**
  * Removes whitespace from the beginning and the end of a memory region. The data

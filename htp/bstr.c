@@ -219,6 +219,10 @@ int bstr_cmp_c_nocase(const bstr *b, const char *c) {
     return bstr_util_cmp_mem_nocase(bstr_ptr(b), bstr_len(b), c, strlen(c));
 }
 
+int bstr_cmp_c_nocasenorzero(const bstr *b, const char *c) {
+    return bstr_util_cmp_mem_nocasenorzero(bstr_ptr(b), bstr_len(b), c, strlen(c));
+}
+
 int bstr_cmp_mem(const bstr *b, const void *data, size_t len) {
     return bstr_util_cmp_mem(bstr_ptr(b), bstr_len(b), data, len);
 }
@@ -293,6 +297,10 @@ int bstr_index_of_c(const bstr *haystack, const char *needle) {
 
 int bstr_index_of_c_nocase(const bstr *haystack, const char *needle) {
     return bstr_index_of_mem_nocase(haystack, needle, strlen(needle));
+}
+
+int bstr_index_of_c_nocasenorzero(const bstr *haystack, const char *needle) {
+    return bstr_util_mem_index_of_mem_nocasenorzero(bstr_ptr(haystack), bstr_len(haystack), needle, strlen(needle));
 }
 
 int bstr_index_of_mem(const bstr *haystack, const void *_data2, size_t len2) {
@@ -379,6 +387,38 @@ int bstr_util_cmp_mem_nocase(const void *_data1, size_t len1, const void *_data2
     }
 
     if ((p1 == len2) && (p2 == len1)) {
+        // They're identical.
+        return 0;
+    } else {
+        // One string is shorter.
+        if (p1 == len1) return -1;
+        else return 1;
+    }
+}
+
+int bstr_util_cmp_mem_nocasenorzero(const void *_data1, size_t len1, const void *_data2, size_t len2) {
+    const unsigned char *data1 = (const unsigned char *) _data1;
+    const unsigned char *data2 = (const unsigned char *) _data2;
+    size_t p1 = 0, p2 = 0;
+
+    while ((p1 < len1) && (p2 < len2)) {
+        if (data1[p1] == 0) {
+            p1++;
+            continue;
+        }
+        if (tolower(data1[p1]) != tolower(data2[p2])) {
+            // Difference.
+            return (tolower(data1[p1]) < tolower(data2[p2])) ? -1 : 1;
+        }
+
+        p1++;
+        p2++;
+    }
+
+    while((p1 < len1) && (data1[p1] == 0)) {
+        p1++;
+    }
+    if ((p1 == len1) && (p2 == len2)) {
         // They're identical.
         return 0;
     } else {
@@ -485,6 +525,33 @@ int bstr_util_mem_index_of_mem_nocase(const void *_data1, size_t len1, const voi
         size_t k = i;
 
         for (j = 0; ((j < len2) && (k < len1)); j++, k++) {
+            if (toupper(data1[k]) != toupper(data2[j])) break;
+        }
+
+        if (j == len2) {
+            return i;
+        }
+    }
+
+    return -1;
+}
+
+int bstr_util_mem_index_of_mem_nocasenorzero(const void *_data1, size_t len1, const void *_data2, size_t len2) {
+    const unsigned char *data1 = (unsigned char *) _data1;
+    const unsigned char *data2 = (unsigned char *) _data2;
+    size_t i, j;
+
+    // If we ever want to optimize this function, the following link
+    // might be useful: http://en.wikipedia.org/wiki/Knuth-Morris-Pratt_algorithm
+
+    for (i = 0; i < len1; i++) {
+        size_t k = i;
+
+        for (j = 0; ((j < len2) && (k < len1)); j++, k++) {
+            if (data1[k] == 0) {
+                j--;
+                continue;
+            }
             if (toupper(data1[k]) != toupper(data2[j])) break;
         }
 
