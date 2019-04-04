@@ -171,9 +171,9 @@ htp_status_t htp_parse_response_header_generic(htp_connp_t *connp, htp_header_t 
 
         name_end = colon_pos;
 
-        // Ignore LWS after field-name.
+        // Ignore unprintable after field-name.
         prev = name_end;
-        while ((prev > name_start) && (htp_is_lws(data[prev - 1]))) {
+        while ((prev > name_start) && (data[prev - 1] <= 0x20)) {
             prev--;
             name_end--;
 
@@ -214,6 +214,12 @@ htp_status_t htp_parse_response_header_generic(htp_connp_t *connp, htp_header_t 
         }
 
         i++;
+    }
+    for (i = value_start; i < value_end; i++) {
+        if (data[i] == 0) {
+            htp_log(connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Response header value contains null.");
+            break;
+        }
     }
 
     // Now extract the name and the value.
