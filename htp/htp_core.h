@@ -57,6 +57,7 @@ typedef struct htp_param_t htp_param_t;
 typedef struct htp_tx_data_t htp_tx_data_t;
 typedef struct htp_tx_t htp_tx_t;
 typedef struct htp_uri_t htp_uri_t;
+typedef struct htp_content_range_t htp_content_range_t;
 typedef struct timeval htp_time_t;
 
 // Below are all htp_status_t return codes used by LibHTP. Enum is not

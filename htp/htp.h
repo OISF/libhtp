@@ -602,6 +602,32 @@ struct htp_uri_t {
 };
 
 /**
+ * Content-range structure. Where an element is not present, the
+ * corresponding field will be set to NULL or -1, depending on the
+ * field type.
+ */
+struct htp_content_range_t {
+    /** Start offset. */
+    int64_t start;
+
+    /** End offset. */
+    int64_t end;
+
+    /** Total size. */
+    int64_t size;
+};
+
+/**
+ * Performs parsing of the content-range value
+ *
+ * @param[in] rawvalue
+ * @param[out] range
+ *
+ * @return HTP_OK on success, HTP_ERROR on failure.
+ */
+htp_status_t htp_parse_content_range(bstr * rawvalue, htp_content_range_t *range);
+
+/**
  * Frees all data contained in the uri, and then the uri itself.
  * 
  * @param[in] uri

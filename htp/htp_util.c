@@ -255,6 +255,66 @@ int64_t htp_parse_content_length(bstr *b) {
 }
 
 /**
+ * Performs parsing of the content-range value
+ *
+ * @param[in] rawvalue
+ * @param[out] range
+ *
+ * @return HTP_OK on success, HTP_ERROR on failure.
+ */
+htp_status_t htp_parse_content_range(bstr * rawvalue, htp_content_range_t *range) {
+    unsigned char *data = bstr_ptr(rawvalue);
+    size_t len = bstr_len(rawvalue);
+    size_t pos = 0;
+    size_t last_pos;
+
+    // skip spaces and units
+    while ((pos < len) && htp_is_space(data[pos])) pos++;
+    while ((pos < len) && (!htp_is_space(data[pos]))) pos++;
+    while ((pos < len) && htp_is_space(data[pos])) pos++;
+
+    // initialize to unseen
+    range->start = -1;
+    range->end = -1;
+    range->size = -1;
+
+    if (pos == len) {
+        // missing data
+        return HTP_ERROR;
+    }
+
+    if (data[pos] == '*') {
+        // case with size only
+        if (len < pos + 1 || data[pos+1] != '/') {
+            range->size = -1;
+            return HTP_ERROR;
+        }
+        pos += 2;
+        range->size = bstr_util_mem_to_pint(data + pos, len - pos, 10, &last_pos);
+    } else {
+        // case with start and end
+        range->start = bstr_util_mem_to_pint(data + pos, len - pos, 10, &last_pos);
+        pos += last_pos;
+        if (len < pos || data[pos] != '-') {
+            return HTP_ERROR;
+        }
+        pos++;
+        range->end = bstr_util_mem_to_pint(data + pos, len - pos, 10, &last_pos);
+        pos += last_pos;
+        if (len < pos || data[pos] != '/') {
+            return HTP_ERROR;
+        }
+        pos++;
+        if (data[pos] != '*') {
+            // case with size
+            range->size = bstr_util_mem_to_pint(data + pos, len - pos, 10, &last_pos);
+        }
+    }
+
+    return HTP_OK;
+}
+
+/**
  * Parses chunk length (positive hexadecimal number). White space is allowed before
  * and after the number. An error will be returned if the chunk length is greater than
  * INT32_MAX.
