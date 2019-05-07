@@ -615,6 +615,23 @@ htp_status_t htp_connp_REQ_BODY_DETERMINE(htp_connp_t *connp) {
  */
 htp_status_t htp_connp_REQ_HEADERS(htp_connp_t *connp) {
     for (;;) {
+        if (connp->in_status == HTP_STREAM_CLOSED) {
+            // Parse previous header, if any.
+            if (connp->in_header != NULL) {
+                if (connp->cfg->process_request_header(connp, bstr_ptr(connp->in_header),
+                                                       bstr_len(connp->in_header)) != HTP_OK)
+                    return HTP_ERROR;
+                bstr_free(connp->in_header);
+                connp->in_header = NULL;
+            }
+
+            htp_connp_req_clear_buffer(connp);
+
+            connp->in_tx->request_progress = HTP_REQUEST_TRAILER;
+
+            // We've seen all the request headers.
+            return htp_tx_state_request_headers(connp->in_tx);
+        }
         IN_COPY_BYTE_OR_RETURN(connp);
 
         // Have we reached the end of the line?
