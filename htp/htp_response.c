@@ -728,6 +728,18 @@ htp_status_t htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
  */
 htp_status_t htp_connp_RES_HEADERS(htp_connp_t *connp) {
     for (;;) {
+        if (connp->out_status == HTP_STREAM_CLOSED) {
+            // Finalize sending raw trailer data.
+            htp_status_t rc = htp_connp_res_receiver_finalize_clear(connp);
+            if (rc != HTP_OK) return rc;
+
+            // Run hook response_TRAILER.
+            rc = htp_hook_run_all(connp->cfg->hook_response_trailer, connp->out_tx);
+            if (rc != HTP_OK) return rc;
+
+            connp->out_state = htp_connp_RES_FINALIZE;
+            return HTP_OK;
+        }
         OUT_COPY_BYTE_OR_RETURN(connp);
 
         // Have we reached the end of the line?
