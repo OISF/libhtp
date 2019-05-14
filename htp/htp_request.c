@@ -329,7 +329,6 @@ htp_status_t htp_connp_REQ_CONNECT_PROBE_DATA(htp_connp_t *connp) {
     unsigned char *data;
     size_t len;
     if (htp_connp_req_consolidate_data(connp, &data, &len) != HTP_OK) {
-        fprintf(stderr, "htp_connp_req_consolidate_data fail");
         return HTP_ERROR;
     }
 #ifdef HTP_DEBUG
