@@ -419,7 +419,7 @@ htp_status_t htp_connp_RES_BODY_CHUNKED_LENGTH(htp_connp_t *connp) {
                 connp->out_tx->response_transfer_coding = HTP_CODING_IDENTITY;
 
                 htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
-                        "Response chunk encoding: Invalid chunk length: %d",
+                        "Response chunk encoding: Invalid chunk length: "PRId64"",
                         connp->out_chunked_length);
                 return HTP_OK;
             }
@@ -671,7 +671,7 @@ htp_status_t htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
             // Get body length
             connp->out_tx->response_content_length = htp_parse_content_length(cl->value);
             if (connp->out_tx->response_content_length < 0) {
-                htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Invalid C-L field in response: %d",
+                htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Invalid C-L field in response: "PRId64"",
                         connp->out_tx->response_content_length);
                 return HTP_ERROR;
             } else {
