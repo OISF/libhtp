@@ -60,6 +60,7 @@ extern "C" {
 #include <sys/types.h>
 #include <sys/stat.h>
 
+#include "htp_config_auto_gen.h"
 #include "htp.h"
 #include "htp_config_private.h"
 #include "htp_connection_parser_private.h"
