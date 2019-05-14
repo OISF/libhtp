@@ -48,8 +48,10 @@ extern "C" {
 #define htp_list_t htp_list_array_t
 #define htp_list_add htp_list_array_push
 #define htp_list_create htp_list_array_create
+#define htp_list_init htp_list_array_init
 #define htp_list_clear htp_list_array_clear
 #define htp_list_destroy htp_list_array_destroy
+#define htp_list_release htp_list_array_release
 #define htp_list_get htp_list_array_get
 #define htp_list_pop htp_list_array_pop
 #define htp_list_push htp_list_array_push
@@ -76,6 +78,15 @@ typedef struct htp_list_linked_t htp_list_linked_t;
 htp_list_array_t *htp_list_array_create(size_t size);
 
 /**
+ * Initialize an array-backed list.
+ *
+ * @param[in] l
+ * @param[in] size
+ * @return HTP_OK or HTP_ERROR if allocation failed
+ */
+htp_status_t htp_list_array_init(htp_list_array_t *l, size_t size);
+
+/**
  * Remove all elements from the list. It is the responsibility of the caller
  * to iterate over list elements and deallocate them if necessary, prior to
  * invoking this function.
@@ -91,6 +102,15 @@ void htp_list_array_clear(htp_list_array_t *l);
  * @param[in] l
  */
 void htp_list_array_destroy(htp_list_array_t *l);
+
+/**
+ * Free the memory occupied by this list, except itself.
+ * This function assumes the elements held by the list
+ * were freed beforehand.
+ *
+ * @param[in] l
+ */
+void htp_list_array_release(htp_list_array_t *l);
 
 /**
  * Find the element at the given index.
