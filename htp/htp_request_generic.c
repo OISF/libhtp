@@ -343,9 +343,12 @@ htp_status_t htp_parse_request_line_generic_ex(htp_connp_t *connp, int nul_termi
         }
         pos++;
     }
+// Too much performance overhead for fuzzing
+#ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
     if (bad_delim) {
         htp_log(connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Request line: non-compliant delimiter between Method and URI");
     }
+#endif
 
     // Is there anything after the request method?
     if (pos == len) {
@@ -375,10 +378,13 @@ htp_status_t htp_parse_request_line_generic_ex(htp_connp_t *connp, int nul_termi
         pos = start;
         while ((pos < len) && (!htp_is_space(data[pos]))) pos++;
     }
+// Too much performance overhead for fuzzing
+#ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
     if (bad_delim) {
         // warn regardless if we've seen non-compliant chars
         htp_log(connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Request line: URI contains non-compliant delimiter");
     }
+#endif
 
     tx->request_uri = bstr_dup_mem(data + start, pos - start);
     if (tx->request_uri == NULL) return HTP_ERROR;
