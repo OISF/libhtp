@@ -62,7 +62,7 @@ enum htp_table_alloc_t {
 
 struct htp_table_t {
     /** Table key and value pairs are stored in this list; name first, then value. */
-    htp_list_t *list;
+    htp_list_t list;
 
     /**
      * Key management strategy. Initially set to HTP_TABLE_KEYS_ALLOC_UKNOWN. The

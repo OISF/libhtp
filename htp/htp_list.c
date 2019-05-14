@@ -42,6 +42,22 @@
 
 // Array-backed list
 
+htp_status_t htp_list_array_init(htp_list_t *l, size_t size) {
+    // Allocate the initial batch of elements.
+    l->elements = malloc(size * sizeof (void *));
+    if (l->elements == NULL) {
+        return HTP_ERROR;
+    }
+
+    // Initialize the structure.
+    l->first = 0;
+    l->last = 0;
+    l->current_size = 0;
+    l->max_size = size;
+
+    return HTP_OK;
+}
+
 htp_list_t *htp_list_array_create(size_t size) {
     // It makes no sense to create a zero-size list.
     if (size == 0) return NULL;
@@ -50,18 +66,10 @@ htp_list_t *htp_list_array_create(size_t size) {
     htp_list_array_t *l = calloc(1, sizeof (htp_list_array_t));
     if (l == NULL) return NULL;
 
-    // Allocate the initial batch of elements.
-    l->elements = malloc(size * sizeof (void *));
-    if (l->elements == NULL) {
+    if (htp_list_array_init(l, size) == HTP_ERROR) {
         free(l);
         return NULL;
     }
-
-    // Initialize the structure.
-    l->first = 0;
-    l->last = 0;
-    l->current_size = 0;
-    l->max_size = size;
 
     return (htp_list_t *) l;
 }
@@ -80,6 +88,12 @@ void htp_list_array_destroy(htp_list_array_t *l) {
 
     free(l->elements);
     free(l);
+}
+
+void htp_list_array_release(htp_list_array_t *l) {
+    if (l == NULL) return;
+
+    free(l->elements);
 }
 
 void *htp_list_array_get(const htp_list_array_t *l, size_t idx) {
