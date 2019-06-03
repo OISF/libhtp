@@ -139,14 +139,6 @@ void htp_table_clear(htp_table_t *table) {
     htp_list_clear(&table->list);
 }
 
-void htp_table_clear_ex(htp_table_t *table) {
-    if (table == NULL) return;
-
-    // This function does not free table keys.
-
-    htp_list_clear(&table->list);
-}
-
 htp_table_t *htp_table_create(size_t size) {
     if (size == 0) return NULL;
 

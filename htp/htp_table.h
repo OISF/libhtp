@@ -94,15 +94,6 @@ htp_status_t htp_table_addk(htp_table_t *table, const bstr *key, const void *ele
 void htp_table_clear(htp_table_t *table);
 
 /**
- * Remove all elements from the table without freeing any of the keys, even
- * if the table is using an allocation strategy where keys belong to it. This
- * function is useful if all the keys have been adopted by some other structure.
- *
- * @param[in] table
- */
-void htp_table_clear_ex(htp_table_t *table);
-
-/**
  * Create a new table structure. The table will grow automatically as needed,
  * but you are required to provide a starting size.
  *

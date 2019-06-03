@@ -76,7 +76,6 @@ extern "C" {
 #define HTP_UTF8_ACCEPT 0
 #define HTP_UTF8_REJECT 1
 
-uint32_t htp_utf8_decode(uint32_t* state, uint32_t* codep, uint32_t byte);
 uint32_t htp_utf8_decode_allow_overlong(uint32_t* state, uint32_t* codep, uint32_t byte);
 
 #ifdef __cplusplus

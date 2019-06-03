@@ -160,16 +160,6 @@ int htp_base64_decode(htp_base64_decoder *decoder, const void *_code_in, int len
 }
 
 /**
- * Base64-decode input, given as bstring.
- *
- * @param[in] input
- * @return new base64-decoded bstring
- */
-bstr *htp_base64_decode_bstr(bstr *input) {
-    return htp_base64_decode_mem(bstr_ptr(input), bstr_len(input));
-}
-
-/**
  * Base64-decode input, given as memory range.
  *
  * @param[in] data

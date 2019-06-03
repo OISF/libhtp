@@ -44,13 +44,6 @@ extern "C" {
 #endif
 
 /**
- * Clears the most recent error, if any.
- *
- * @param[in] connp
- */
-void htp_connp_clear_error(htp_connp_t *connp);
-
-/**
  * Closes the connection associated with the supplied parser.
  *
  * @param[in] connp

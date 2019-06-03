@@ -90,18 +90,6 @@ int htp_is_separator(int c) {
 }
 
 /**
- * Is character a text character?
- *
- * @param[in] c
- * @return 0 or 1
- */
-int htp_is_text(int c) {
-    if (c == '\t') return 1;
-    if (c < 32) return 0;
-    return 1;
-}
-
-/**
  * Is character a token character?
  *
  * @param[in] c
@@ -2247,118 +2235,6 @@ char *htp_tx_response_progress_as_string(htp_tx_t *tx) {
     }
 
     return "INVALID";
-}
-
-bstr *htp_unparse_uri_noencode(htp_uri_t *uri) {
-    if (uri == NULL) return NULL;    
-
-    // On the first pass determine the length of the final string
-    size_t len = 0;
-
-    if (uri->scheme != NULL) {
-        len += bstr_len(uri->scheme);
-        len += 3; // "://"
-    }
-
-    if ((uri->username != NULL) || (uri->password != NULL)) {
-        if (uri->username != NULL) {
-            len += bstr_len(uri->username);
-        }
-
-        len += 1; // ":"
-
-        if (uri->password != NULL) {
-            len += bstr_len(uri->password);
-        }
-
-        len += 1; // "@"
-    }
-
-    if (uri->hostname != NULL) {
-        len += bstr_len(uri->hostname);
-    }
-
-    if (uri->port != NULL) {
-        len += 1; // ":"
-        len += bstr_len(uri->port);
-    }
-
-    if (uri->path != NULL) {
-        len += bstr_len(uri->path);
-    }
-
-    if (uri->query != NULL) {
-        len += 1; // "?"
-        len += bstr_len(uri->query);
-    }
-
-    if (uri->fragment != NULL) {
-        len += 1; // "#"
-        len += bstr_len(uri->fragment);
-    }
-
-    // On the second pass construct the string
-    bstr *r = bstr_alloc(len);
-    if (r == NULL) return NULL;    
-
-    if (uri->scheme != NULL) {
-        bstr_add_noex(r, uri->scheme);
-        bstr_add_c_noex(r, "://");
-    }
-
-    if ((uri->username != NULL) || (uri->password != NULL)) {
-        if (uri->username != NULL) {
-            bstr_add_noex(r, uri->username);
-        }
-
-        bstr_add_c_noex(r, ":");
-
-        if (uri->password != NULL) {
-            bstr_add_noex(r, uri->password);
-        }
-
-        bstr_add_c_noex(r, "@");
-    }
-
-    if (uri->hostname != NULL) {
-        bstr_add_noex(r, uri->hostname);
-    }
-
-    if (uri->port != NULL) {
-        bstr_add_c_noex(r, ":");
-        bstr_add_noex(r, uri->port);
-    }
-
-    if (uri->path != NULL) {
-        bstr_add_noex(r, uri->path);
-    }
-
-    if (uri->query != NULL) {
-        bstr_add_c_noex(r, "?");
-        bstr_add_noex(r, uri->query);
-
-        /*
-        bstr *query = bstr_dup(uri->query);
-        if (query == NULL) {
-            bstr_free(r);
-            return NULL;
-        }
-
-        htp_uriencoding_normalize_inplace(query);
-
-        bstr_add_c_noex(r, "?");
-        bstr_add_noex(r, query);
-
-        bstr_free(query);
-        */
-    }
-
-    if (uri->fragment != NULL) {
-        bstr_add_c_noex(r, "#");
-        bstr_add_noex(r, uri->fragment);
-    }
-
-    return r;
 }
 
 /**

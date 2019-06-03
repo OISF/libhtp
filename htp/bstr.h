@@ -83,30 +83,6 @@ struct bstr_t {
 // Functions
 
 /**
- * Append source bstring to destination bstring, growing destination if
- * necessary. If the destination bstring is expanded, the pointer will change.
- * You must replace the original destination pointer with the returned one.
- * Destination is not changed on memory allocation failure.
- *
- * @param[in] bdestination
- * @param[in] bsource
- * @return Updated bstring, or NULL on memory allocation failure.
- */
-bstr *bstr_add(bstr *bdestination, const bstr *bsource);
-
-/**
- * Append a NUL-terminated source to destination, growing destination if
- * necessary. If the string is expanded, the pointer will change. You must 
- * replace the original destination pointer with the returned one. Destination
- * is not changed on memory allocation failure.
- *
- * @param[in] b
- * @param[in] cstr
- * @return Updated bstring, or NULL on memory allocation failure.
- */
-bstr *bstr_add_c(bstr *b, const char *cstr);
-
-/**
  * Append as many bytes from the source to destination bstring. The
  * destination storage will not be expanded if there is not enough space in it
  * already to accommodate all of the data.
@@ -164,15 +140,6 @@ bstr *bstr_add_noex(bstr *bdestination, const bstr *bsource);
 void bstr_adjust_len(bstr *b, size_t newlen);
 
 /**
- * Change the external pointer used by bstring. You will need to use this
- * function only if you're messing with bstr internals. Use with caution.
- *
- * @param[in] b
- * @param[in] newrealptr
- */
-void bstr_adjust_realptr(bstr *b, void *newrealptr);
-
-/**
  * Adjust bstring size. This does not change the size of the storage behind
  * the bstring, just changes the field that keeps track of how many bytes
  * there are in the storage. You will need to use this function only if
@@ -190,15 +157,6 @@ void bstr_adjust_size(bstr *b, size_t newsize);
  * @return New string instance
  */
 bstr *bstr_alloc(size_t size);
-
-/**
- * Checks whether bstring begins with another bstring. Case sensitive.
- * 
- * @param[in] bhaystack
- * @param[in] bneedle
- * @return 1 if true, otherwise 0.
- */
-int bstr_begins_with(const bstr *bhaystack, const bstr *bneedle);
 
 /**
  * Checks whether bstring begins with NUL-terminated string. Case sensitive.
@@ -239,15 +197,6 @@ int bstr_begins_with_mem(const bstr *bhaystack, const void *data, size_t len);
 int bstr_begins_with_mem_nocase(const bstr *bhaystack, const void *data, size_t len);
 
 /**
- * Checks whether bstring begins with another bstring. Case insensitive.
- *
- * @param[in] bhaystack
- * @param[in] cneedle
- * @return 1 if true, otherwise 0.
- */
-int bstr_begins_with_nocase(const bstr *bhaystack, const bstr *cneedle);
-
-/**
  * Return the byte at the given position.
  *
  * @param[in] b
@@ -284,16 +233,6 @@ void bstr_chop(bstr *b);
  */
 int bstr_chr(const bstr *b, int c);
 
-/**
- * Case-sensitive comparison of two bstrings.
- *
- * @param[in] b1
- * @param[in] b2
- * @return Zero on string match, 1 if b1 is greater than b2, and -1 if b2 is
- *         greater than b1.
- */
-int bstr_cmp(const bstr *b1, const bstr *b2);
-  
 /**
  * Case-sensitive comparison of a bstring and a NUL-terminated string.
  *
@@ -408,24 +347,6 @@ bstr *bstr_expand(bstr *b, size_t newsize);
 void bstr_free(bstr *b);
 
 /**
- * Find the needle in the haystack.
- *
- * @param[in] bhaystack
- * @param[in] bneedle
- * @return Position of the match, or -1 if the needle could not be found.
- */
-int bstr_index_of(const bstr *bhaystack, const bstr *bneedle);
-
-/**
- * Find the needle in the haystack, ignoring case differences.
- *
- * @param[in] bhaystack
- * @param[in] bneedle
- * @return Position of the match, or -1 if the needle could not be found.
- */
-int bstr_index_of_nocase(const bstr *bhaystack, const bstr *bneedle);
-
-/**
  * Find the needle in the haystack, with the needle being a NUL-terminated
  * string.
  *
@@ -465,15 +386,6 @@ int bstr_index_of_mem(const bstr *bhaystack, const void *data, size_t len);
  * @return Position of the match, or -1 if the needle could not be found.
  */
 int bstr_index_of_mem_nocase(const bstr *bhaystack, const void *data, size_t len);
-
-/**
- * Return the last position of a character (byte).
- *
- * @param[in] b
- * @param[in] c
- * @return The last position of the character, or -1 if it could not be found.
- */
-int bstr_rchr(const bstr *b, int c);
 
 /**
  * Convert bstring to lowercase. This function converts the supplied string,
@@ -597,16 +509,6 @@ char *bstr_util_memdup_to_c(const void *data, size_t len);
  *         allocation failure.
  */
 char *bstr_util_strdup_to_c(const bstr *b);
-  
-/**
- * Create a new bstring from the provided NUL-terminated string and without
- * copying the data. The caller must ensure that the input string continues
- * to point to a valid memory location for as long as the bstring is used.
- * 
- * @param[in] cstr
- * @return New bstring, or NULL on memory allocation failure.
- */
-bstr *bstr_wrap_c(const char *cstr);
 
 /**
  * Create a new bstring from the provided memory buffer without

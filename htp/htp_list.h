@@ -57,7 +57,6 @@ extern "C" {
 #define htp_list_push htp_list_array_push
 #define htp_list_replace htp_list_array_replace
 #define htp_list_size htp_list_array_size
-#define htp_list_shift htp_list_array_shift
 
 // Data structures
 

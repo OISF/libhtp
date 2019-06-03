@@ -104,17 +104,6 @@ htp_status_t htp_hook_register(htp_hook_t **hook, const htp_callback_fn_t callba
  */
 htp_status_t htp_hook_run_all(htp_hook_t *hook, void *user_data);
 
-/**
- * Run callbacks one by one until one of them accepts to service the hook.
- *
- * @param[in] hook
- * @param[in] user_data
- * @return HTP_OK if a hook was found to process the callback, HTP_DECLINED if
- *         no hook could be found, HTP_STOP if a hook signalled the processing
- *         to stop, and HTP_ERROR or any other value less than zero on error.
- */
-htp_status_t htp_hook_run_one(htp_hook_t *hook, void *user_data);
-
 #ifdef __cplusplus
 }
 #endif

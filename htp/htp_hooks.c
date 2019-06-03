@@ -136,25 +136,3 @@ htp_status_t htp_hook_run_all(htp_hook_t *hook, void *user_data) {
 
     return HTP_OK;
 }
-
-htp_status_t htp_hook_run_one(htp_hook_t *hook, void *user_data) {
-    if (hook == NULL) return HTP_DECLINED;
-
-    for (size_t i = 0, n = htp_list_size(hook->callbacks); i < n; i++) {
-        htp_callback_t *callback = htp_list_get(hook->callbacks, i);
-
-        htp_status_t rc = callback->fn(user_data);
-
-        // A hook can return HTP_DECLINED to say that it did no work,
-        // and we'll ignore that. If we see HTP_OK or anything else,
-        // we stop processing (because it was either a successful
-        // handling or an error).
-        if (rc != HTP_DECLINED) {
-            // Return HTP_OK or an error.
-            return rc;
-        }
-    }
-
-    // No hook wanted to process the callback.
-    return HTP_DECLINED;
-}

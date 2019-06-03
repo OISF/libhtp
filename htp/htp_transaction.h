@@ -109,16 +109,6 @@ htp_tx_t *htp_tx_create(htp_connp_t *connp);
 htp_status_t htp_tx_destroy(htp_tx_t *tx);
 
 /**
- * Determines if the transaction used a shared configuration structure. See the
- * documentation for htp_tx_set_config() for more information why you might want
- * to know that.
- *
- * @param[in] tx Transaction pointer. Must not be NULL.
- * @return HTP_CFG_SHARED or HTP_CFG_PRIVATE.
- */
-int htp_tx_get_is_config_shared(const htp_tx_t *tx);
-
-/**
  * Returns the user data associated with this transaction.
  *
  * @param[in] tx Transaction pointer. Must not be NULL.

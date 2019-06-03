@@ -40,10 +40,6 @@
 
 #include "htp_private.h"
 
-void htp_connp_clear_error(htp_connp_t *connp) {
-    connp->last_error = NULL;
-}
-
 void htp_connp_close(htp_connp_t *connp, const htp_time_t *timestamp) {
     if (connp == NULL) return;
     

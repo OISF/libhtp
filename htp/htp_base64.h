@@ -62,8 +62,6 @@ int htp_base64_decode_single(signed char value_in);
 
 int htp_base64_decode(htp_base64_decoder *decoder, const void *code_in, int length_in, void *plaintext_out, int length_out);
 
-bstr *htp_base64_decode_bstr(bstr *input);
-
 bstr *htp_base64_decode_mem(const void *data, size_t len);
 
 #ifdef __cplusplus

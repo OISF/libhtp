@@ -138,7 +138,6 @@ htp_status_t htp_tx_state_response_complete_ex(htp_tx_t *tx, int hybrid_mode);
 int htp_convert_method_to_number(bstr *);
 int htp_is_lws(int c);
 int htp_is_separator(int c);
-int htp_is_text(int c);
 int htp_is_token(int c);
 int htp_chomp(unsigned char *data, size_t *len);
 int htp_is_space(int c);
@@ -188,8 +187,6 @@ char *htp_connp_in_state_as_string(htp_connp_t *connp);
 char *htp_connp_out_state_as_string(htp_connp_t *connp);
 char *htp_tx_request_progress_as_string(htp_tx_t *tx);
 char *htp_tx_response_progress_as_string(htp_tx_t *tx);
-
-bstr *htp_unparse_uri_noencode(htp_uri_t *uri);
 
 int htp_treat_response_line_as_body(const uint8_t *data, size_t len);
 

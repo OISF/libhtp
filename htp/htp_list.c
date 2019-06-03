@@ -197,26 +197,6 @@ size_t htp_list_array_size(const htp_list_array_t *l) {
     return l->current_size;
 }
 
-void *htp_list_array_shift(htp_list_array_t *l) {
-    if (l == NULL) return NULL;
-
-    void *r = NULL;
-
-    if (l->current_size == 0) {
-        return NULL;
-    }
-
-    r = l->elements[l->first];
-    l->first++;
-    if (l->first == l->max_size) {
-        l->first = 0;
-    }
-
-    l->current_size--;
-
-    return r;
-}
-
 #if 0
 // Linked list
 
@@ -320,41 +300,5 @@ void *htp_list_linked_shift(htp_list_linked_t *l) {
     free(le);
 
     return r;
-}
-#endif
-
-#if 0
-
-int main(int argc, char **argv) {
-    htp_list_t *q = htp_list_array_create(4);
-
-    htp_list_push(q, "1");
-    htp_list_push(q, "2");
-    htp_list_push(q, "3");
-    htp_list_push(q, "4");
-
-    htp_list_shift(q);
-    htp_list_push(q, "5");
-    htp_list_push(q, "6");
-
-    char *s = NULL;
-    while ((s = (char *) htp_list_pop(q)) != NULL) {
-        printf("Got: %s\n", s);
-    }
-
-    printf("---\n");
-
-    htp_list_push(q, "1");
-    htp_list_push(q, "2");
-    htp_list_push(q, "3");
-    htp_list_push(q, "4");
-
-    while ((s = (char *) htp_list_shift(q)) != NULL) {
-        printf("Got: %s\n", s);
-    }
-
-    free(q);
-
-    return 0;
 }
 #endif
