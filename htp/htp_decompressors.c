@@ -181,6 +181,7 @@ static void htp_gzip_decompressor_end(htp_decompressor_gzip_t *drec) {
 static htp_status_t htp_gzip_decompressor_decompress(htp_decompressor_gzip_t *drec, htp_tx_data_t *d) {
     size_t consumed = 0;
     int rc = 0;
+    htp_status_t callback_rc;
 
     // Pass-through the NULL chunk, which indicates the end of the stream.
 
@@ -191,7 +192,7 @@ static htp_status_t htp_gzip_decompressor_decompress(htp_decompressor_gzip_t *dr
         d2.len = d->len;
         d2.is_last = d->is_last;
 
-        htp_status_t callback_rc = drec->super.callback(&d2);
+        callback_rc = drec->super.callback(&d2);
         if (callback_rc != HTP_OK) {
             return HTP_ERROR;
         }
@@ -215,7 +216,7 @@ static htp_status_t htp_gzip_decompressor_decompress(htp_decompressor_gzip_t *dr
             return htp_gzip_decompressor_decompress((htp_decompressor_gzip_t *)drec->super.next, &dout);
         } else {
             // Send decompressed data to the callback.
-            htp_status_t callback_rc = drec->super.callback(&dout);
+            callback_rc = drec->super.callback(&dout);
             if (callback_rc != HTP_OK) {
                 htp_gzip_decompressor_end(drec);
                 return callback_rc;
@@ -246,16 +247,15 @@ restart:
             d2.len = GZIP_BUF_SIZE;
             d2.is_last = d->is_last;
 
-            //if (drec->super.next != NULL) {
             if (drec->super.next != NULL && drec->zlib_initialized) {
-                return htp_gzip_decompressor_decompress((htp_decompressor_gzip_t *)drec->super.next, &d2);
+                callback_rc = htp_gzip_decompressor_decompress((htp_decompressor_gzip_t *)drec->super.next, &d2);
             } else {
                 // Send decompressed data to callback.
-                htp_status_t callback_rc = drec->super.callback(&d2);
-                if (callback_rc != HTP_OK) {
-                    htp_gzip_decompressor_end(drec);
-                    return callback_rc;
-                }
+                callback_rc = drec->super.callback(&d2);
+            }
+            if (callback_rc != HTP_OK) {
+                htp_gzip_decompressor_end(drec);
+                return callback_rc;
             }
 
             drec->stream.next_out = drec->buffer;
@@ -312,15 +312,14 @@ restart:
             d2.is_last = d->is_last;
 
             if (drec->super.next != NULL && drec->zlib_initialized) {
-                return htp_gzip_decompressor_decompress((htp_decompressor_gzip_t *)drec->super.next, &d2);
-
+                callback_rc = htp_gzip_decompressor_decompress((htp_decompressor_gzip_t *)drec->super.next, &d2);
             } else {
                 // Send decompressed data to the callback.
-                htp_status_t callback_rc = drec->super.callback(&d2);
-                if (callback_rc != HTP_OK) {
-                    htp_gzip_decompressor_end(drec);
-                    return callback_rc;
-                }
+                callback_rc = drec->super.callback(&d2);
+            }
+            if (callback_rc != HTP_OK) {
+                htp_gzip_decompressor_end(drec);
+                return callback_rc;
             }
             drec->stream.avail_out = GZIP_BUF_SIZE;
             drec->stream.next_out = drec->buffer;
@@ -360,10 +359,13 @@ restart:
             d2.len = d->len;
             d2.is_last = d->is_last;
 
-            htp_status_t callback_rc = drec->super.callback(&d2);
+            callback_rc = drec->super.callback(&d2);
             if (callback_rc != HTP_OK) {
                 return HTP_ERROR;
             }
+
+            drec->stream.avail_out = GZIP_BUF_SIZE;
+            drec->stream.next_out = drec->buffer;
 
             /* successfully passed through, lets continue doing that */
             drec->passthrough = 1;
