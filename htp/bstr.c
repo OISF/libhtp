@@ -546,6 +546,10 @@ int bstr_util_mem_index_of_mem_nocasenorzero(const void *_data1, size_t len1, co
 
     for (i = 0; i < len1; i++) {
         size_t k = i;
+        if (data1[i] == 0) {
+            // skip leading zeroes to avoid quadratic complexity
+            continue;
+        }
 
         for (j = 0; ((j < len2) && (k < len1)); j++, k++) {
             if (data1[k] == 0) {
