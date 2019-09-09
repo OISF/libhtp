@@ -417,7 +417,7 @@ htp_decompressor_t *htp_gzip_decompressor_create(htp_connp_t *connp, enum htp_co
     switch (format) {
         case HTP_COMPRESSION_LZMA:
 #ifdef HAVE_LIBLZMA
-            rc = lzma_alone_decoder(&drec->lzstrm, UINT64_MAX /* memlimit */);
+            rc = lzma_alone_decoder(&drec->lzstrm, GZIP_BUF_SIZE /* memlimit */);
             if (rc != LZMA_OK) {
                 rc = Z_DATA_ERROR;
             } else {
