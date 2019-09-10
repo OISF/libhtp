@@ -69,6 +69,14 @@ extern "C" {
 #include "htp_multipart_private.h"
 #include "htp_table_private.h"
 
+#ifndef MIN
+#define MIN(x, y) (((x)<(y))?(x):(y))
+#endif
+
+#ifndef MAX
+#define MAX(x, y) (((x)<(y))?(y):(x))
+#endif
+
 #ifndef CR
 #define CR '\r'
 #endif
@@ -76,6 +84,10 @@ extern "C" {
 #ifndef LF
 #define LF '\n'
 #endif
+
+#define HTP_LZMA_INITIAL_MEMLIMIT           4096
+#define HTP_LZMA_UPPER_MEMLIMIT             1048576
+#define HTP_LZMA_MAX_DICT_RATIO             100
 
 #define HTP_FIELD_LIMIT_HARD               18000
 #define HTP_FIELD_LIMIT_SOFT               9000

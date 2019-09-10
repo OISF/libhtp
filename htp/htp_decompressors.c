@@ -264,11 +264,36 @@ restart:
 
         if (drec->zlib_initialized == HTP_COMPRESSION_LZMA) {
 #ifdef HAVE_LIBLZMA
+            char is_first = (drec->lzstrm.total_in == 0);
+retry_lzma:
             drec->lzstrm.avail_in = drec->stream.avail_in;
             drec->lzstrm.avail_out = drec->stream.avail_out;
             drec->lzstrm.next_in = drec->stream.next_in;
             drec->lzstrm.next_out = drec->stream.next_out;
             rc = lzma_code(&drec->lzstrm, LZMA_RUN);
+            if (rc == LZMA_MEMLIMIT_ERROR) {
+                uint64_t x = lzma_memusage(&drec->lzstrm);
+                if (x > 0 && drec->lzstrm.avail_in > 0 && d->is_last &&
+                        x / drec->lzstrm.avail_in > d->tx->cfg->lzma_max_dict_ratio) {
+                    htp_log(d->tx->connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0,
+                            "LZMA decompressor: suspicious LZMA dict to data ratio");
+                    rc = Z_DATA_ERROR;
+                } else if (!is_first || x == 0 || x > d->tx->cfg->lzma_upper_memlimit) {
+                    htp_log(d->tx->connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0,
+                            "LZMA decompressor: memory limit reached");
+                    rc = Z_DATA_ERROR;
+                } else {
+                    lzma_end(&drec->lzstrm);
+                    uint64_t set = MIN(x, d->tx->cfg->lzma_upper_memlimit);
+                    rc = lzma_alone_decoder(&drec->lzstrm, set /* memlimit */);
+                    if (rc != LZMA_OK) {
+                        rc = Z_DATA_ERROR;
+                    } else {
+                        is_first = 0;
+                        goto retry_lzma;
+                    }
+                }
+            }
             drec->stream.avail_in = drec->lzstrm.avail_in;
             drec->stream.avail_out = drec->lzstrm.avail_out;
             drec->stream.next_in = (Bytef *) drec->lzstrm.next_in;
@@ -417,7 +442,7 @@ htp_decompressor_t *htp_gzip_decompressor_create(htp_connp_t *connp, enum htp_co
     switch (format) {
         case HTP_COMPRESSION_LZMA:
 #ifdef HAVE_LIBLZMA
-            rc = lzma_alone_decoder(&drec->lzstrm, 0x1000000 /* memlimit */);
+            rc = lzma_alone_decoder(&drec->lzstrm, connp->cfg->lzma_initial_memlimit /* memlimit */);
 
             if (rc != LZMA_OK) {
                 rc = Z_DATA_ERROR;

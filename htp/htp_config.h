@@ -427,6 +427,24 @@ htp_status_t htp_config_set_extract_request_files(htp_cfg_t *cfg, int extract_fi
 void htp_config_set_field_limits(htp_cfg_t *cfg, size_t soft_limit, size_t hard_limit);
 
 /**
+ * Configures the maximum memlimit LibHTP will pass to liblzma. It will first try the
+ * @initial_memlimit setting and retry with @upper_memlimit if that is not sufficient.
+ *
+ * @param[in] cfg
+ * @param[in] initial_memlimit
+ * @param[in] upper_memlimit
+ */
+void htp_config_set_lzma_memlimits(htp_cfg_t *cfg, size_t initial_memlimit, size_t upper_memlimit);
+
+/**
+ * Configures the maximum data vs dict size ratio LibHTP will accept for LZMA.
+ *
+ * @param[in] cfg
+ * @param[in] ratio
+ */
+void htp_config_set_lzma_max_dict_ratio(htp_cfg_t *cfg, uint32_t ratio);
+
+/**
  * Configures the desired log level.
  * 
  * @param[in] cfg

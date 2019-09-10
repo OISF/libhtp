@@ -56,6 +56,8 @@ protected:
         htp_config_set_server_personality(cfg, HTP_SERVER_APACHE_2);
         htp_config_register_urlencoded_parser(cfg);
         htp_config_register_multipart_parser(cfg);
+        htp_config_set_lzma_memlimits(cfg, 4096, 16000000);
+        htp_config_set_lzma_max_dict_ratio(cfg, 1000000);
     }
 
     virtual void TearDown() {
