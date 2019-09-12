@@ -5,7 +5,7 @@ h_sources_private = 7zTypes.h LzFind.h LzHash.h Compiler.h Precomp.h
 
 c_sources = LzFind.c LzmaDec.c
 
-AM_CFLAGS = -I$(top_srcdir) -D_GNU_SOURCE -g -Wall -Wextra -std=c11 -pedantic \
+AM_CFLAGS = -I$(top_srcdir) -D_GNU_SOURCE -g -Wall -Wextra -std=gnu99 -pedantic \
     -Wextra -Wno-missing-field-initializers -Wshadow -Wpointer-arith \
     -Wstrict-prototypes -Wmissing-prototypes -Wno-unused-parameter
 
