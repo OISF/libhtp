@@ -4,11 +4,10 @@
 #include "Precomp.h"
 
 #include <string.h>
+#include <stdlib.h>
 
 /* #include "CpuArch.h" */
 #include "LzmaDec.h"
-
-#define LZMA_DIC_MAX (1 << 15)
 
 #define kNumTopBits 24
 #define kTopValue ((UInt32)1 << kNumTopBits)
@@ -165,6 +164,7 @@
 #define GET_LEN_STATE (posState)
 
 #define LZMA_DIC_MIN (1 << 12)
+#define LZMA_DIC_MAX (1 << 15)
 
 /*
 p->remainLen : shows status of LZMA decoder:
@@ -1032,8 +1032,19 @@ SRes LzmaDec_DecodeToBuf(CLzmaDec *p, Byte *dest, SizeT *destLen, const Byte *sr
     ELzmaFinishMode curFinishMode;
     SRes res;
     if (p->dicPos == p->dicBufSize) {
-      if (p->prop.dicSize > LZMA_DIC_MAX) {
-        return SZ_ERROR_MEM;
+      if (p->dicBufSize < p->prop.dicSize) {
+        if (p->dicBufSize < LZMA_DIC_MAX) {
+          p->dicBufSize = p->dicBufSize << 2;
+          if (p->dicBufSize < LZMA_DIC_MAX) {
+            p->dicBufSize = LZMA_DIC_MAX;
+          }
+          p->dic = realloc(p->dic, p->dicBufSize);
+          if (!p->dic) {
+            return SZ_ERROR_MEM;
+          }
+        } else {
+          return SZ_ERROR_MEM;
+        }
       } else {
         p->dicPos = 0;
       }
@@ -1149,9 +1160,10 @@ SRes LzmaDec_Allocate(CLzmaDec *p, const Byte *props, unsigned propsSize, ISzAll
     dicBufSize = ((SizeT)dictSize + mask) & ~mask;
     if (dicBufSize < dictSize)
       dicBufSize = dictSize;
+    propNew.dicSize = dicBufSize;
   }
-    if (dicBufSize > LZMA_DIC_MAX) {
-        dicBufSize = LZMA_DIC_MAX;
+    if (dicBufSize > LZMA_DIC_MIN) {
+        dicBufSize = LZMA_DIC_MIN;
     }
 
   if (!p->dic || dicBufSize != p->dicBufSize)
