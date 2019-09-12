@@ -109,17 +109,6 @@ if test "$ZLIB" = "no"; then
     exit 1
 fi
 
-# liblzma
-AC_CHECK_HEADER(lzma.h,AC_DEFINE([HAVE_LIBLZMA],[1],[liblzma available]),)
-LIBLZMA=""
-AC_CHECK_LIB(lzma, lzma_alone_decoder,, LIBLZMA="no")
-if test "$LIBLZMA" = "no"; then
-    echo
-    echo "   Warning: liblzma library not found"
-    echo "   lzma decompression will not be supported"
-    echo
-fi
-
 # Determine the OS 
 AC_MSG_CHECKING([OS])
 OS=`uname -s`
@@ -261,6 +250,7 @@ AC_PREFIX_DEFAULT(/usr/local)
 AC_OUTPUT(Makefile \
           htp.pc \
           htp/Makefile \
+          htp/lzma/Makefile \
           test/Makefile \
           docs/Makefile
 )

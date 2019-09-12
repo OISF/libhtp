@@ -40,6 +40,12 @@
 
 #include "htp_private.h"
 
+
+static void *SzAlloc(ISzAllocPtr p, size_t size) { return malloc(size); }
+static void SzFree(ISzAllocPtr p, void *address) { free(address); }
+const ISzAlloc lzma_Alloc = { SzAlloc, SzFree };
+
+
 /**
  *  @brief See if the header has extensions
  *  @return number of bytes to skip
@@ -160,9 +166,7 @@ restart:
  */
 static void htp_gzip_decompressor_end(htp_decompressor_gzip_t *drec) {
     if (drec->zlib_initialized == HTP_COMPRESSION_LZMA) {
-#ifdef HAVE_LIBLZMA
-        lzma_end(&drec->lzstrm);
-#endif
+        LzmaDec_Free(&drec->state, &lzma_Alloc);
         drec->zlib_initialized = 0;
     } else if (drec->zlib_initialized) {
         inflateEnd(&drec->stream);
@@ -263,30 +267,42 @@ restart:
         }
 
         if (drec->zlib_initialized == HTP_COMPRESSION_LZMA) {
-#ifdef HAVE_LIBLZMA
-            drec->lzstrm.avail_in = drec->stream.avail_in;
-            drec->lzstrm.avail_out = drec->stream.avail_out;
-            drec->lzstrm.next_in = drec->stream.next_in;
-            drec->lzstrm.next_out = drec->stream.next_out;
-            rc = lzma_code(&drec->lzstrm, LZMA_RUN);
-            drec->stream.avail_in = drec->lzstrm.avail_in;
-            drec->stream.avail_out = drec->lzstrm.avail_out;
-            drec->stream.next_in = (Bytef *) drec->lzstrm.next_in;
-            drec->stream.next_out = drec->lzstrm.next_out;
-            switch(rc) {
-                case LZMA_STREAM_END:
-                    rc = Z_STREAM_END;
-                    break;
-                case LZMA_OK:
-                    rc = Z_OK;
-                    break;
-                default:
-                    rc = Z_DATA_ERROR;
+            if (drec->header_len < LZMA_PROPS_SIZE + 8) {
+                consumed = LZMA_PROPS_SIZE + 8 - drec->header_len;
+                if (consumed > drec->stream.avail_in) {
+                    consumed = drec->stream.avail_in;
+                }
+                memcpy(drec->header + drec->header_len, drec->stream.next_in, consumed);
+                drec->stream.next_in = (unsigned char *) (d->data + consumed);
+                drec->stream.avail_in = d->len - consumed;
+                drec->header_len += consumed;
             }
-#else
-            // We should never get there as we initialized passthrough
-            rc = Z_DATA_ERROR;
-#endif
+            if (drec->header_len == LZMA_PROPS_SIZE + 8) {
+                rc = LzmaDec_Allocate(&drec->state, drec->header, LZMA_PROPS_SIZE, &lzma_Alloc);
+                if (rc != SZ_OK)
+                    return rc;
+                LzmaDec_Init(&drec->state);
+                // hacky to get to next step end retry allocate in case of failure
+                drec->header_len++;
+            }
+            if (drec->header_len > LZMA_PROPS_SIZE + 8) {
+                size_t inprocessed = drec->stream.avail_in;
+                size_t outprocessed = drec->stream.avail_out;
+                ELzmaStatus status;
+                rc = LzmaDec_DecodeToBuf(&drec->state, drec->stream.next_out, &outprocessed,
+                                         drec->stream.next_in, &inprocessed, LZMA_FINISH_ANY, &status);
+                drec->stream.avail_in -= inprocessed;
+                drec->stream.next_in += inprocessed;
+                drec->stream.avail_out -= outprocessed;
+                drec->stream.next_out += outprocessed;
+                if (status == LZMA_STATUS_FINISHED_WITH_MARK) {
+                    rc = Z_STREAM_END;
+                } else if (rc == SZ_OK) {
+                    rc = Z_OK;
+                } else {
+                    rc = Z_DATA_ERROR;
+                }
+            }
         } else if (drec->zlib_initialized) {
             rc = inflate(&drec->stream, Z_NO_FLUSH);
         }
@@ -330,9 +346,7 @@ restart:
         else if (rc != Z_OK) {
             htp_log(d->tx->connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "GZip decompressor: inflate failed with %d", rc);
             if (drec->zlib_initialized == HTP_COMPRESSION_LZMA) {
-#ifdef HAVE_LIBLZMA
-                lzma_end(&drec->lzstrm);
-#endif
+                LzmaDec_Free(&drec->state, &lzma_Alloc);
                 // so as to clean zlib ressources after restart
                 drec->zlib_initialized = HTP_COMPRESSION_NONE;
             } else {
@@ -416,19 +430,8 @@ htp_decompressor_t *htp_gzip_decompressor_create(htp_connp_t *connp, enum htp_co
 
     switch (format) {
         case HTP_COMPRESSION_LZMA:
-#ifdef HAVE_LIBLZMA
-            rc = lzma_alone_decoder(&drec->lzstrm, 0x1000000 /* memlimit */);
-
-            if (rc != LZMA_OK) {
-                rc = Z_DATA_ERROR;
-            } else {
-                rc = Z_OK;
-            }
-#else
-            htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Unsupported lzma compression");
-            drec->passthrough = 1;
+            LzmaDec_Construct(&drec->state);
             rc = Z_OK;
-#endif
             break;
         case HTP_COMPRESSION_DEFLATE:
             // Negative values activate raw processing,
