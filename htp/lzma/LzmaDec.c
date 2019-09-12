@@ -1119,6 +1119,7 @@ SRes LzmaProps_Decode(CLzmaProps *p, const Byte *data, unsigned size)
   d /= 9;
   p->pb = (Byte)(d / 5);
   p->lp = (Byte)(d % 5);
+  p->_pad_ = 0;
 
   return SZ_OK;
 }
