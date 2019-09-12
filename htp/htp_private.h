@@ -59,6 +59,7 @@ extern "C" {
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <stdint.h>
 
 #include "htp_config_auto_gen.h"
 #include "htp.h"
