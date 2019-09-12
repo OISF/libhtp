@@ -8,6 +8,8 @@
 /* #include "CpuArch.h" */
 #include "LzmaDec.h"
 
+#define LZMA_DIC_MAX (1 << 15)
+
 #define kNumTopBits 24
 #define kTopValue ((UInt32)1 << kNumTopBits)
 
@@ -1029,8 +1031,13 @@ SRes LzmaDec_DecodeToBuf(CLzmaDec *p, Byte *dest, SizeT *destLen, const Byte *sr
     SizeT inSizeCur = inSize, outSizeCur, dicPos;
     ELzmaFinishMode curFinishMode;
     SRes res;
-    if (p->dicPos == p->dicBufSize)
-      p->dicPos = 0;
+    if (p->dicPos == p->dicBufSize) {
+      if (p->prop.dicSize > LZMA_DIC_MAX) {
+        return SZ_ERROR_MEM;
+      } else {
+        p->dicPos = 0;
+      }
+    }
     dicPos = p->dicPos;
     if (outSize > p->dicBufSize - dicPos)
     {
@@ -1127,7 +1134,6 @@ SRes LzmaDec_AllocateProbs(CLzmaDec *p, const Byte *props, unsigned propsSize, I
   return SZ_OK;
 }
 
-#define LZMA_DIC_MAX (1 << 15)
 SRes LzmaDec_Allocate(CLzmaDec *p, const Byte *props, unsigned propsSize, ISzAllocPtr alloc)
 {
   CLzmaProps propNew;
