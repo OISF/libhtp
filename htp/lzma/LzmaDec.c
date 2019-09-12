@@ -164,7 +164,6 @@
 #define GET_LEN_STATE (posState)
 
 #define LZMA_DIC_MIN (1 << 12)
-#define LZMA_DIC_MAX (1 << 15)
 
 /*
 p->remainLen : shows status of LZMA decoder:
@@ -1021,7 +1020,7 @@ SRes LzmaDec_DecodeToDic(CLzmaDec *p, SizeT dicLimit, const Byte *src, SizeT *sr
 }
 
 
-SRes LzmaDec_DecodeToBuf(CLzmaDec *p, Byte *dest, SizeT *destLen, const Byte *src, SizeT *srcLen, ELzmaFinishMode finishMode, ELzmaStatus *status)
+SRes LzmaDec_DecodeToBuf(CLzmaDec *p, Byte *dest, SizeT *destLen, const Byte *src, SizeT *srcLen, ELzmaFinishMode finishMode, ELzmaStatus *status, SizeT memlimit)
 {
   SizeT outSize = *destLen;
   SizeT inSize = *srcLen;
@@ -1033,10 +1032,13 @@ SRes LzmaDec_DecodeToBuf(CLzmaDec *p, Byte *dest, SizeT *destLen, const Byte *sr
     SRes res;
     if (p->dicPos == p->dicBufSize) {
       if (p->dicBufSize < p->prop.dicSize) {
-        if (p->dicBufSize < LZMA_DIC_MAX) {
+        if (p->dicBufSize < memlimit) {
           p->dicBufSize = p->dicBufSize << 2;
-          if (p->dicBufSize < LZMA_DIC_MAX) {
-            p->dicBufSize = LZMA_DIC_MAX;
+          if (p->dicBufSize > memlimit) {
+            p->dicBufSize = memlimit;
+          }
+          if (p->dicBufSize > p->prop.dicSize) {
+            p->dicBufSize = p->prop.dicSize;
           }
           p->dic = realloc(p->dic, p->dicBufSize);
           if (!p->dic) {
