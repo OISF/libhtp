@@ -77,6 +77,9 @@ extern "C" {
 #define LF '\n'
 #endif
 
+// 1048576 is 1 Mbyte
+#define HTP_LZMA_UPPER_MEMLIMIT             0x100000
+
 #define HTP_FIELD_LIMIT_HARD               18000
 #define HTP_FIELD_LIMIT_SOFT               9000
 

@@ -201,7 +201,7 @@ finishMode:
 */
 
 SRes LzmaDec_DecodeToBuf(CLzmaDec *p, Byte *dest, SizeT *destLen,
-    const Byte *src, SizeT *srcLen, ELzmaFinishMode finishMode, ELzmaStatus *status);
+    const Byte *src, SizeT *srcLen, ELzmaFinishMode finishMode, ELzmaStatus *status, SizeT memlimit);
 
 
 /* ---------- One Call Interface ---------- */
