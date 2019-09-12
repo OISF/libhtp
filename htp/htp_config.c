@@ -158,6 +158,7 @@ htp_cfg_t *htp_config_create(void) {
     cfg->extract_request_files = 0;
     cfg->extract_request_files_limit = -1; // Use the parser default.
     cfg->response_decompression_layer_limit = 2; // 2 layers seem fairly common
+    cfg->lzma_upper_memlimit = HTP_LZMA_UPPER_MEMLIMIT;
 
     // Default settings for URL-encoded data.
 
@@ -505,6 +506,11 @@ void htp_config_set_field_limits(htp_cfg_t *cfg, size_t soft_limit, size_t hard_
     if (cfg == NULL) return;
     cfg->field_limit_soft = soft_limit;
     cfg->field_limit_hard = hard_limit;
+}
+
+void htp_config_set_lzma_memlimits(htp_cfg_t *cfg, size_t upper_memlimit) {
+    if (cfg == NULL) return;
+    cfg->lzma_upper_memlimit = upper_memlimit;
 }
 
 void htp_config_set_log_level(htp_cfg_t *cfg, enum htp_log_level_t log_level) {

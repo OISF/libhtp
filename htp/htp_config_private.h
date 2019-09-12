@@ -342,6 +342,8 @@ struct htp_cfg_t {
 
     /** How many layers of compression we will decompress (0 => no limit). */
     int response_decompression_layer_limit;
+
+     size_t lzma_upper_memlimit;
 };
 
 #ifdef	__cplusplus
