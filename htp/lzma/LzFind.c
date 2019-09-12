@@ -46,7 +46,7 @@ static int LzInWindow_Create(CMatchFinder *p, UInt32 keepSizeReserv, ISzAllocPtr
 
 Byte *MatchFinder_GetPointerToCurrentPos(CMatchFinder *p) { return p->buffer; }
 
-UInt32 MatchFinder_GetNumAvailableBytes(CMatchFinder *p) { return p->streamPos - p->pos; }
+static UInt32 MatchFinder_GetNumAvailableBytes(CMatchFinder *p) { return p->streamPos - p->pos; }
 
 void MatchFinder_ReduceOffsets(CMatchFinder *p, UInt32 subValue)
 {

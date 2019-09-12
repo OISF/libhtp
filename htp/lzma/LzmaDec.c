@@ -852,7 +852,7 @@ static ELzmaDummy LzmaDec_TryDummy(const CLzmaDec *p, const Byte *buf, SizeT inS
 }
 
 
-void LzmaDec_InitDicAndState(CLzmaDec *p, BoolInt initDic, BoolInt initState)
+static void LzmaDec_InitDicAndState(CLzmaDec *p, BoolInt initDic, BoolInt initState)
 {
   p->remainLen = kMatchSpecLenStart + 1;
   p->tempBufSize = 0;
