@@ -1127,6 +1127,7 @@ SRes LzmaDec_AllocateProbs(CLzmaDec *p, const Byte *props, unsigned propsSize, I
   return SZ_OK;
 }
 
+#define LZMA_DIC_MAX (1 << 15)
 SRes LzmaDec_Allocate(CLzmaDec *p, const Byte *props, unsigned propsSize, ISzAllocPtr alloc)
 {
   CLzmaProps propNew;
@@ -1143,6 +1144,9 @@ SRes LzmaDec_Allocate(CLzmaDec *p, const Byte *props, unsigned propsSize, ISzAll
     if (dicBufSize < dictSize)
       dicBufSize = dictSize;
   }
+    if (dicBufSize > LZMA_DIC_MAX) {
+        dicBufSize = LZMA_DIC_MAX;
+    }
 
   if (!p->dic || dicBufSize != p->dicBufSize)
   {
