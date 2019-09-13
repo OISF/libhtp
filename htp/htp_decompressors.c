@@ -289,18 +289,24 @@ restart:
                 size_t inprocessed = drec->stream.avail_in;
                 size_t outprocessed = drec->stream.avail_out;
                 ELzmaStatus status;
-                rc = LzmaDec_DecodeToBuf(&drec->state, drec->stream.next_out, &outprocessed,
-                                         drec->stream.next_in, &inprocessed, LZMA_FINISH_ANY, &status, d->tx->cfg->lzma_upper_memlimit);
+                LzmaDec_DecodeToBuf(&drec->state, drec->stream.next_out, &outprocessed,
+                                    drec->stream.next_in, &inprocessed, LZMA_FINISH_ANY, &status, d->tx->cfg->lzma_upper_memlimit);
                 drec->stream.avail_in -= inprocessed;
                 drec->stream.next_in += inprocessed;
                 drec->stream.avail_out -= outprocessed;
                 drec->stream.next_out += outprocessed;
-                if (status == LZMA_STATUS_FINISHED_WITH_MARK) {
-                    rc = Z_STREAM_END;
-                } else if (rc == SZ_OK) {
-                    rc = Z_OK;
-                } else {
-                    rc = Z_DATA_ERROR;
+                switch (status) {
+                    case LZMA_STATUS_FINISHED_WITH_MARK:
+                        rc = Z_STREAM_END;
+                        break;
+                    case SZ_OK:
+                        rc = Z_OK;
+                        break;
+                    case SZ_ERROR_MEM:
+                        htp_log(d->tx->connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "LZMA decompressor: memory limit reached");
+                        // fall through
+                    default:
+                        rc = Z_DATA_ERROR;
                 }
             }
         } else if (drec->zlib_initialized) {
