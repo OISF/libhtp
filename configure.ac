@@ -261,6 +261,7 @@ AC_PREFIX_DEFAULT(/usr/local)
 AC_OUTPUT(Makefile \
           htp.pc \
           htp/Makefile \
+          htp/lzma/Makefile \
           test/Makefile \
           docs/Makefile
 )

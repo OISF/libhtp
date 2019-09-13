@@ -1,4 +1,6 @@
 
+SUBDIRS = lzma
+
 h_sources = bstr.h bstr_builder.h htp.h htp_base64.h htp_config.h htp_connection_parser.h \
     htp_core.h htp_decompressors.h htp_hooks.h htp_list.h \
     htp_multipart.h htp_table.h htp_transaction.h \
@@ -25,5 +27,5 @@ libhtp_c_la_SOURCES = $(h_sources) $(h_sources_private) $(c_sources)
 
 lib_LTLIBRARIES = libhtp.la
 libhtp_la_SOURCES =
-libhtp_la_LIBADD = libhtp-c.la
+libhtp_la_LIBADD = libhtp-c.la lzma/liblzma-c.la
 libhtp_la_LDFLAGS = -version-info $(GENERIC_LIBRARY_VERSION)
