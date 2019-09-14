@@ -290,7 +290,7 @@ restart:
                 size_t outprocessed = drec->stream.avail_out;
                 ELzmaStatus status;
                 rc = LzmaDec_DecodeToBuf(&drec->state, drec->stream.next_out, &outprocessed,
-                                          drec->stream.next_in, &inprocessed, LZMA_FINISH_ANY, &status, d->tx->cfg->lzma_upper_memlimit);
+                                          drec->stream.next_in, &inprocessed, LZMA_FINISH_ANY, &status, d->tx->cfg->lzma_memlimit);
                 drec->stream.avail_in -= inprocessed;
                 drec->stream.next_in += inprocessed;
                 drec->stream.avail_out -= outprocessed;
