@@ -311,6 +311,9 @@ restart:
             }
         } else if (drec->zlib_initialized) {
             rc = inflate(&drec->stream, Z_NO_FLUSH);
+        } else {
+            // no initialization means previous error on stream
+            return HTP_ERROR;
         }
         if (GZIP_BUF_SIZE > drec->stream.avail_out) {
             if (rc == Z_DATA_ERROR) {
