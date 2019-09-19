@@ -439,7 +439,12 @@ htp_decompressor_t *htp_gzip_decompressor_create(htp_connp_t *connp, enum htp_co
 
     switch (format) {
         case HTP_COMPRESSION_LZMA:
-            LzmaDec_Construct(&drec->state);
+            if (connp->cfg->lzma_memlimit > 0) {
+                LzmaDec_Construct(&drec->state);
+            } else {
+                htp_log(connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "LZMA decompression disabled");
+                drec->passthrough = 1;
+            }
             rc = Z_OK;
             break;
         case HTP_COMPRESSION_DEFLATE:
