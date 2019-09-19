@@ -79,6 +79,9 @@ extern "C" {
 
 // 1048576 is 1 Mbyte
 #define HTP_LZMA_MEMLIMIT                   1048576
+//deflate max ratio is about 1000
+#define HTP_COMPRESSION_BOMB_RATIO          4096
+#define HTP_COMPRESSION_BOMB_LIMIT          1048576
 
 #define HTP_FIELD_LIMIT_HARD               18000
 #define HTP_FIELD_LIMIT_SOFT               9000

@@ -789,6 +789,13 @@ static htp_status_t htp_tx_res_process_body_data_decompressor_callback(htp_tx_da
     // Invoke all callbacks.
     htp_status_t rc = htp_res_run_hook_body_data(d->tx->connp, d);
     if (rc != HTP_OK) return HTP_ERROR;
+    if (d->tx->response_entity_len > d->tx->connp->cfg->compression_bomb_limit &&
+        d->tx->response_entity_len > HTP_COMPRESSION_BOMB_RATIO * d->tx->response_message_len) {
+        htp_log(d->tx->connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
+                "Compression bomb: decompressed %d bytes out of %d",
+                d->tx->response_entity_len, d->tx->response_message_len);
+        return HTP_ERROR;
+    }
 
     return HTP_OK;
 }
