@@ -435,6 +435,14 @@ void htp_config_set_field_limits(htp_cfg_t *cfg, size_t soft_limit, size_t hard_
 void htp_config_set_lzma_memlimit(htp_cfg_t *cfg, size_t memlimit);
 
 /**
+ * Configures the maximum compression bomb size LibHTP will decompress.
+ *
+ * @param[in] cfg
+ * @param[in] bomblimit
+ */
+void htp_config_set_compression_bomb_limit(htp_cfg_t *cfg, size_t bomblimit);
+
+/**
  * Configures the desired log level.
  * 
  * @param[in] cfg
