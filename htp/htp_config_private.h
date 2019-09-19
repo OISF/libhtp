@@ -345,6 +345,9 @@ struct htp_cfg_t {
 
     /** max memory use by a the lzma decompressor. */
     size_t lzma_memlimit;
+
+    /** max output size for a compression bomb. */
+    size_t compression_bomb_limit;
 };
 
 #ifdef	__cplusplus
