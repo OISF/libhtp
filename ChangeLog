@@ -1,3 +1,12 @@
+0.5.31 (24 September 2019)
+--------------------------
+
+- various improvements related to 'HTTP Evader'
+
+- various fixes for issues found by oss-fuzz
+
+- adds optional LZMA decompression
+
 0.5.30 (07 March 2019)
 ----------------------
 
