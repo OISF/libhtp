@@ -9,14 +9,23 @@ AM_CPPFLAGS = -I$(top_srcdir) -I$(top_builddir)/htp -Wno-write-strings -DGTEST_U
 
 AUTOMAKE_OPTIONS = subdir-objects
 EXTRA_DIST = files
-check_PROGRAMS = test_all test_fuzz
+check_PROGRAMS = test_all
+if BUILD_FUZZTARGETS
+    check_PROGRAMS += fuzz_htp
+endif
 check_LIBRARIES = libgtest.a
 
 test_all_SOURCES = test_bstr.cpp test_gunzip.cpp test_hybrid.cpp test_main.cpp test_multipart.cpp test.c test.h test_utils.cpp test_bench.cpp
 test_all_LDADD = libgtest.a -lpthread $(LDADD)
 
-test_fuzz_SOURCES = fuzz/onefile.c fuzz/fuzz_htp.c fuzz/fuzz_htp.h test.c
-test_fuzz_LDADD = $(LDADD)
+fuzz_htp_SOURCES = fuzz/fuzz_htp.c fuzz/fuzz_htp.h test.c
+# use static version of libhtp
+fuzz_htp_LDADD = $(top_builddir)/htp/.libs/libhtp.a -lz @LIBICONV@
+if HAS_FUZZLDFLAGS
+    fuzz_htp_LDFLAGS = $(LIB_FUZZING_ENGINE)
+else
+    fuzz_htp_SOURCES += fuzz/onefile.c
+endif
 
 libgtest_a_SOURCES = gtest/gtest-all.cc gtest/gtest_main.cc gtest/gtest.h
 
