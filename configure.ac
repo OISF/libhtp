@@ -76,6 +76,36 @@ if test "$enable_gcov" = "yes"; then
     echo "gcov support enabled"
 fi
 
+AC_ARG_ENABLE(fuzztargets,
+    AS_HELP_STRING([--enable-fuzztargets], [Enable fuzz targets]),[enable_fuzztargets=$enableval],[enable_fuzztargets=no])
+AM_CONDITIONAL([BUILD_FUZZTARGETS], [test "x$enable_fuzztargets" = "xyes"])
+AS_IF([test "x$enable_fuzztargets" = "xyes"], [
+    AS_IF([test "x$LIB_FUZZING_ENGINE" = "x"], [
+        LIB_FUZZING_ENGINE=-fsanitize=fuzzer
+        AC_SUBST(LIB_FUZZING_ENGINE)
+    ])
+    AC_LANG_PUSH(C++)
+    tmp_saved_flags=$CXXFLAGS
+    CXXFLAGS="$CXXFLAGS $LIB_FUZZING_ENGINE"
+    AC_MSG_CHECKING([whether $CXX accepts $LIB_FUZZING_ENGINE])
+    AC_LINK_IFELSE([AC_LANG_SOURCE([[
+#include <sys/types.h>
+extern "C" int LLVMFuzzerTestOneInput(const unsigned char *Data, size_t Size);
+extern "C" int LLVMFuzzerTestOneInput(const unsigned char *Data, size_t Size) {
+(void)Data;
+(void)Size;
+return 0;
+}
+    ]])],
+    [ AC_MSG_RESULT(yes)
+      has_sanitizefuzzer=yes],
+    [ AC_MSG_RESULT(no) ]
+    )
+    CXXFLAGS=$tmp_saved_flags
+    AC_LANG_POP()
+])
+
+AM_CONDITIONAL([HAS_FUZZLDFLAGS], [test "x$has_sanitizefuzzer" = "xyes"])
 CFLAGS="${CFLAGS} -O${OLEVEL}"
 CPPFLAGS="${CPPFLAGS} -O${OLEVEL}"
 

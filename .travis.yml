@@ -3,7 +3,9 @@ compiler:
   - gcc
   - clang
 # Change this to your needs
-script: sh autogen.sh && ./configure && make && make check && make distcheck
+script:
+  - sh autogen.sh && ./configure --enable-fuzztargets && make && make check && make distcheck
+  - if [ -n "$QA_FUZZIT" ]; then test/fuzzit.sh; fi
 before_install:
   - sudo apt-get update -qq
   - sudo apt-get install -y build-essential autoconf automake libtool zlib1g zlib1g-dev make 
@@ -11,14 +13,14 @@ before_install:
 matrix:
     include:
         - name: fuzza
-          env: CXX="clang++" ASAN_OPTIONS=detect_leaks=0 CXXFLAGS="-DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION -fsanitize=address" CFLAGS="-DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION -fsanitize=address" LDFLAGS="-fsanitize=address"
+          env: CXX="clang++" ASAN_OPTIONS=detect_leaks=0 CXXFLAGS="-DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION -fsanitize=address -fsanitize=fuzzer-no-link" CFLAGS="-DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION -fsanitize=address -fsanitize=fuzzer-no-link" LDFLAGS="-fsanitize=address" QA_FUZZIT=asan
           compiler: clang
           os: linux
         - name: fuzzm
-          env: CXX="clang++" CXXFLAGS="-DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION -fsanitize=memory" CFLAGS="-DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION -fsanitize=memory" LDFLAGS="-fsanitize=memory"
+          env: CXX="clang++" CXXFLAGS="-DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION -fsanitize=memory -fsanitize=fuzzer-no-link" CFLAGS="-DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION -fsanitize=memory -fsanitize=fuzzer-no-link" LDFLAGS="-fsanitize=memory" QA_FUZZIT=msan
           compiler: clang
           os: linux
         - name: fuzzu
-          env: CXX="clang++" CXXFLAGS="-DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION -fsanitize=undefined" CFLAGS="-DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION -fsanitize=undefined -fno-sanitize-recover=undefined,integer" LDFLAGS="-fsanitize=undefined"
+          env: CXX="clang++" CXXFLAGS="-DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION -fsanitize=undefined -fsanitize=fuzzer-no-link" CFLAGS="-DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION -fsanitize=undefined -fno-sanitize-recover=undefined,integer -fsanitize=fuzzer-no-link" LDFLAGS="-fsanitize=undefined" QA_FUZZIT=ubsan
           compiler: clang
           os: linux
