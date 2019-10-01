@@ -679,6 +679,29 @@ static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {
     rc = htp_hook_run_all(tx->connp->cfg->hook_request_headers, tx);
     if (rc != HTP_OK) return rc;
 
+    if (tx->connp->cfg->response_decompression_enabled) {
+        if ((tx->request_content_encoding == HTP_COMPRESSION_GZIP) ||
+            (tx->request_content_encoding == HTP_COMPRESSION_DEFLATE) ||
+            (tx->request_content_encoding == HTP_COMPRESSION_LZMA) ||
+            ce_multi_comp)
+        {
+            if (tx->connp->req_decompressor != NULL) {
+                htp_tx_req_destroy_decompressors(tx->connp);
+            }
+            /* normal case */
+            if (!ce_multi_comp) {
+                tx->connp->req_decompressor = htp_gzip_decompressor_create(tx->connp, tx->request_content_encoding);
+                if (tx->connp->req_decompressor == NULL) return HTP_ERROR;
+
+                tx->connp->req_decompressor->callback = htp_tx_req_process_body_data_decompressor_callback;
+
+                /* multiple ce value case */
+            } else {
+                //TODO
+            }
+        }
+    }
+
     // We cannot proceed if the request is invalid.
     if (tx->flags & HTP_REQUEST_INVALID) {
         return HTP_ERROR;
