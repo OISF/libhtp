@@ -319,6 +319,30 @@ static htp_status_t htp_tx_res_process_body_data_decompressor_callback(htp_tx_da
     return HTP_OK;
 }
 
+static htp_status_t htp_tx_req_process_body_data_decompressor_callback(htp_tx_data_t *d) {
+    if (d == NULL) return HTP_ERROR;
+
+    #if HTP_DEBUG
+    fprint_raw_data(stderr, __func__, d->data, d->len);
+    #endif
+
+    // Keep track of actual request body length.
+    d->tx->request_entity_len += d->len;
+
+    // Invoke all callbacks.
+    htp_status_t rc = htp_req_run_hook_body_data(d->tx->connp, d);
+    if (rc != HTP_OK) return HTP_ERROR;
+    if (d->tx->request_entity_len > d->tx->connp->cfg->compression_bomb_limit &&
+        d->tx->request_entity_len > HTP_COMPRESSION_BOMB_RATIO * d->tx->request_message_len) {
+        htp_log(d->tx->connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
+                "Compression bomb: decompressed %"PRId64" bytes out of %"PRId64,
+                d->tx->request_entity_len, d->tx->request_message_len);
+        return HTP_ERROR;
+    }
+
+    return HTP_OK;
+}
+
 htp_status_t htp_tx_req_add_param(htp_tx_t *tx, htp_param_t *param) {
     if ((tx == NULL) || (param == NULL)) return HTP_ERROR;
 
