@@ -694,6 +694,22 @@ htp_status_t htp_tx_req_process_body_data(htp_tx_t *tx, const void *data, size_t
     return htp_tx_req_process_body_data_ex(tx, data, len);
 }
 
+/** \internal
+ *
+ * Clean up decompressor(s).
+ *
+ * @param[in] tx
+ */
+static void htp_tx_req_destroy_decompressors(htp_connp_t *connp) {
+    htp_decompressor_t *comp = connp->req_decompressor;
+    while (comp) {
+        htp_decompressor_t *next = comp->next;
+        comp->destroy(comp);
+        comp = next;
+    }
+    connp->req_decompressor = NULL;
+}
+
 htp_status_t htp_tx_req_process_body_data_ex(htp_tx_t *tx, const void *data, size_t len) {
     if (tx == NULL) return HTP_ERROR;
 
@@ -882,7 +898,13 @@ htp_status_t htp_tx_res_set_headers_clear(htp_tx_t *tx) {
     return HTP_OK;
 }
 
-void htp_connp_destroy_decompressors(htp_connp_t *connp) {
+/** \internal
+ *
+ * Clean up decompressor(s).
+ *
+ * @param[in] tx
+ */
+static void htp_tx_res_destroy_decompressors(htp_connp_t *connp) {
     htp_decompressor_t *comp = connp->out_decompressor;
     while (comp) {
         htp_decompressor_t *next = comp->next;
@@ -892,14 +914,9 @@ void htp_connp_destroy_decompressors(htp_connp_t *connp) {
     connp->out_decompressor = NULL;
 }
 
-/** \internal
- *
- * Clean up decompressor(s).
- *
- * @param[in] tx
- */
-static void htp_tx_res_destroy_decompressors(htp_tx_t *tx) {
-    htp_connp_destroy_decompressors(tx->connp);
+void htp_connp_destroy_decompressors(htp_connp_t *connp) {
+    htp_tx_res_destroy_decompressors(connp);
+    htp_tx_req_destroy_decompressors(connp);
 }
 
 htp_status_t htp_tx_res_process_body_data(htp_tx_t *tx, const void *data, size_t len) {
@@ -941,7 +958,7 @@ htp_status_t htp_tx_res_process_body_data_ex(htp_tx_t *tx, const void *data, siz
 
             if (data == NULL) {
                 // Shut down the decompressor, if we used one.
-                htp_tx_res_destroy_decompressors(tx);
+                htp_tx_res_destroy_decompressors(tx->connp);
             }
             break;
 
@@ -1268,7 +1285,7 @@ htp_status_t htp_tx_state_response_headers(htp_tx_t *tx) {
          ce_multi_comp)
     {
         if (tx->connp->out_decompressor != NULL) {
-            htp_tx_res_destroy_decompressors(tx);
+            htp_tx_res_destroy_decompressors(tx->connp);
         }
 
         /* normal case */
