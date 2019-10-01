@@ -716,9 +716,6 @@ htp_status_t htp_tx_req_process_body_data_ex(htp_tx_t *tx, const void *data, siz
     // NULL data is allowed in this private function; it's
     // used to indicate the end of request body.
 
-    // Keep track of the body length.
-    tx->request_entity_len += len;
-
     // Send data to the callbacks.
 
     htp_tx_data_t d;
@@ -726,12 +723,49 @@ htp_status_t htp_tx_req_process_body_data_ex(htp_tx_t *tx, const void *data, siz
     d.data = (unsigned char *) data;
     d.len = len;
 
-    htp_status_t rc = htp_req_run_hook_body_data(tx->connp, &d);
-    if (rc != HTP_OK) {
-        htp_log(tx->connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Request body data callback returned error (%d)", rc);
-        return HTP_ERROR;
+    enum htp_content_encoding_t encoding_processing;
+    if (tx->connp->cfg->response_decompression_enabled) {
+        encoding_processing = tx->request_content_encoding;
+    } else {
+        encoding_processing = HTP_COMPRESSION_NONE;
     }
+    switch (encoding_processing) {
+        case HTP_COMPRESSION_NONE:
+            // When there's no decompression, request_entity_len.
+            // is identical to request_message_len.
+            tx->request_entity_len += d.len;
 
+            htp_status_t rc = htp_req_run_hook_body_data(tx->connp, &d);
+            if (rc != HTP_OK) {
+                htp_log(tx->connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Request body data callback returned error (%d)", rc);
+                return HTP_ERROR;
+            }
+            break;
+
+
+        case HTP_COMPRESSION_GZIP:
+        case HTP_COMPRESSION_DEFLATE:
+        case HTP_COMPRESSION_LZMA:
+            // In severe memory stress these could be NULL
+            if (tx->connp->req_decompressor == NULL || tx->connp->req_decompressor->decompress == NULL)
+                return HTP_ERROR;
+
+            // Send data buffer to the decompressor.
+            tx->connp->req_decompressor->decompress(tx->connp->req_decompressor, &d);
+
+            if (data == NULL) {
+                // Shut down the decompressor, if we used one.
+                htp_tx_req_destroy_decompressors(tx->connp);
+            }
+            break;
+
+        default:
+            // Internal error.
+            htp_log(tx->connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
+                "[Internal Error] Invalid tx->request_content_encoding value: %d",
+                tx->request_content_encoding);
+            return HTP_ERROR;
+    }
     return HTP_OK;
 }
 
