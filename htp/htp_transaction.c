@@ -476,6 +476,90 @@ static void htp_tx_req_destroy_decompressors(htp_connp_t *connp) {
     connp->req_decompressor = NULL;
 }
 
+static htp_status_t htp_tx_init_multi_decompressors(htp_header_t *ce, enum htp_content_encoding_t * encoding_processing, htp_status_t (*callback)(htp_tx_data_t *), htp_decompressor_t **decompressor, htp_tx_t *tx) {
+    int layers = 0;
+    htp_decompressor_t *comp = NULL;
+
+    uint8_t *tok = NULL;
+    size_t tok_len = 0;
+
+    uint8_t *input = bstr_ptr(ce->value);
+    size_t input_len = bstr_len(ce->value);
+
+#if HTP_DEBUG
+    fprintf(stderr, "INPUT %"PRIuMAX, (uintmax_t)input_len);
+    fprint_raw_data(stderr, __func__, input, input_len);
+#endif
+
+    while (input_len > 0 &&
+           get_token(input, input_len, ", ", &tok, &tok_len))
+    {
+#if HTP_DEBUG
+        fprintf(stderr, "TOKEN %"PRIuMAX, (uintmax_t)tok_len);
+        fprint_raw_data(stderr, __func__, tok, tok_len);
+#endif
+        enum htp_content_encoding_t cetype = HTP_COMPRESSION_NONE;
+
+        /* check depth limit (0 means no limit) */
+        if ((tx->connp->cfg->response_decompression_layer_limit != 0) &&
+            ((++layers) > tx->connp->cfg->response_decompression_layer_limit))
+        {
+            htp_log(tx->connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0,
+                    "Too many response content encoding layers");
+            break;
+        }
+
+        if (bstr_util_mem_index_of_c_nocase(tok, tok_len, "gzip") != -1) {
+            if (!(bstr_util_cmp_mem(tok, tok_len, "gzip", 4) == 0 ||
+                  bstr_util_cmp_mem(tok, tok_len, "x-gzip", 6) == 0)) {
+                htp_log(tx->connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0,
+                        "C-E gzip has abnormal value");
+            }
+            cetype = HTP_COMPRESSION_GZIP;
+        } else if (bstr_util_mem_index_of_c_nocase(tok, tok_len, "deflate") != -1) {
+            if (!(bstr_util_cmp_mem(tok, tok_len, "deflate", 7) == 0 ||
+                  bstr_util_cmp_mem(tok, tok_len, "x-deflate", 9) == 0)) {
+                htp_log(tx->connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0,
+                        "C-E deflate has abnormal value");
+            }
+            cetype = HTP_COMPRESSION_DEFLATE;
+        } else if (bstr_util_cmp_mem(tok, tok_len, "lzma", 4) == 0) {
+            cetype = HTP_COMPRESSION_LZMA;
+        } else if (bstr_util_cmp_mem(tok, tok_len, "inflate", 7) == 0) {
+            cetype = HTP_COMPRESSION_NONE;
+        } else {
+            // continue
+            htp_log(tx->connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0,
+                    "C-E unknown setting");
+        }
+
+        if (cetype != HTP_COMPRESSION_NONE) {
+            if (comp == NULL) {
+                *encoding_processing = cetype;
+                *decompressor = htp_gzip_decompressor_create(tx->connp, cetype);
+                if (*decompressor == NULL) {
+                    return HTP_ERROR;
+                }
+                (*decompressor)->callback = callback;
+                comp = *decompressor;
+            } else {
+                comp->next = htp_gzip_decompressor_create(tx->connp, cetype);
+                if (comp->next == NULL) {
+                    return HTP_ERROR;
+                }
+                comp->next->callback = callback;
+                comp = comp->next;
+            }
+        }
+
+        if ((tok_len + 1) >= input_len)
+        break;
+        input += (tok_len + 1);
+        input_len -= (tok_len + 1);
+    }
+    return HTP_OK;
+}
+
 static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {
     if (tx == NULL) return HTP_ERROR;
 
@@ -713,7 +797,8 @@ static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {
 
                 /* multiple ce value case */
             } else {
-                //TODO
+                rc = htp_tx_init_multi_decompressors(ce, &tx->request_content_encoding, htp_tx_req_process_body_data_decompressor_callback, &tx->connp->req_decompressor, tx);
+                if (rc != HTP_OK) return rc;
             }
         }
     }
@@ -1278,90 +1363,6 @@ htp_status_t htp_tx_state_response_complete_ex(htp_tx_t *tx, int hybrid_mode) {
 
     connp->out_state = htp_connp_RES_IDLE;
 
-    return HTP_OK;
-}
-
-static htp_status_t htp_tx_init_multi_decompressors(htp_header_t *ce, enum htp_content_encoding_t * encoding_processing, htp_status_t (*callback)(htp_tx_data_t *), htp_decompressor_t **decompressor, htp_tx_t *tx) {
-    int layers = 0;
-    htp_decompressor_t *comp = NULL;
-
-    uint8_t *tok = NULL;
-    size_t tok_len = 0;
-
-    uint8_t *input = bstr_ptr(ce->value);
-    size_t input_len = bstr_len(ce->value);
-
-#if HTP_DEBUG
-    fprintf(stderr, "INPUT %"PRIuMAX, (uintmax_t)input_len);
-    fprint_raw_data(stderr, __func__, input, input_len);
-#endif
-
-    while (input_len > 0 &&
-           get_token(input, input_len, ", ", &tok, &tok_len))
-    {
-#if HTP_DEBUG
-        fprintf(stderr, "TOKEN %"PRIuMAX, (uintmax_t)tok_len);
-        fprint_raw_data(stderr, __func__, tok, tok_len);
-#endif
-        enum htp_content_encoding_t cetype = HTP_COMPRESSION_NONE;
-
-        /* check depth limit (0 means no limit) */
-        if ((tx->connp->cfg->response_decompression_layer_limit != 0) &&
-            ((++layers) > tx->connp->cfg->response_decompression_layer_limit))
-        {
-            htp_log(tx->connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0,
-                    "Too many response content encoding layers");
-            break;
-        }
-
-        if (bstr_util_mem_index_of_c_nocase(tok, tok_len, "gzip") != -1) {
-            if (!(bstr_util_cmp_mem(tok, tok_len, "gzip", 4) == 0 ||
-                  bstr_util_cmp_mem(tok, tok_len, "x-gzip", 6) == 0)) {
-                htp_log(tx->connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0,
-                        "C-E gzip has abnormal value");
-            }
-            cetype = HTP_COMPRESSION_GZIP;
-        } else if (bstr_util_mem_index_of_c_nocase(tok, tok_len, "deflate") != -1) {
-            if (!(bstr_util_cmp_mem(tok, tok_len, "deflate", 7) == 0 ||
-                  bstr_util_cmp_mem(tok, tok_len, "x-deflate", 9) == 0)) {
-                htp_log(tx->connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0,
-                        "C-E deflate has abnormal value");
-            }
-            cetype = HTP_COMPRESSION_DEFLATE;
-        } else if (bstr_util_cmp_mem(tok, tok_len, "lzma", 4) == 0) {
-            cetype = HTP_COMPRESSION_LZMA;
-        } else if (bstr_util_cmp_mem(tok, tok_len, "inflate", 7) == 0) {
-            cetype = HTP_COMPRESSION_NONE;
-        } else {
-            // continue
-            htp_log(tx->connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0,
-                    "C-E unknown setting");
-        }
-
-        if (cetype != HTP_COMPRESSION_NONE) {
-            if (comp == NULL) {
-                *encoding_processing = cetype;
-                *decompressor = htp_gzip_decompressor_create(tx->connp, cetype);
-                if (*decompressor == NULL) {
-                    return HTP_ERROR;
-                }
-                (*decompressor)->callback = callback;
-                comp = *decompressor;
-            } else {
-                comp->next = htp_gzip_decompressor_create(tx->connp, cetype);
-                if (comp->next == NULL) {
-                    return HTP_ERROR;
-                }
-                comp->next->callback = callback;
-                comp = comp->next;
-            }
-        }
-
-        if ((tok_len + 1) >= input_len)
-        break;
-        input += (tok_len + 1);
-        input_len -= (tok_len + 1);
-    }
     return HTP_OK;
 }
 
