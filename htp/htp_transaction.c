@@ -238,6 +238,63 @@ void htp_tx_set_user_data(htp_tx_t *tx, void *user_data) {
     tx->user_data = user_data;
 }
 
+/**
+ *  @internal
+ *  @brief split input into tokens separated by "seps"
+ *  @param seps nul-terminated string: each character is a separator
+ */
+static int get_token(const unsigned char *in, size_t in_len, const char *seps,
+    unsigned char **ret_tok_ptr, size_t *ret_tok_len)
+{
+    #if HTP_DEBUG
+    fprintf(stderr, "INPUT %"PRIuMAX, (uintmax_t)in_len);
+    fprint_raw_data(stderr, __func__, in, in_len);
+    #endif
+
+    size_t i = 0;
+
+    /* skip leading 'separators' */
+    while (i < in_len)
+    {
+        int match = 0;
+        for (const char *s = seps; *s != '\0'; s++) {
+            if (in[i] == *s) {
+                match++;
+                break;
+            }
+        }
+        if (!match)
+            break;
+
+        i++;
+    }
+    if (i >= in_len)
+        return 0;
+
+    in += i;
+    in_len -= i;
+
+    #if HTP_DEBUG
+    fprintf(stderr, "INPUT (POST SEP STRIP) %"PRIuMAX, (uintmax_t)in_len);
+    fprint_raw_data(stderr, __func__, in, in_len);
+    #endif
+
+    for (i = 0; i < in_len; i++)
+    {
+        for (const char *s = seps; *s != '\0'; s++) {
+            if (in[i] == *s) {
+                *ret_tok_ptr = (unsigned char *)in;
+                *ret_tok_len = i;
+                return 1;
+            }
+        }
+    }
+
+    *ret_tok_ptr = (unsigned char *)in;
+    *ret_tok_len = in_len;
+    return 1;
+}
+
 htp_status_t htp_tx_req_add_param(htp_tx_t *tx, htp_param_t *param) {
     if ((tx == NULL) || (param == NULL)) return HTP_ERROR;
 
@@ -1103,63 +1160,6 @@ htp_status_t htp_tx_state_response_complete_ex(htp_tx_t *tx, int hybrid_mode) {
     connp->out_state = htp_connp_RES_IDLE;
 
     return HTP_OK;
-}
-
-/**
- *  @internal
- *  @brief split input into tokens separated by "seps"
- *  @param seps nul-terminated string: each character is a separator
- */
-static int get_token(const unsigned char *in, size_t in_len, const char *seps,
-    unsigned char **ret_tok_ptr, size_t *ret_tok_len)
-{
-    #if HTP_DEBUG
-    fprintf(stderr, "INPUT %"PRIuMAX, (uintmax_t)in_len);
-    fprint_raw_data(stderr, __func__, in, in_len);
-    #endif
-
-    size_t i = 0;
-
-    /* skip leading 'separators' */
-    while (i < in_len)
-    {
-        int match = 0;
-        for (const char *s = seps; *s != '\0'; s++) {
-            if (in[i] == *s) {
-                match++;
-                break;
-            }
-        }
-        if (!match)
-            break;
-
-        i++;
-    }
-    if (i >= in_len)
-        return 0;
-
-    in += i;
-    in_len -= i;
-
-    #if HTP_DEBUG
-    fprintf(stderr, "INPUT (POST SEP STRIP) %"PRIuMAX, (uintmax_t)in_len);
-    fprint_raw_data(stderr, __func__, in, in_len);
-    #endif
-
-    for (i = 0; i < in_len; i++)
-    {
-        for (const char *s = seps; *s != '\0'; s++) {
-            if (in[i] == *s) {
-                *ret_tok_ptr = (unsigned char *)in;
-                *ret_tok_len = i;
-                return 1;
-            }
-        }
-    }
-
-    *ret_tok_ptr = (unsigned char *)in;
-    *ret_tok_len = in_len;
-    return 1;
 }
 
 htp_status_t htp_tx_state_response_headers(htp_tx_t *tx) {
