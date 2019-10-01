@@ -650,6 +650,27 @@ static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {
         }
     }
 
+    int ce_multi_comp = 0;
+    tx->request_content_encoding = HTP_COMPRESSION_NONE;
+    htp_header_t *ce = htp_table_get_c(tx->request_headers, "content-encoding");
+    if (ce != NULL) {
+        /* fast paths: regular gzip and friends */
+        if ((bstr_cmp_c_nocasenorzero(ce->value, "gzip") == 0) ||
+            (bstr_cmp_c_nocasenorzero(ce->value, "x-gzip") == 0)) {
+            tx->request_content_encoding = HTP_COMPRESSION_GZIP;
+        } else if ((bstr_cmp_c_nocasenorzero(ce->value, "deflate") == 0) ||
+                   (bstr_cmp_c_nocasenorzero(ce->value, "x-deflate") == 0)) {
+            tx->request_content_encoding = HTP_COMPRESSION_DEFLATE;
+        } else if (bstr_cmp_c_nocasenorzero(ce->value, "lzma") == 0) {
+            tx->request_content_encoding = HTP_COMPRESSION_LZMA;
+        } else if (bstr_cmp_c_nocasenorzero(ce->value, "inflate") == 0) {
+            // ignore
+        } else if (tx->connp->cfg->response_decompression_enabled) {
+            /* exceptional cases: enter slow path */
+            ce_multi_comp = 1;
+        }
+    }
+
     // Finalize sending raw header data.
     rc = htp_connp_req_receiver_finalize_clear(tx->connp);
     if (rc != HTP_OK) return rc;
