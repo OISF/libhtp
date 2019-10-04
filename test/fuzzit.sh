@@ -13,8 +13,8 @@ fi
 
 FUZZIT_ARGS="--type ${FUZZING_TYPE} --branch ${FUZZIT_BRANCH} --revision ${TRAVIS_COMMIT}"
 
-wget -O fuzzit https://github.com/fuzzitdev/fuzzit/releases/download/v2.4.60/fuzzit_Linux_x86_64
+wget -q -O fuzzit https://github.com/fuzzitdev/fuzzit/releases/latest/download/fuzzit_Linux_x86_64
 chmod +x fuzzit
 set -x
-./fuzzit create job ${FUZZIT_ARGS} fuzz-htp-${QA_FUZZIT} ./test/fuzz_htp
+./fuzzit create job ${FUZZIT_ARGS} oisf-gh/fuzz-htp-${QA_FUZZIT} ./test/fuzz_htp
 set +x
