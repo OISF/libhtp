@@ -1070,21 +1070,49 @@ size_t htp_connp_res_data_consumed(htp_connp_t *connp) {
 }
 
 htp_status_t htp_connp_RES_FINALIZE(htp_connp_t *connp) {
-    int bytes_left = connp->out_current_len - connp->out_current_read_offset;
-    unsigned char * data = connp->out_current_data + connp->out_current_read_offset;
+    if (connp->out_status != HTP_STREAM_CLOSED) {
+        OUT_PEEK_NEXT(connp);
+        if (connp->out_next_byte == -1) {
+            return htp_tx_state_response_complete_ex(connp->out_tx, 0);
+        }
+        if (connp->out_next_byte != LF || connp->out_current_consume_offset >= connp->out_current_read_offset) {
+            for (;;) {//;i < max_read; i++) {
+                OUT_COPY_BYTE_OR_RETURN(connp);
+                // Have we reached the end of the line? For some reason
+                // we can't test after IN_COPY_BYTE_OR_RETURN */
+                if (connp->out_next_byte == LF)
+                    break;
+            }
+        }
+    }
+    size_t bytes_left;
+    unsigned char * data;
 
-    if (bytes_left > 0 &&
-        htp_treat_response_line_as_body(data, bytes_left)) {
+    if (htp_connp_res_consolidate_data(connp, &data, &bytes_left) != HTP_OK) {
+        return HTP_ERROR;
+    }
+#ifdef HTP_DEBUG
+    fprint_raw_data(stderr, "PROBING response finalize", data, bytes_left);
+#endif
+    if (bytes_left == 0) {
+        //closing
+        return htp_tx_state_response_complete_ex(connp->out_tx, 0);
+    }
+
+    if (htp_treat_response_line_as_body(data, bytes_left)) {
         // Interpret remaining bytes as body data
         htp_log(connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Unexpected response body");
-        connp->out_current_read_offset += bytes_left;
-        connp->out_current_consume_offset += bytes_left;
-        connp->out_stream_offset += bytes_left;
-        connp->out_body_data_left -= bytes_left;
         htp_status_t rc = htp_tx_res_process_body_data_ex(connp->out_tx, data, bytes_left);
+        htp_connp_res_clear_buffer(connp);
         return rc;
     }
 
+    //unread last end of line so that RES_LINE works
+    if (connp->out_current_read_offset < (int64_t)bytes_left) {
+        connp->out_current_read_offset=0;
+    } else {
+        connp->out_current_read_offset-=bytes_left;
+    }
     return htp_tx_state_response_complete_ex(connp->out_tx, 0 /* not hybrid mode */);
 }
 
@@ -1112,6 +1140,10 @@ htp_status_t htp_connp_RES_IDLE(htp_connp_t *connp) {
     connp->out_tx = htp_list_get(connp->conn->transactions, connp->out_next_tx_index);
     if (connp->out_tx == NULL) {
         htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Unable to match response to request");
+        // finalize dangling request waiting for next request or body
+        if (connp->in_state == htp_connp_REQ_FINALIZE) {
+            htp_tx_state_request_complete(connp->in_tx);
+        }
         connp->out_tx = htp_connp_tx_create(connp);
         if (connp->out_tx == NULL) {
             return HTP_ERROR;
