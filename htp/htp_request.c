@@ -828,39 +828,68 @@ htp_status_t htp_connp_REQ_LINE(htp_connp_t *connp) {
 }
 
 htp_status_t htp_connp_REQ_FINALIZE(htp_connp_t *connp) {
-    size_t bytes_left = connp->in_current_len - connp->in_current_read_offset;
-
-    if (bytes_left > 0) {
-        // If we have more bytes
-        // Either it is request pipelining
-        // Or we interpret it as body data
-        int64_t pos = connp->in_current_read_offset;
-        int64_t mstart = 0;
-        // skip past leading whitespace. IIS allows this
-        while ((pos < connp->in_current_len) && htp_is_space(connp->in_current_data[pos]))
-            pos++;
-        if (pos < connp->in_current_len) {
-            mstart = pos;
-            // The request method starts at the beginning of the
-            // line and ends with the first whitespace character.
-            while ((pos < connp->in_current_len) && (!htp_is_space(connp->in_current_data[pos])))
-                pos++;
-
-            int methodi = HTP_M_UNKNOWN;
-            bstr *method = bstr_dup_mem(connp->in_current_data + mstart, pos - mstart);
-            if (method) {
-                methodi = htp_convert_method_to_number(method);
-                bstr_free(method);
-            }
-            if (methodi == HTP_M_UNKNOWN) {
-                // Interpret remaining bytes as body data
-                htp_log(connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Unexpected request body");
-                connp->in_tx->request_progress = HTP_REQUEST_BODY;
-                connp->in_state = htp_connp_REQ_BODY_IDENTITY;
-                connp->in_body_data_left = bytes_left;
-                return HTP_OK;
+    if (connp->in_status != HTP_STREAM_CLOSED) {
+        IN_PEEK_NEXT(connp);
+        if (connp->in_next_byte == -1) {
+            return htp_tx_state_request_complete(connp->in_tx);
+        }
+        if (connp->in_next_byte != LF || connp->in_current_consume_offset >= connp->in_current_read_offset) {
+            for (;;) {//;i < max_read; i++) {
+                IN_COPY_BYTE_OR_RETURN(connp);
+                // Have we reached the end of the line? For some reason
+                // we can't test after IN_COPY_BYTE_OR_RETURN */
+                if (connp->in_next_byte == LF)
+                    break;
             }
         }
+    }
+
+    unsigned char *data;
+    size_t len;
+    if (htp_connp_req_consolidate_data(connp, &data, &len) != HTP_OK) {
+        return HTP_ERROR;
+    }
+#ifdef HTP_DEBUG
+    fprint_raw_data(stderr, "PROBING request finalize", data, len);
+#endif
+    if (len == 0) {
+        //closing
+        return htp_tx_state_request_complete(connp->in_tx);
+    }
+
+    size_t pos = 0;
+    size_t mstart = 0;
+    // skip past leading whitespace. IIS allows this
+    while ((pos < len) && htp_is_space(data[pos]))
+        pos++;
+    if (pos)
+        mstart = pos;
+    // The request method starts at the beginning of the
+    // line and ends with the first whitespace character.
+    while ((pos < len) && (!htp_is_space(data[pos])))
+        pos++;
+
+    if (pos > mstart) {
+        int methodi = HTP_M_UNKNOWN;
+        bstr *method = bstr_dup_mem(data + mstart, pos - mstart);
+        if (method) {
+            methodi = htp_convert_method_to_number(method);
+            bstr_free(method);
+        }
+        if (methodi == HTP_M_UNKNOWN) {
+            // Interpret remaining bytes as body data
+            htp_log(connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Unexpected request body");
+            htp_status_t rc = htp_tx_req_process_body_data_ex(connp->in_tx, data, len);
+            htp_connp_req_clear_buffer(connp);
+            return rc;
+        }
+    }
+    //else
+    //unread last end of line so that REQ_LINE works
+    if (connp->in_current_read_offset < (int64_t)len) {
+        connp->in_current_read_offset=0;
+    } else {
+        connp->in_current_read_offset-=len;
     }
     return htp_tx_state_request_complete(connp->in_tx);
 }
