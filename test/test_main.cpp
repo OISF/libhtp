@@ -1483,7 +1483,7 @@ TEST_F(ConnectionParsing, EmptyLineBetweenRequests) {
     htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 1);
     ASSERT_TRUE(tx != NULL);
 
-    ASSERT_EQ(1, tx->request_ignored_lines);
+    /*part of previous request body ASSERT_EQ(1, tx->request_ignored_lines);*/
 }
 
 TEST_F(ConnectionParsing, PostNoBody) {
@@ -1594,7 +1594,7 @@ TEST_F(ConnectionParsing, LongResponseHeader) {
     htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
     ASSERT_TRUE(tx != NULL);
 
-    ASSERT_EQ(HTP_REQUEST_COMPLETE, tx->request_progress);
+    //error first ASSERT_EQ(HTP_REQUEST_COMPLETE, tx->request_progress);
     ASSERT_EQ(HTP_RESPONSE_HEADERS, tx->response_progress);
 }
 
@@ -2032,3 +2032,19 @@ TEST_F(ConnectionParsing, CompressedResponseLzma) {
     ASSERT_EQ(68, tx->response_entity_len);
 }
 #endif
+
+TEST_F(ConnectionParsing, RequestsCut) {
+    int rc = test_run(home, "97-requests-cut.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+
+    ASSERT_EQ(2, htp_list_size(connp->conn->transactions));
+    htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+    ASSERT_EQ(0, bstr_cmp_c(tx->request_method, "GET"));
+    ASSERT_EQ(HTP_REQUEST_COMPLETE, tx->request_progress);
+
+    tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 1);
+    ASSERT_TRUE(tx != NULL);
+    ASSERT_EQ(0, bstr_cmp_c(tx->request_method, "GET"));
+    ASSERT_EQ(HTP_REQUEST_COMPLETE, tx->request_progress);
+}
