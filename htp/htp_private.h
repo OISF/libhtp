@@ -167,8 +167,6 @@ int htp_validate_hostname(bstr *hostname);
 int htp_parse_uri_hostport(htp_connp_t *connp, bstr *input, htp_uri_t *uri);
 int htp_normalize_parsed_uri(htp_tx_t *tx, htp_uri_t *parsed_uri_incomplete, htp_uri_t *parsed_uri);
 bstr *htp_normalize_hostname_inplace(bstr *input);
-void htp_replace_hostname(htp_connp_t *connp, htp_uri_t *parsed_uri, bstr *hostname);
-int htp_is_uri_unreserved(unsigned char c);
 
 int htp_decode_path_inplace(htp_tx_t *tx, bstr *path);
 
