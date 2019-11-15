@@ -1070,19 +1070,34 @@ size_t htp_connp_res_data_consumed(htp_connp_t *connp) {
 }
 
 htp_status_t htp_connp_RES_FINALIZE(htp_connp_t *connp) {
-    int bytes_left = connp->out_current_len - connp->out_current_read_offset;
-    unsigned char * data = connp->out_current_data + connp->out_current_read_offset;
+    if (connp->out_current_len > connp->out_current_read_offset) {
+        size_t bytes_left;
+        unsigned char * data;
 
-    if (bytes_left > 0 &&
-        htp_treat_response_line_as_body(data, bytes_left)) {
-        // Interpret remaining bytes as body data
-        htp_log(connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Unexpected response body");
-        connp->out_current_read_offset += bytes_left;
-        connp->out_current_consume_offset += bytes_left;
-        connp->out_stream_offset += bytes_left;
-        connp->out_body_data_left -= bytes_left;
-        htp_status_t rc = htp_tx_res_process_body_data_ex(connp->out_tx, data, bytes_left);
-        return rc;
+        if (connp->out_status == HTP_STREAM_CLOSED) {
+            return htp_tx_state_response_complete_ex(connp->out_tx, 0);
+        }
+        for (;;) {//;i < max_read; i++) {
+            OUT_COPY_BYTE_OR_RETURN(connp);
+            if (connp->out_next_byte == LF)
+                break;
+        }
+
+        if (htp_connp_res_consolidate_data(connp, &data, &bytes_left) != HTP_OK) {
+            return HTP_ERROR;
+        }
+        if (htp_treat_response_line_as_body(data, bytes_left)) {
+            // Interpret remaining bytes as body data
+            htp_log(connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Unexpected response body");
+            connp->out_current_consume_offset = connp->out_current_read_offset;
+            connp->out_body_data_left = 0;
+            htp_status_t rc = htp_tx_res_process_body_data_ex(connp->out_tx, data, bytes_left);
+            htp_connp_res_clear_buffer(connp);
+            return rc;
+        } else {
+            // reset read so that they get interpreted
+            connp->out_current_read_offset = connp->out_current_consume_offset;
+        }
     }
 
     return htp_tx_state_response_complete_ex(connp->out_tx, 0 /* not hybrid mode */);
