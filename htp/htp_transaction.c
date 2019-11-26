@@ -834,8 +834,21 @@ htp_status_t htp_tx_res_process_body_data_ex(htp_tx_t *tx, const void *data, siz
             if (tx->connp->out_decompressor == NULL || tx->connp->out_decompressor->decompress == NULL)
                 return HTP_ERROR;
 
+            struct timeval before, after, duration;
+            gettimeofday(&before, NULL);
             // Send data buffer to the decompressor.
             tx->connp->out_decompressor->decompress(tx->connp->out_decompressor, &d);
+            gettimeofday(&after, NULL);
+            //check for overflows ?
+            timersub(&after, &before, &duration);
+            timeradd(&tx->connp->out_decompressor->time_spent, &duration, &tx->connp->out_decompressor->time_spent);
+            if ( timercmp(&tx->connp->out_decompressor->time_spent, &tx->connp->cfg->compression_time_limit, >) ) {
+                htp_log(tx->connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
+                        "Compression bomb: spent %"PRId64"."PRId64" s decompressing",
+                        tx->connp->out_decompressor->time_spent.tv_sec,
+                        tx->connp->out_decompressor->time_spent.tv_usec);
+                return HTP_ERROR;
+            }
 
             if (data == NULL) {
                 // Shut down the decompressor, if we used one.

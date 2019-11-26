@@ -83,6 +83,9 @@ extern "C" {
 //deflate max ratio is about 1000
 #define HTP_COMPRESSION_BOMB_RATIO          2048
 #define HTP_COMPRESSION_BOMB_LIMIT          1048576
+// 1 second
+#define HTP_COMPRESSION_TIME_LIMIT_SEC      1
+#define HTP_COMPRESSION_TIME_LIMIT_USEC     0
 
 #define HTP_FIELD_LIMIT_HARD               18000
 #define HTP_FIELD_LIMIT_SOFT               9000
