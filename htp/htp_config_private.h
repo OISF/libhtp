@@ -348,6 +348,9 @@ struct htp_cfg_t {
 
     /** max output size for a compression bomb. */
     int32_t compression_bomb_limit;
+
+    /** max time for a decompression bomb. */
+    uint64_t compression_time_limit;
 };
 
 #ifdef	__cplusplus
