@@ -59,6 +59,9 @@ struct htp_decompressor_t {
     htp_status_t (*callback)(htp_tx_data_t *);
     void (*destroy)(htp_decompressor_t *);
     struct htp_decompressor_t *next;
+    struct timeval time_before;
+    int32_t time_spent;
+    uint32_t nb_callbacks;
 };
 
 struct htp_decompressor_gzip_t {

@@ -160,6 +160,7 @@ htp_cfg_t *htp_config_create(void) {
     cfg->response_decompression_layer_limit = 2; // 2 layers seem fairly common
     cfg->lzma_memlimit = HTP_LZMA_MEMLIMIT;
     cfg->compression_bomb_limit = HTP_COMPRESSION_BOMB_LIMIT;
+    cfg->compression_time_limit = HTP_COMPRESSION_TIME_LIMIT_USEC;
 
     // Default settings for URL-encoded data.
 
@@ -520,6 +521,16 @@ void htp_config_set_compression_bomb_limit(htp_cfg_t *cfg, size_t bomblimit) {
         cfg->compression_bomb_limit = INT32_MAX;
     } else {
         cfg->compression_bomb_limit = bomblimit;
+    }
+}
+
+void htp_config_set_compression_time_limit(htp_cfg_t *cfg, size_t useclimit) {
+    if (cfg == NULL) return;
+    // max limit is one second
+    if (useclimit >= 1000000) {
+        cfg->compression_time_limit = 1000000;
+    } else {
+        cfg->compression_time_limit = useclimit;
     }
 }
 
