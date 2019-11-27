@@ -634,6 +634,10 @@ htp_status_t htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
         // We have a response body
         htp_header_t *ct = htp_table_get_c(connp->out_tx->response_headers, "content-type");
         if (ct != NULL) {
+            if (connp->out_tx->response_content_type) {
+                bstr_free(connp->out_tx->response_content_type);
+            }
+
             connp->out_tx->response_content_type = bstr_dup_lower(ct->value);
             if (connp->out_tx->response_content_type == NULL) return HTP_ERROR;
 
