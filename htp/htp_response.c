@@ -1116,6 +1116,10 @@ htp_status_t htp_connp_RES_IDLE(htp_connp_t *connp) {
         if (connp->out_tx == NULL) {
             return HTP_ERROR;
         }
+        // Creating a tx instance automatically assigns it to in_tx. Clear it to avoid it
+        // being used out of context
+        connp->in_tx = NULL;
+
         connp->out_tx->parsed_uri = htp_uri_alloc();
         if (connp->out_tx->parsed_uri == NULL) {
             return HTP_ERROR;
