@@ -242,7 +242,7 @@ protected:
  */
 TEST_F(HybridParsing, GetTest) {
     // Create a new LibHTP transaction
-    htp_tx_t *tx = htp_connp_tx_create(connp);
+    htp_tx_t *tx = connp->in_tx =htp_connp_tx_create(connp);
     ASSERT_TRUE(tx != NULL);
 
     // Configure user data and callbacks
@@ -394,7 +394,7 @@ TEST_F(HybridParsing, GetTest) {
  */
 TEST_F(HybridParsing, PostUrlecodedTest) {
     // Create a new LibHTP transaction
-    htp_tx_t *tx = htp_connp_tx_create(connp);
+    htp_tx_t *tx = connp->in_tx = htp_connp_tx_create(connp);
     ASSERT_TRUE(tx != NULL);
 
     // Request begins
@@ -504,7 +504,7 @@ static void HybridParsing_CompressedResponse_Setup(htp_tx_t *tx) {
  */
 TEST_F(HybridParsing, CompressedResponse) {
     // Create a new LibHTP transaction
-    htp_tx_t *tx = htp_connp_tx_create(connp);
+    htp_tx_t *tx = connp->in_tx = htp_connp_tx_create(connp);
     ASSERT_TRUE(tx != NULL);
 
     HybridParsing_CompressedResponse_Setup(tx);
@@ -521,7 +521,7 @@ TEST_F(HybridParsing, CompressedResponseNoDecompression) {
     htp_config_set_response_decompression(cfg, 0);
 
     // Create a new LibHTP transaction
-    htp_tx_t *tx = htp_connp_tx_create(connp);
+    htp_tx_t *tx = connp->in_tx = htp_connp_tx_create(connp);
     ASSERT_TRUE(tx != NULL);
 
     HybridParsing_CompressedResponse_Setup(tx);
@@ -546,7 +546,7 @@ TEST_F(HybridParsing, ForcedDecompression) {
     htp_config_register_response_headers(cfg, HybridParsing_ForcedDecompressionTest_Callback_RESPONSE_HEADERS);
 
     // Create a new LibHTP transaction
-    htp_tx_t *tx = htp_connp_tx_create(connp);
+    htp_tx_t *tx = connp->in_tx = htp_connp_tx_create(connp);
     ASSERT_TRUE(tx != NULL);
 
     HybridParsing_CompressedResponse_Setup(tx);
@@ -571,7 +571,7 @@ TEST_F(HybridParsing, DisableDecompression) {
     htp_config_register_response_headers(cfg, HybridParsing_DisableDecompressionTest_Callback_RESPONSE_HEADERS);
 
     // Create a new LibHTP transaction
-    htp_tx_t *tx = htp_connp_tx_create(connp);
+    htp_tx_t *tx = connp->in_tx = htp_connp_tx_create(connp);
     ASSERT_TRUE(tx != NULL);
 
     HybridParsing_CompressedResponse_Setup(tx);
@@ -582,7 +582,7 @@ TEST_F(HybridParsing, DisableDecompression) {
 
 TEST_F(HybridParsing, ParamCaseSensitivity) {
     // Create a new LibHTP transaction
-    htp_tx_t *tx = htp_connp_tx_create(connp);
+    htp_tx_t *tx = connp->in_tx = htp_connp_tx_create(connp);
     ASSERT_TRUE(tx != NULL);
 
     // Request begins
@@ -628,7 +628,7 @@ TEST_F(HybridParsing, ParamCaseSensitivity) {
  */
 TEST_F(HybridParsing, PostUrlecodedChunked) {
     // Create a new LibHTP transaction.
-    htp_tx_t *tx = htp_connp_tx_create(connp);
+    htp_tx_t *tx = connp->in_tx = htp_connp_tx_create(connp);
     ASSERT_TRUE(tx != NULL);
 
     // Request begins.
@@ -672,7 +672,7 @@ TEST_F(HybridParsing, PostUrlecodedChunked) {
 
 TEST_F(HybridParsing, RequestLineParsing1) {
     // Create a new LibHTP transaction
-    htp_tx_t *tx = htp_connp_tx_create(connp);
+    htp_tx_t *tx = connp->in_tx = htp_connp_tx_create(connp);
     ASSERT_TRUE(tx != NULL);
 
     // Request begins
@@ -702,7 +702,7 @@ TEST_F(HybridParsing, RequestLineParsing1) {
 }
 
 TEST_F(HybridParsing, RequestLineParsing2) {
-    htp_tx_t *tx = htp_connp_tx_create(connp);
+    htp_tx_t *tx = connp->in_tx = htp_connp_tx_create(connp);
     ASSERT_TRUE(tx != NULL);
 
     // Feed data to the parser.
@@ -721,7 +721,7 @@ TEST_F(HybridParsing, RequestLineParsing2) {
 }
 
 TEST_F(HybridParsing, ParsedUriSupplied) {
-    htp_tx_t *tx = htp_connp_tx_create(connp);
+    htp_tx_t *tx = connp->in_tx = htp_connp_tx_create(connp);
     ASSERT_TRUE(tx != NULL);
 
     // Feed data to the parser.
@@ -775,7 +775,7 @@ protected:
 TEST_F(HybridParsing, TestRepeatCallbacks)
 {
     // Create a new LibHTP transaction
-    htp_tx_t *tx = htp_connp_tx_create(connp);
+    htp_tx_t *tx = connp->in_tx = htp_connp_tx_create(connp);
     ASSERT_TRUE(tx != NULL);
 
     // Configure user data and callbacks
@@ -857,7 +857,7 @@ TEST_F(HybridParsing, TestRepeatCallbacks)
 TEST_F(HybridParsing, DeleteTransactionBeforeComplete)
 {
     // Create a new LibHTP transaction
-    htp_tx_t *tx = htp_connp_tx_create(connp);
+    htp_tx_t *tx = connp->in_tx = htp_connp_tx_create(connp);
     ASSERT_TRUE(tx != NULL);
 
     // Request begins
