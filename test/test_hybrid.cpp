@@ -242,7 +242,7 @@ protected:
  */
 TEST_F(HybridParsing, GetTest) {
     // Create a new LibHTP transaction
-    htp_tx_t *tx = connp->in_tx =htp_connp_tx_create(connp);
+    htp_tx_t *tx = connp->in_tx = htp_connp_tx_create(connp);
     ASSERT_TRUE(tx != NULL);
 
     // Configure user data and callbacks
