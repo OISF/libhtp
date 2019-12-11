@@ -1110,8 +1110,10 @@ htp_status_t htp_connp_RES_FINALIZE(htp_connp_t *connp) {
     //unread last end of line so that RES_LINE works
     if (connp->out_current_read_offset < (int64_t)bytes_left) {
         connp->out_current_read_offset=0;
+        connp->out_current_consume_offset=0;
     } else {
         connp->out_current_read_offset-=bytes_left;
+        connp->out_current_consume_offset-=bytes_left;
     }
     return htp_tx_state_response_complete_ex(connp->out_tx, 0 /* not hybrid mode */);
 }
