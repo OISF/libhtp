@@ -57,6 +57,7 @@ void htp_connp_clear_error(htp_connp_t *connp);
  * @param[in] timestamp Optional.
  */
 void htp_connp_close(htp_connp_t *connp, const htp_time_t *timestamp);
+void htp_connp_req_close(htp_connp_t *connp, const htp_time_t *timestamp);
 
 /**
  * Creates a new connection parser using the provided configuration. Because

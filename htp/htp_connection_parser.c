@@ -44,6 +44,18 @@ void htp_connp_clear_error(htp_connp_t *connp) {
     connp->last_error = NULL;
 }
 
+void htp_connp_req_close(htp_connp_t *connp, const htp_time_t *timestamp) {
+    if (connp == NULL) return;
+    
+    // Update internal flags
+    if (connp->in_status != HTP_STREAM_ERROR)
+        connp->in_status = HTP_STREAM_CLOSED;
+
+    // Call the parsers one last time, which will allow them
+    // to process the events that depend on stream closure
+    htp_connp_req_data(connp, timestamp, NULL, 0);
+}
+
 void htp_connp_close(htp_connp_t *connp, const htp_time_t *timestamp) {
     if (connp == NULL) return;
     
