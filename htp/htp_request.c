@@ -891,6 +891,10 @@ htp_status_t htp_connp_REQ_FINALIZE(htp_connp_t *connp) {
     } else {
         connp->in_current_read_offset-=len;
     }
+    if (connp->in_current_read_offset < connp->in_current_consume_offset) {
+        connp->in_current_consume_offset=connp->in_current_read_offset;
+    }
+
     return htp_tx_state_request_complete(connp->in_tx);
 }
 

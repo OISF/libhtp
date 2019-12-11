@@ -1113,6 +1113,9 @@ htp_status_t htp_connp_RES_FINALIZE(htp_connp_t *connp) {
     } else {
         connp->out_current_read_offset-=bytes_left;
     }
+    if (connp->out_current_read_offset < connp->out_current_consume_offset) {
+        connp->out_current_consume_offset=connp->out_current_read_offset;
+    }
     return htp_tx_state_response_complete_ex(connp->out_tx, 0 /* not hybrid mode */);
 }
 
