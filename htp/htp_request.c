@@ -888,8 +888,10 @@ htp_status_t htp_connp_REQ_FINALIZE(htp_connp_t *connp) {
     //unread last end of line so that REQ_LINE works
     if (connp->in_current_read_offset < (int64_t)len) {
         connp->in_current_read_offset=0;
+        connp->in_current_consume_offset=0;
     } else {
         connp->in_current_read_offset-=len;
+        connp->in_current_consume_offset-=len;
     }
     return htp_tx_state_request_complete(connp->in_tx);
 }
