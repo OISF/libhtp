@@ -85,6 +85,8 @@ extern "C" {
 #define HTP_COMPRESSION_BOMB_LIMIT          1048576
 // 0.1 second
 #define HTP_COMPRESSION_TIME_LIMIT_USEC     100000
+// test time for compression every 256 callbacks
+#define HTP_COMPRESSION_TIME_FREQ_TEST      256
 
 #define HTP_FIELD_LIMIT_HARD               18000
 #define HTP_FIELD_LIMIT_SOFT               9000

@@ -789,6 +789,25 @@ static htp_status_t htp_tx_res_process_body_data_decompressor_callback(htp_tx_da
     // Invoke all callbacks.
     htp_status_t rc = htp_res_run_hook_body_data(d->tx->connp, d);
     if (rc != HTP_OK) return HTP_ERROR;
+    d->tx->connp->out_decompressor->nb_callbacks++;
+    if (d->tx->connp->out_decompressor->nb_callbacks % HTP_COMPRESSION_TIME_FREQ_TEST == 0) {
+        struct timeval after, duration;
+        gettimeofday(&after, NULL);
+        // sanity check for race condition if system time changed
+        if ( timercmp(&after, &d->tx->connp->out_decompressor->time_before, >) ) {
+            timersub(&after, &d->tx->connp->out_decompressor->time_before, &duration);
+            timeradd(&d->tx->connp->out_decompressor->time_spent, &duration, &d->tx->connp->out_decompressor->time_spent);
+            d->tx->connp->out_decompressor->time_before = after;
+            if ( timercmp(&d->tx->connp->out_decompressor->time_spent, &d->tx->connp->cfg->compression_time_limit, >) ) {
+                htp_log(d->tx->connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
+                        "Compression bomb: spent %"PRId64"s and "PRId64" us decompressing",
+                        d->tx->connp->out_decompressor->time_spent.tv_sec,
+                        d->tx->connp->out_decompressor->time_spent.tv_usec);
+                return HTP_ERROR;
+            }
+        }
+
+    }
     if (d->tx->response_entity_len > d->tx->connp->cfg->compression_bomb_limit &&
         d->tx->response_entity_len > HTP_COMPRESSION_BOMB_RATIO * d->tx->response_message_len) {
         htp_log(d->tx->connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
@@ -834,14 +853,15 @@ htp_status_t htp_tx_res_process_body_data_ex(htp_tx_t *tx, const void *data, siz
             if (tx->connp->out_decompressor == NULL || tx->connp->out_decompressor->decompress == NULL)
                 return HTP_ERROR;
 
-            struct timeval before, after, duration;
-            gettimeofday(&before, NULL);
+            struct timeval after, duration;
+            gettimeofday(&tx->connp->out_decompressor->time_before, NULL);
             // Send data buffer to the decompressor.
+            tx->connp->out_decompressor->nb_callbacks=0;
             tx->connp->out_decompressor->decompress(tx->connp->out_decompressor, &d);
             gettimeofday(&after, NULL);
             // sanity check for race condition if system time changed
-            if ( timercmp(&after, &before, >) ) {
-                timersub(&after, &before, &duration);
+            if ( timercmp(&after, &tx->connp->out_decompressor->time_before, >) ) {
+                timersub(&after, &tx->connp->out_decompressor->time_before, &duration);
                 timeradd(&tx->connp->out_decompressor->time_spent, &duration, &tx->connp->out_decompressor->time_spent);
                 if ( timercmp(&tx->connp->out_decompressor->time_spent, &tx->connp->cfg->compression_time_limit, >) ) {
                     htp_log(tx->connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
