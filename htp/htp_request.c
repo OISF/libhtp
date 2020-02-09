@@ -929,6 +929,13 @@ htp_status_t htp_connp_REQ_IDLE(htp_connp_t * connp) {
     // connection.
     IN_TEST_NEXT_BYTE_OR_RETURN(connp);
 
+    // If there is only CRLF left, we just unread last end of line so that REQ_LINE works.
+    // Need more data before starting a new request.
+    if (connp->in_current_read_offset + 2 == connp->in_current_len &&
+        connp->in_current_data[connp->in_current_read_offset] == CR &&
+        connp->in_current_data[connp->in_current_read_offset + 1] == LF)
+        return HTP_DATA;
+
     connp->in_tx = htp_connp_tx_create(connp);
     if (connp->in_tx == NULL) return HTP_ERROR;
 
