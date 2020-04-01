@@ -869,7 +869,12 @@ htp_status_t htp_connp_REQ_FINALIZE(htp_connp_t *connp) {
     while ((pos < len) && (!htp_is_space(data[pos])))
         pos++;
 
-    if (pos > mstart) {
+    if (pos <= mstart) {
+        //empty whitespace line
+        htp_status_t rc = htp_tx_req_process_body_data_ex(connp->in_tx, data, len);
+        htp_connp_req_clear_buffer(connp);
+        return rc;
+    } else {
         int methodi = HTP_M_UNKNOWN;
         bstr *method = bstr_dup_mem(data + mstart, pos - mstart);
         if (method) {
@@ -882,9 +887,8 @@ htp_status_t htp_connp_REQ_FINALIZE(htp_connp_t *connp) {
             htp_status_t rc = htp_tx_req_process_body_data_ex(connp->in_tx, data, len);
             htp_connp_req_clear_buffer(connp);
             return rc;
-        }
+        } // else continue
     }
-    //else
     //unread last end of line so that REQ_LINE works
     if (connp->in_current_read_offset < (int64_t)len) {
         connp->in_current_read_offset=0;
