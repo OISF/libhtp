@@ -826,8 +826,13 @@ htp_status_t htp_connp_RES_HEADERS(htp_connp_t *connp) {
             fprint_raw_data(stderr, __func__, data, len);
             #endif
 
+            int next_no_lf = 0;
+            if (connp->out_current_read_offset < connp->out_current_len &&
+                connp->out_current_data[connp->out_current_read_offset] != LF) {
+                next_no_lf = 1;
+            }
             // Should we terminate headers?
-            if (htp_connp_is_line_terminator(connp, data, len)) {
+            if (htp_connp_is_line_terminator(connp, data, len, next_no_lf)) {
                 // Parse previous header, if any.
                 if (connp->out_header != NULL) {
                     if (connp->cfg->process_response_header(connp, bstr_ptr(connp->out_header),

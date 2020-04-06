@@ -647,7 +647,7 @@ htp_status_t htp_connp_REQ_HEADERS(htp_connp_t *connp) {
             #endif           
 
             // Should we terminate headers?
-            if (htp_connp_is_line_terminator(connp, data, len)) {
+            if (htp_connp_is_line_terminator(connp, data, len, 0)) {
                 // Parse previous header, if any.
                 if (connp->in_header != NULL) {
                     if (connp->cfg->process_request_header(connp, bstr_ptr(connp->in_header),

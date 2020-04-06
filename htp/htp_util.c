@@ -464,7 +464,7 @@ int htp_is_folding_char(int c) {
  * @param[in] len
  * @return 0 or 1
  */
-int htp_connp_is_line_terminator(htp_connp_t *connp, unsigned char *data, size_t len) {
+int htp_connp_is_line_terminator(htp_connp_t *connp, unsigned char *data, size_t len, int next_no_lf) {
     // Is this the end of request headers?
     switch (connp->cfg->server_personality) {
         case HTP_SERVER_IIS_5_1:
@@ -481,10 +481,7 @@ int htp_connp_is_line_terminator(htp_connp_t *connp, unsigned char *data, size_t
             }
             // Only space is terminator if terminator does not follow right away
             if (len == 2 && htp_is_lws(data[0]) && data[1] == LF) {
-                if (connp->out_current_read_offset < connp->out_current_len &&
-                    connp->out_current_data[connp->out_current_read_offset] != LF) {
-                    return 1;
-                }
+                return next_no_lf;
             }
             break;
     }
@@ -501,7 +498,7 @@ int htp_connp_is_line_terminator(htp_connp_t *connp, unsigned char *data, size_t
  * @return 0 or 1
  */
 int htp_connp_is_line_ignorable(htp_connp_t *connp, unsigned char *data, size_t len) {
-    return htp_connp_is_line_terminator(connp, data, len);
+    return htp_connp_is_line_terminator(connp, data, len, 0);
 }
 
 static htp_status_t htp_parse_port(unsigned char *data, size_t len, int *port, int *invalid) {

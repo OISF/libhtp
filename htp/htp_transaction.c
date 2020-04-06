@@ -1394,7 +1394,8 @@ htp_status_t htp_tx_state_response_start(htp_tx_t *tx) {
     if (tx->request_method == HTP_M_UNKNOWN && tx->request_uri == NULL && tx->connp->in_state == htp_connp_REQ_LINE) {
         htp_log(tx->connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Request line incomplete");
 
-        if (htp_connp_REQ_LINE_complete(tx->connp) != HTP_OK) {
+        // if we have some bufferized data, extract what we can out of it
+        if (tx->connp->in_buf != NULL && htp_connp_REQ_LINE_complete(tx->connp) != HTP_OK) {
             return HTP_ERROR;
         }
     }

@@ -161,7 +161,7 @@ int htp_is_line_whitespace(unsigned char *data, size_t len);
 
 int htp_connp_is_line_folded(unsigned char *data, size_t len);
 int htp_is_folding_char(int c);
-int htp_connp_is_line_terminator(htp_connp_t *connp, unsigned char *data, size_t len);
+int htp_connp_is_line_terminator(htp_connp_t *connp, unsigned char *data, size_t len, int next_no_lf);
 int htp_connp_is_line_ignorable(htp_connp_t *connp, unsigned char *data, size_t len);
 
 int htp_parse_uri(bstr *input, htp_uri_t **uri);
