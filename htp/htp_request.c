@@ -816,6 +816,10 @@ htp_status_t htp_connp_REQ_LINE_complete(htp_connp_t *connp) {
 htp_status_t htp_connp_REQ_LINE(htp_connp_t *connp) {
     for (;;) {
         // Get one byte
+        IN_PEEK_NEXT(connp);
+        if (connp->in_status == HTP_STREAM_CLOSED && connp->in_next_byte == -1) {
+            return htp_connp_REQ_LINE_complete(connp);
+        }
         IN_COPY_BYTE_OR_RETURN(connp);
 
         // Have we reached the end of the line?
