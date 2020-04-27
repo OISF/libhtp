@@ -1,3 +1,12 @@
+0.5.33 (27 April 2020)
+----------------------
+
+- compression bomb protection
+
+- memory handling issue found by Oss-Fuzz
+
+- improve handling of anomalies in traffic
+
 0.5.32 (13 December 2019)
 --------------------------
 
