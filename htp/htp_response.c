@@ -1228,7 +1228,7 @@ int htp_connp_res_data(htp_connp_t *connp, const htp_time_t *timestamp, const vo
     // only if the stream has been closed. We do not allow zero-sized
     // chunks in the API, but we use it internally to force the parsers
     // to finalize parsing.
-    if (((data == NULL) || (len == 0)) && (connp->out_status != HTP_STREAM_CLOSED)) {
+    if (len == 0 && connp->out_status != HTP_STREAM_CLOSED) {
         htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Zero-length data chunks are not allowed");
 
         #ifdef HTP_DEBUG
@@ -1277,7 +1277,23 @@ int htp_connp_res_data(htp_connp_t *connp, const htp_time_t *timestamp, const vo
         // or if we've run out of data. We are relying
         // on processors to add error messages, so we'll
         // keep quiet here.
-        htp_status_t rc = connp->out_state(connp);
+        htp_status_t rc;
+
+        //handle gap
+        if (data == NULL) {
+            if (connp->out_state == htp_connp_RES_BODY_IDENTITY_CL_KNOWN ||
+                connp->out_state == htp_connp_RES_BODY_IDENTITY_STREAM_CLOSE ||
+                connp->out_state == htp_connp_RES_BODY_CHUNKED_DATA) {
+                rc = connp->out_state(connp);
+            } else if (connp->out_state == htp_connp_RES_FINALIZE) {
+                rc = htp_tx_state_response_complete_ex(connp->out_tx, 0);
+            } else {
+                htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Gaps are not allowed during this state");
+                return HTP_STREAM_CLOSED;
+            }
+        } else {
+            rc = connp->out_state(connp);
+        }
         if (rc == HTP_OK) {
             if (connp->out_status == HTP_STREAM_TUNNEL) {
                 #ifdef HTP_DEBUG
