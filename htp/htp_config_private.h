@@ -343,6 +343,9 @@ struct htp_cfg_t {
     /** How many layers of compression we will decompress (0 => no limit). */
     int response_decompression_layer_limit;
 
+    /** How many layers of compression we will decompress (0 => no lzma). */
+    int response_lzma_layer_limit;
+
     /** max memory use by a the lzma decompressor. */
     size_t lzma_memlimit;
 
