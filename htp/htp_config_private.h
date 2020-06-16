@@ -351,6 +351,9 @@ struct htp_cfg_t {
 
     /** max time for a decompression bomb. */
     int32_t compression_time_limit;
+
+    /** How many layers of compression we will decompress (0 => no lzma). */
+    int response_lzma_layer_limit;
 };
 
 #ifdef	__cplusplus
