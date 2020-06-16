@@ -560,11 +560,13 @@ htp_status_t htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
             return rc;
         } else if (connp->out_tx->response_status_number == 407) {
             // proxy telling us to auth
-            connp->in_status = HTP_STREAM_DATA;
+            if (connp->in_status != HTP_STREAM_ERROR)
+                connp->in_status = HTP_STREAM_DATA;
         } else {
             // This is a failed CONNECT stream, which means that
             // we can unblock request parsing
-            connp->in_status = HTP_STREAM_DATA;
+            if (connp->in_status != HTP_STREAM_ERROR)
+                connp->in_status = HTP_STREAM_DATA;
 
             // We are going to continue processing this transaction,
             // adding a note for ourselves to stop at the end (because
@@ -586,7 +588,8 @@ htp_status_t htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
         if (te == NULL && cl == NULL) {
             connp->out_state = htp_connp_RES_FINALIZE;
 
-            connp->in_status = HTP_STREAM_TUNNEL;
+            if (connp->in_status != HTP_STREAM_ERROR)
+                connp->in_status = HTP_STREAM_TUNNEL;
             connp->out_status = HTP_STREAM_TUNNEL;
 
             // we may have response headers
