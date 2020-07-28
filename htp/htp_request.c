@@ -775,6 +775,10 @@ htp_status_t htp_connp_REQ_LINE_complete(htp_connp_t *connp) {
     #ifdef HTP_DEBUG
     fprint_raw_data(stderr, __func__, data, len);
     #endif
+    if (len == 0) {
+        htp_connp_req_clear_buffer(connp);
+        return HTP_DATA;
+    }
 
     // Is this a line that should be ignored?
     if (htp_connp_is_line_ignorable(connp, data, len)) {
