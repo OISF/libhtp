@@ -2068,3 +2068,23 @@ TEST_F(ConnectionParsing, ResponsesCut) {
     ASSERT_EQ(200, tx->response_status_number);
     ASSERT_EQ(HTP_RESPONSE_COMPLETE, tx->response_progress);
 }
+
+TEST_F(ConnectionParsing, Expect100) {
+    int rc = test_run(home, "99-expect-100.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+
+    ASSERT_EQ(2, htp_list_size(connp->conn->transactions));
+    htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+    ASSERT_EQ(0, bstr_cmp_c(tx->request_method, "PUT"));
+    ASSERT_EQ(HTP_REQUEST_COMPLETE, tx->request_progress);
+    ASSERT_EQ(401, tx->response_status_number);
+    ASSERT_EQ(HTP_RESPONSE_COMPLETE, tx->response_progress);
+
+    tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 1);
+    ASSERT_TRUE(tx != NULL);
+    ASSERT_EQ(0, bstr_cmp_c(tx->request_method, "POST"));
+    ASSERT_EQ(HTP_REQUEST_COMPLETE, tx->request_progress);
+    ASSERT_EQ(200, tx->response_status_number);
+    ASSERT_EQ(HTP_RESPONSE_COMPLETE, tx->response_progress);
+}
