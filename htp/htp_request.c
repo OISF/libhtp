@@ -890,12 +890,18 @@ htp_status_t htp_connp_REQ_FINALIZE(htp_connp_t *connp) {
             bstr_free(method);
         }
         if (methodi == HTP_M_UNKNOWN) {
+            if (connp->in_body_data_left <= 0) {
+                // log only once per transaction
+                htp_log(connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Unexpected request body");
+            } else {
+                connp->in_body_data_left = 1;
+            }
             // Interpret remaining bytes as body data
-            htp_log(connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Unexpected request body");
             htp_status_t rc = htp_tx_req_process_body_data_ex(connp->in_tx, data, len);
             htp_connp_req_clear_buffer(connp);
             return rc;
         } // else continue
+        connp->in_body_data_left = -1;
     }
     //unread last end of line so that REQ_LINE works
     if (connp->in_current_read_offset < (int64_t)len) {
