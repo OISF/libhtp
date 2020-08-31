@@ -608,6 +608,19 @@ htp_status_t htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
         return HTP_OK;
     }
 
+    // A request can indicate it waits for headers validation
+    // before sending its body cf
+    // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Expect
+    if (connp->out_tx->response_status_number >= 400 &&
+        connp->out_tx->response_status_number <= 499 &&
+        connp->in_content_length > 0 &&
+        connp->in_body_data_left == connp->in_content_length) {
+        htp_header_t *exp = htp_table_get_c(connp->out_tx->request_headers, "expect");
+        if ((exp != NULL) && (bstr_cmp_c_nocase(exp->value, "100-continue") == 0)) {
+            connp->in_state = htp_connp_REQ_FINALIZE;
+        }
+    }
+
     // 1. Any response message which MUST NOT include a message-body
     //  (such as the 1xx, 204, and 304 responses and any response to a HEAD
     //  request) is always terminated by the first empty line after the
