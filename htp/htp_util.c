@@ -1975,7 +1975,12 @@ void fprint_bstr(FILE *stream, const char *name, bstr *b) {
  *
  */
 void fprint_raw_data(FILE *stream, const char *name, const void *data, size_t len) {
-    fprint_raw_data_ex(stream, name, data, 0, len);
+    // may happen for gaps
+    if (data == NULL && len > 0) {
+        fprintf(stream, "\n%s: ptr NULL len %u\n", name, (unsigned int)len);
+    } else {
+        fprint_raw_data_ex(stream, name, data, 0, len);
+    }
 }
 
 /**
