@@ -153,6 +153,7 @@ htp_cfg_t *htp_config_create(void) {
     cfg->field_limit_soft = HTP_FIELD_LIMIT_SOFT;
     cfg->log_level = HTP_LOG_NOTICE;
     cfg->response_decompression_enabled = 1;
+    cfg->request_decompression_enabled = 0; // disabled by default
     cfg->parse_request_cookies = 1;
     cfg->parse_request_auth = 1;
     cfg->extract_request_files = 0;
@@ -558,6 +559,11 @@ void htp_config_set_parse_request_cookies(htp_cfg_t *cfg, int parse_request_cook
 void htp_config_set_response_decompression(htp_cfg_t *cfg, int enabled) {
     if (cfg == NULL) return;
     cfg->response_decompression_enabled = enabled;
+}
+
+void htp_config_set_request_decompression(htp_cfg_t *cfg, int enabled) {
+    if (cfg == NULL) return;
+    cfg->request_decompression_enabled = enabled;
 }
 
 int htp_config_set_server_personality(htp_cfg_t *cfg, enum htp_server_personality_t personality) {

@@ -354,6 +354,9 @@ struct htp_cfg_t {
 
     /** How many layers of compression we will decompress (0 => no lzma). */
     int response_lzma_layer_limit;
+
+    /** Whether to decompress compressed request bodies. */
+    int request_decompression_enabled;
 };
 
 #ifdef	__cplusplus

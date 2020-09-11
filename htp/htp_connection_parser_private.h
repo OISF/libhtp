@@ -255,6 +255,9 @@ struct htp_connp_t {
 
     /** On a PUT request, this field contains additional file data. */
     htp_file_t *put_file;
+
+    /** Request decompressor used to decompress request body data. */
+    htp_decompressor_t *req_decompressor;
 };
 
 /**
