@@ -40,6 +40,9 @@
 
 #include "htp_private.h"
 
+static void htp_tx_req_destroy_decompressors(htp_connp_t *connp);
+static htp_status_t htp_tx_req_process_body_data_decompressor_callback(htp_tx_data_t *d);
+
 static bstr *copy_or_wrap_mem(const void *data, size_t len, enum htp_alloc_strategy_t alloc) {
     if (data == NULL) return NULL;
 
@@ -362,6 +365,35 @@ static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {
 
     htp_status_t rc = HTP_OK;
 
+    if (tx->connp->cfg->request_decompression_enabled) {
+        tx->request_content_encoding = HTP_COMPRESSION_NONE;
+        htp_header_t *ce = htp_table_get_c(tx->request_headers, "content-encoding");
+        if (ce != NULL) {
+            /* fast paths: regular gzip and friends */
+            if ((bstr_cmp_c_nocasenorzero(ce->value, "gzip") == 0) ||
+                (bstr_cmp_c_nocasenorzero(ce->value, "x-gzip") == 0)) {
+                tx->request_content_encoding = HTP_COMPRESSION_GZIP;
+            } else if ((bstr_cmp_c_nocasenorzero(ce->value, "deflate") == 0) ||
+                       (bstr_cmp_c_nocasenorzero(ce->value, "x-deflate") == 0)) {
+                tx->request_content_encoding = HTP_COMPRESSION_DEFLATE;
+            } else if (bstr_cmp_c_nocasenorzero(ce->value, "lzma") == 0) {
+                tx->request_content_encoding = HTP_COMPRESSION_LZMA;
+            }
+            //ignore other cases such as inflate, ot multiple layers
+            if ((tx->request_content_encoding != HTP_COMPRESSION_NONE))
+            {
+                if (tx->connp->req_decompressor != NULL) {
+                    htp_tx_req_destroy_decompressors(tx->connp);
+                }
+                tx->connp->req_decompressor = htp_gzip_decompressor_create(tx->connp, tx->request_content_encoding);
+                if (tx->connp->req_decompressor == NULL)
+                    return HTP_ERROR;
+
+                tx->connp->req_decompressor->callback = htp_tx_req_process_body_data_decompressor_callback;
+            }
+        }
+    }
+
     htp_header_t *cl = htp_table_get_c(tx->request_headers, "content-length");
     htp_header_t *te = htp_table_get_c(tx->request_headers, "transfer-encoding");
 
@@ -574,9 +606,6 @@ htp_status_t htp_tx_req_process_body_data_ex(htp_tx_t *tx, const void *data, siz
     // NULL data is allowed in this private function; it's
     // used to indicate the end of request body.
 
-    // Keep track of the body length.
-    tx->request_entity_len += len;
-
     // Send data to the callbacks.
 
     htp_tx_data_t d;
@@ -584,10 +613,41 @@ htp_status_t htp_tx_req_process_body_data_ex(htp_tx_t *tx, const void *data, siz
     d.data = (unsigned char *) data;
     d.len = len;
 
-    htp_status_t rc = htp_req_run_hook_body_data(tx->connp, &d);
-    if (rc != HTP_OK) {
-        htp_log(tx->connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Request body data callback returned error (%d)", rc);
-        return HTP_ERROR;
+    switch(tx->request_content_encoding) {
+        case HTP_COMPRESSION_UNKNOWN:
+        case HTP_COMPRESSION_NONE:
+            // When there's no decompression, request_entity_len.
+            // is identical to request_message_len.
+            tx->request_entity_len += d.len;
+            htp_status_t rc = htp_req_run_hook_body_data(tx->connp, &d);
+            if (rc != HTP_OK) {
+                htp_log(tx->connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Request body data callback returned error (%d)", rc);
+                return HTP_ERROR;
+            }
+            break;
+
+        case HTP_COMPRESSION_GZIP:
+        case HTP_COMPRESSION_DEFLATE:
+        case HTP_COMPRESSION_LZMA:
+            // In severe memory stress these could be NULL
+            if (tx->connp->req_decompressor == NULL || tx->connp->req_decompressor->decompress == NULL)
+                return HTP_ERROR;
+
+            // Send data buffer to the decompressor.
+            tx->connp->req_decompressor->decompress(tx->connp->req_decompressor, &d);
+
+            if (data == NULL) {
+                // Shut down the decompressor, if we used one.
+                htp_tx_req_destroy_decompressors(tx->connp);
+            }
+            break;
+
+        default:
+            // Internal error.
+            htp_log(tx->connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
+                    "[Internal Error] Invalid tx->request_content_encoding value: %d",
+                    tx->request_content_encoding);
+            return HTP_ERROR;
     }
 
     return HTP_OK;
@@ -756,7 +816,13 @@ htp_status_t htp_tx_res_set_headers_clear(htp_tx_t *tx) {
     return HTP_OK;
 }
 
-void htp_connp_destroy_decompressors(htp_connp_t *connp) {
+/** \internal
+ *
+ * Clean up decompressor(s).
+ *
+ * @param[in] tx
+ */
+static void htp_tx_res_destroy_decompressors(htp_connp_t *connp) {
     htp_decompressor_t *comp = connp->out_decompressor;
     while (comp) {
         htp_decompressor_t *next = comp->next;
@@ -766,14 +832,19 @@ void htp_connp_destroy_decompressors(htp_connp_t *connp) {
     connp->out_decompressor = NULL;
 }
 
-/** \internal
- *
- * Clean up decompressor(s).
- *
- * @param[in] tx
- */
-static void htp_tx_res_destroy_decompressors(htp_tx_t *tx) {
-    htp_connp_destroy_decompressors(tx->connp);
+static void htp_tx_req_destroy_decompressors(htp_connp_t *connp) {
+    htp_decompressor_t *comp = connp->req_decompressor;
+    while (comp) {
+        htp_decompressor_t *next = comp->next;
+        comp->destroy(comp);
+        comp = next;
+    }
+    connp->req_decompressor = NULL;
+}
+
+void htp_connp_destroy_decompressors(htp_connp_t *connp) {
+    htp_tx_res_destroy_decompressors(connp);
+    htp_tx_req_destroy_decompressors(connp);
 }
 
 static htp_status_t htp_timer_track(int32_t *time_spent, struct timeval * after, struct timeval *before) {
@@ -789,6 +860,48 @@ static htp_status_t htp_timer_track(int32_t *time_spent, struct timeval * after,
     }
     return HTP_OK;
 }
+
+static htp_status_t htp_tx_req_process_body_data_decompressor_callback(htp_tx_data_t *d) {
+    if (d == NULL) return HTP_ERROR;
+
+    #if HTP_DEBUG
+    fprint_raw_data(stderr, __func__, d->data, d->len);
+    #endif
+
+    // Keep track of actual request body length.
+    d->tx->request_entity_len += d->len;
+
+    // Invoke all callbacks.
+    htp_status_t rc = htp_req_run_hook_body_data(d->tx->connp, d);
+    if (rc != HTP_OK) return HTP_ERROR;
+    d->tx->connp->req_decompressor->nb_callbacks++;
+    if (d->tx->connp->req_decompressor->nb_callbacks % HTP_COMPRESSION_TIME_FREQ_TEST == 0) {
+        struct timeval after;
+        gettimeofday(&after, NULL);
+        // sanity check for race condition if system time changed
+        if ( htp_timer_track(&d->tx->connp->req_decompressor->time_spent, &after, &d->tx->connp->req_decompressor->time_before) == HTP_OK) {
+            // updates last tracked time
+            d->tx->connp->req_decompressor->time_before = after;
+            if (d->tx->connp->req_decompressor->time_spent > d->tx->connp->cfg->compression_time_limit ) {
+                htp_log(d->tx->connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
+                        "Compression bomb: spent %"PRId64" us decompressing",
+                        d->tx->connp->req_decompressor->time_spent);
+                return HTP_ERROR;
+            }
+        }
+
+    }
+    if (d->tx->request_entity_len > d->tx->connp->cfg->compression_bomb_limit &&
+        d->tx->request_entity_len > HTP_COMPRESSION_BOMB_RATIO * d->tx->request_message_len) {
+        htp_log(d->tx->connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
+                "Compression bomb: decompressed %"PRId64" bytes out of %"PRId64,
+                d->tx->request_entity_len, d->tx->request_message_len);
+        return HTP_ERROR;
+    }
+
+    return HTP_OK;
+}
+
 static htp_status_t htp_tx_res_process_body_data_decompressor_callback(htp_tx_data_t *d) {
     if (d == NULL) return HTP_ERROR;
 
@@ -882,7 +995,7 @@ htp_status_t htp_tx_res_process_body_data_ex(htp_tx_t *tx, const void *data, siz
 
             if (data == NULL) {
                 // Shut down the decompressor, if we used one.
-                htp_tx_res_destroy_decompressors(tx);
+                htp_tx_res_destroy_decompressors(tx->connp);
             }
             break;
 
@@ -1272,7 +1385,7 @@ htp_status_t htp_tx_state_response_headers(htp_tx_t *tx) {
          ce_multi_comp)
     {
         if (tx->connp->out_decompressor != NULL) {
-            htp_tx_res_destroy_decompressors(tx);
+            htp_tx_res_destroy_decompressors(tx->connp);
         }
 
         /* normal case */
