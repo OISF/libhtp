@@ -175,6 +175,9 @@ struct htp_cfg_t {
     /** Whether to decompress compressed response bodies. */
     int response_decompression_enabled;
 
+    /** Whether to decompress compressed request bodies. */
+    int request_decompression_enabled;
+
     /** Not fully implemented at the moment. */
     char *request_encoding;
 
