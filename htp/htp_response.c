@@ -342,7 +342,20 @@ htp_status_t htp_connp_RES_BODY_CHUNKED_DATA(htp_connp_t *connp) {
     return HTP_DATA;
 }
 
-#define HTP_CHUNKED_ISCTLCHAR(c) ((c) == 0x0d || (c) == 0x0a || (c) == 0x20 || (c) == 0x09 || (c) == 0x0b || (c) == 0x0c)
+static inline int is_chunked_ctl_char(const unsigned char c) {
+    switch (c) {
+        case 0x0d:
+        case 0x0a:
+        case 0x20:
+        case 0x09:
+        case 0x0b:
+        case 0x0c:
+            return 1;
+        default:
+            return 0;
+    }
+}
+
 /**
  * Peeks ahead into the data to try to see if it starts with a valid Chunked
  * length field.
@@ -362,7 +375,7 @@ static inline int data_probe_chunk_length(htp_connp_t *connp) {
     while (i < len) {
         unsigned char c = data[i];
 
-        if (HTP_CHUNKED_ISCTLCHAR(c)) {
+        if (is_chunked_ctl_char(c)) {
             // ctl char, still good.
         } else if (isdigit(c) || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')) {
             // real chunklen char
@@ -387,7 +400,8 @@ htp_status_t htp_connp_RES_BODY_CHUNKED_LENGTH(htp_connp_t *connp) {
         OUT_COPY_BYTE_OR_RETURN(connp);
 
         // Have we reached the end of the line? Or is this not chunked after all?
-        if (connp->out_next_byte == LF || (!HTP_CHUNKED_ISCTLCHAR(connp->out_next_byte) &&!data_probe_chunk_length(connp))) {
+        if (connp->out_next_byte == LF ||
+                (!is_chunked_ctl_char(connp->out_next_byte) && !data_probe_chunk_length(connp))) {
             unsigned char *data;
             size_t len;
 
