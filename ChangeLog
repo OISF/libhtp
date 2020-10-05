@@ -1,3 +1,9 @@
+0.5.35 (8 October 2020)
+
+- fix memory leak in tunnel traffoc
+
+- fix case where chunked data causes excessive CPU use
+
 0.5.34 (11 September 2020)
 --------------------------
 
