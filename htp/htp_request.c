@@ -843,11 +843,11 @@ htp_status_t htp_connp_REQ_FINALIZE(htp_connp_t *connp) {
         }
         if (connp->in_next_byte != LF || connp->in_current_consume_offset >= connp->in_current_read_offset) {
             for (;;) {//;i < max_read; i++) {
-                IN_COPY_BYTE_OR_RETURN(connp);
-                // Have we reached the end of the line? For some reason
-                // we can't test after IN_COPY_BYTE_OR_RETURN */
+                // peek until LF but do not mark it read so that REQ_LINE works
+                IN_PEEK_NEXT(connp);
                 if (connp->in_next_byte == LF)
                     break;
+                IN_COPY_BYTE_OR_RETURN(connp);
             }
         }
     }
@@ -877,43 +877,34 @@ htp_status_t htp_connp_REQ_FINALIZE(htp_connp_t *connp) {
     while ((pos < len) && (!htp_is_space(data[pos])))
         pos++;
 
-    if (pos <= mstart) {
-        //empty whitespace line
-        htp_status_t rc = htp_tx_req_process_body_data_ex(connp->in_tx, data, len);
-        htp_connp_req_clear_buffer(connp);
-        return rc;
-    } else {
+    if (pos > mstart) {
+        //non empty whitespace line
         int methodi = HTP_M_UNKNOWN;
         bstr *method = bstr_dup_mem(data + mstart, pos - mstart);
         if (method) {
             methodi = htp_convert_method_to_number(method);
             bstr_free(method);
         }
-        if (methodi == HTP_M_UNKNOWN) {
-            if (connp->in_body_data_left <= 0) {
-                // log only once per transaction
-                htp_log(connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Unexpected request body");
-            } else {
-                connp->in_body_data_left = 1;
-            }
-            // Interpret remaining bytes as body data
-            htp_status_t rc = htp_tx_req_process_body_data_ex(connp->in_tx, data, len);
-            htp_connp_req_clear_buffer(connp);
-            return rc;
+        if (methodi != HTP_M_UNKNOWN) {
+            connp->in_body_data_left = -1;
+            return htp_tx_state_request_complete(connp->in_tx);
         } // else continue
-        connp->in_body_data_left = -1;
+        if (connp->in_body_data_left <= 0) {
+            // log only once per transaction
+            htp_log(connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Unexpected request body");
+        } else {
+            connp->in_body_data_left = 1;
+        }
     }
-    //unread last end of line so that REQ_LINE works
-    if (connp->in_current_read_offset < (int64_t)len) {
-        connp->in_current_read_offset=0;
-    } else {
-        connp->in_current_read_offset-=len;
+    //Adds linefeed to the buffer if there was one
+    if (connp->in_next_byte == LF) {
+        IN_COPY_BYTE_OR_RETURN(connp);
+        htp_connp_req_consolidate_data(connp, &data, &len);
     }
-    if (connp->in_current_read_offset < connp->in_current_consume_offset) {
-        connp->in_current_consume_offset=connp->in_current_read_offset;
-    }
-
-    return htp_tx_state_request_complete(connp->in_tx);
+    // Interpret remaining bytes as body data
+    htp_status_t rc = htp_tx_req_process_body_data_ex(connp->in_tx, data, len);
+    htp_connp_req_clear_buffer(connp);
+    return rc;
 }
 
 htp_status_t htp_connp_REQ_IGNORE_DATA_AFTER_HTTP_0_9(htp_connp_t *connp) {
