@@ -29,3 +29,7 @@ lib_LTLIBRARIES = libhtp.la
 libhtp_la_SOURCES =
 libhtp_la_LIBADD = libhtp-c.la lzma/liblzma-c.la
 libhtp_la_LDFLAGS = -version-info $(GENERIC_LIBRARY_VERSION)
+if CYGWIN
+libhtp_la_LIBADD += $(LIBICONV)
+libhtp_la_LDFLAGS += -no-undefined
+endif
