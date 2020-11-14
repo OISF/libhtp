@@ -154,6 +154,7 @@ sinclude(m4/lib-ld.m4)
 sinclude(m4/lib-link.m4)
 sinclude(m4/lib-prefix.m4)
 AM_ICONV
+AM_CONDITIONAL([CYGWIN], [test x${OS_CYGWIN} = xtrue])
 
 # iconvctl is not standard, it is defined only in GNU libiconv
 AC_MSG_CHECKING(for iconvctl)
