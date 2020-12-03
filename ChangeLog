@@ -1,4 +1,10 @@
+0.5.36 (3 December 2020)
+------------------------
+
+- fix a http pipelining issue (#304, fixed by #312)
+
 0.5.35 (8 October 2020)
+-----------------------
 
 - fix memory leak in tunnel traffoc
 
