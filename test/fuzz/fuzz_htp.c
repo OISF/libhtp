@@ -68,7 +68,7 @@ static int HTPCallbackResponseHasTrailer(htp_tx_t *tx)
 static int HTPCallbackRequestBodyData(htp_tx_data_t *tx_data)
 {
     fprintf(logfile, "HTPCallbackRequestBodyData %"PRIuMAX"\n", (uintmax_t)tx_data->len);
-    if (tx_data->len > 0) {
+    if (tx_data->len > 0 && tx_data->data != NULL) {
         fprintf(logfile, "HTPCallbackRequestBodyData %x %x\n", tx_data->data[0], tx_data->data[(uintmax_t)tx_data->len-1]);
     }
     return 0;
@@ -77,7 +77,7 @@ static int HTPCallbackRequestBodyData(htp_tx_data_t *tx_data)
 static int HTPCallbackResponseBodyData(htp_tx_data_t *tx_data)
 {
     fprintf(logfile, "HTPCallbackResponseBodyData %"PRIuMAX"\n", (uintmax_t)tx_data->len);
-    if (tx_data->len > 0) {
+    if (tx_data->len > 0 && tx_data->data != NULL) {
         fprintf(logfile, "HTPCallbackResponseBodyData %x %x\n", tx_data->data[0], tx_data->data[(uintmax_t)tx_data->len-1]);
     }
     return 0;

@@ -73,7 +73,7 @@ static int test_is_boundary(test_t *test, size_t pos) {
     // Check that there's enough room
     if (pos + 3 >= test->len) return -1;
 
-    if ((test->buf[pos] == '<') && (test->buf[pos + 1] == '<') && (test->buf[pos + 2] == '<')) {
+    if ((test->buf[pos] == '<') && (test->buf[pos + 1] == '<' || test->buf[pos + 1] == '>') && (test->buf[pos + 2] == '<')) {
         if (test->buf[pos + 3] == '\n') {
             return SERVER;
         }
@@ -86,7 +86,7 @@ static int test_is_boundary(test_t *test, size_t pos) {
         }
     }
 
-    if ((test->buf[pos] == '>') && (test->buf[pos + 1] == '>') && (test->buf[pos + 2] == '>')) {
+    if ((test->buf[pos] == '>') && (test->buf[pos + 1] == '>' || test->buf[pos + 1] == '<') && (test->buf[pos + 2] == '>')) {
         if (test->buf[pos + 3] == '\n') {
             return CLIENT;
         }
@@ -207,6 +207,10 @@ int test_next_chunk(test_t *test) {
                 // which belongs to the next boundary
                 if ((test->chunk_len > 0) && (test->chunk[test->chunk_len - 1] == '\r')) {
                     test->chunk_len--;
+                }
+                if (test->buf[test->pos + 1] != test->buf[test->pos + 2]) {
+                    // test gap
+                    test->chunk = NULL;
                 }
 
                 // Position at the next boundary line
