@@ -201,7 +201,11 @@ int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
             }
         } else {
             if (out_data_other) {
-                rc = htp_connp_res_data(connp, NULL, out_data + out_data_offset, out_data_len - out_data_offset);
+                if (out_data == NULL) {
+                    rc = htp_connp_res_data(connp, NULL, NULL, out_data_len - out_data_offset);
+                } else {
+                    rc = htp_connp_res_data(connp, NULL, out_data + out_data_offset, out_data_len - out_data_offset);
+                }
                 if (rc == HTP_STREAM_ERROR) {
                     break;
                 }
@@ -220,7 +224,11 @@ int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
                 out_data_offset = htp_connp_res_data_consumed(connp);
             }
             if (in_data_other) {
-                rc = htp_connp_req_data(connp, NULL, in_data + in_data_offset, in_data_len - in_data_offset);
+                if (in_data == NULL) {
+                    rc = htp_connp_req_data(connp, NULL, NULL, in_data_len - in_data_offset);
+                } else {
+                    rc = htp_connp_req_data(connp, NULL, in_data + in_data_offset, in_data_len - in_data_offset);
+                }
                 if (rc == HTP_STREAM_ERROR) {
                     break;
                 }
@@ -229,7 +237,11 @@ int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
         }
     }
     if (out_data_other) {
-        htp_connp_res_data(connp, NULL, out_data + out_data_offset, out_data_len - out_data_offset);
+        if (out_data == NULL) {
+            (void) htp_connp_res_data(connp, NULL, NULL, out_data_len - out_data_offset);
+        } else {
+            (void) htp_connp_res_data(connp, NULL, out_data + out_data_offset, out_data_len - out_data_offset);
+        }
     }
 
     htp_connp_close(connp, NULL);
