@@ -1104,8 +1104,11 @@ htp_status_t htp_tx_state_response_complete_ex(htp_tx_t *tx, int hybrid_mode) {
         htp_status_t rc = htp_hook_run_all(tx->connp->cfg->hook_response_complete, tx);
         if (rc != HTP_OK) return rc;
 
-        // Clear the out data receiver hook if any
+        // Clear the data receivers hook if any
         rc = htp_connp_res_receiver_finalize_clear(tx->connp);
+        if (rc != HTP_OK) return rc;
+
+        rc = htp_connp_req_receiver_finalize_clear(tx->connp);
         if (rc != HTP_OK) return rc;
     }
 
