@@ -132,12 +132,12 @@ htp_status_t htp_connp_res_receiver_finalize_clear(htp_connp_t *connp) {
  * @return HTP_OK, or a value returned from a callback.
  */
 static htp_status_t htp_connp_res_receiver_set(htp_connp_t *connp, htp_hook_t *data_receiver_hook) {
-    htp_connp_res_receiver_finalize_clear(connp);
+    htp_status_t rc = htp_connp_res_receiver_finalize_clear(connp);
 
     connp->out_data_receiver_hook = data_receiver_hook;
     connp->out_current_receiver_offset = connp->out_current_read_offset;
 
-    return HTP_OK;
+    return rc;
 }
 
 /**
