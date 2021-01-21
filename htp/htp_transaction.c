@@ -921,6 +921,8 @@ htp_status_t htp_tx_state_request_complete_partial(htp_tx_t *tx) {
     // Run hook REQUEST_COMPLETE.
     htp_status_t rc = htp_hook_run_all(tx->connp->cfg->hook_request_complete, tx);
     if (rc != HTP_OK) return rc;
+    rc = htp_connp_req_receiver_finalize_clear(tx->connp);
+    if (rc != HTP_OK) return rc;
 
     // Clean-up.
     if (tx->connp->put_file != NULL) {
@@ -1106,9 +1108,6 @@ htp_status_t htp_tx_state_response_complete_ex(htp_tx_t *tx, int hybrid_mode) {
 
         // Clear the data receivers hook if any
         rc = htp_connp_res_receiver_finalize_clear(tx->connp);
-        if (rc != HTP_OK) return rc;
-
-        rc = htp_connp_req_receiver_finalize_clear(tx->connp);
         if (rc != HTP_OK) return rc;
     }
 
