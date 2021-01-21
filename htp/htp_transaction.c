@@ -1430,6 +1430,7 @@ htp_status_t htp_tx_state_response_headers(htp_tx_t *tx) {
                     break;
                 }
 
+                nblzma++;
                 if (bstr_util_mem_index_of_c_nocase(tok, tok_len, "gzip") != -1) {
                     if (!(bstr_util_cmp_mem(tok, tok_len, "gzip", 4) == 0 ||
                           bstr_util_cmp_mem(tok, tok_len, "x-gzip", 6) == 0)) {
@@ -1446,10 +1447,9 @@ htp_status_t htp_tx_state_response_headers(htp_tx_t *tx) {
                     cetype = HTP_COMPRESSION_DEFLATE;
                 } else if (bstr_util_cmp_mem(tok, tok_len, "lzma", 4) == 0) {
                     cetype = HTP_COMPRESSION_LZMA;
-                    nblzma++;
                     if (nblzma > tx->connp->cfg->response_lzma_layer_limit) {
                         htp_log(tx->connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
-                                "Compression bomb: double lzma encoding");
+                                "Compression bomb: multiple encoding with lzma");
                         break;
                     }
                 } else if (bstr_util_cmp_mem(tok, tok_len, "inflate", 7) == 0) {
