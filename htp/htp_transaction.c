@@ -884,7 +884,7 @@ static htp_status_t htp_tx_req_process_body_data_decompressor_callback(htp_tx_da
             d->tx->connp->req_decompressor->time_before = after;
             if (d->tx->connp->req_decompressor->time_spent > d->tx->connp->cfg->compression_time_limit ) {
                 htp_log(d->tx->connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
-                        "Compression bomb: spent %"PRId64" us decompressing",
+                        "Compression bomb: spent %"PRId32" us decompressing",
                         d->tx->connp->req_decompressor->time_spent);
                 return HTP_ERROR;
             }
@@ -925,7 +925,7 @@ static htp_status_t htp_tx_res_process_body_data_decompressor_callback(htp_tx_da
             d->tx->connp->out_decompressor->time_before = after;
             if (d->tx->connp->out_decompressor->time_spent > d->tx->connp->cfg->compression_time_limit ) {
                 htp_log(d->tx->connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
-                        "Compression bomb: spent %"PRId64" us decompressing",
+                        "Compression bomb: spent %"PRId32" us decompressing",
                         d->tx->connp->out_decompressor->time_spent);
                 return HTP_ERROR;
             }
@@ -987,7 +987,7 @@ htp_status_t htp_tx_res_process_body_data_ex(htp_tx_t *tx, const void *data, siz
             if ( htp_timer_track(&tx->connp->out_decompressor->time_spent, &after, &tx->connp->out_decompressor->time_before) == HTP_OK) {
                 if ( tx->connp->out_decompressor->time_spent > tx->connp->cfg->compression_time_limit ) {
                     htp_log(tx->connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
-                            "Compression bomb: spent %"PRId64" us decompressing",
+                            "Compression bomb: spent %"PRId32" us decompressing",
                             tx->connp->out_decompressor->time_spent);
                     return HTP_ERROR;
                 }
