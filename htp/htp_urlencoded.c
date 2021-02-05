@@ -65,7 +65,7 @@ static void htp_urlenp_add_field_piece(htp_urlenp_t *urlenp, const unsigned char
             // The current field consists of more than once piece, we have to use the string builder.
 
             // Add current piece to string builder.
-            if ((data != NULL) && (endpos - startpos > 0)) {
+            if ((data != NULL) && (endpos > startpos)) {
                 bstr_builder_append_mem(urlenp->_bb, data + startpos, endpos - startpos);
             }
 
@@ -76,7 +76,7 @@ static void htp_urlenp_add_field_piece(htp_urlenp_t *urlenp, const unsigned char
             bstr_builder_clear(urlenp->_bb);
         } else {            
             // We only have the current piece to work with, so no need to involve the string builder.
-            if ((data != NULL) && (endpos - startpos > 0)) {
+            if ((data != NULL) && (endpos > startpos)) {
                 field = bstr_dup_mem(data + startpos, endpos - startpos);
                 if (field == NULL) return;
             }
@@ -162,7 +162,7 @@ static void htp_urlenp_add_field_piece(htp_urlenp_t *urlenp, const unsigned char
         }        
     } else {
         // The field has not ended. We'll make a copy of of the available data for later.
-        if ((data != NULL) && (endpos - startpos > 0)) {
+        if ((data != NULL) && (endpos > startpos)) {
             bstr_builder_append_mem(urlenp->_bb, data + startpos, endpos - startpos);
         }
     }
