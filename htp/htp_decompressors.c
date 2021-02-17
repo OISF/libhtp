@@ -189,7 +189,7 @@ static htp_status_t htp_gzip_decompressor_decompress(htp_decompressor_gzip_t *dr
 
     // Pass-through the NULL chunk, which indicates the end of the stream.
 
-    if (drec->passthrough) {
+    if (drec->super.passthrough) {
         htp_tx_data_t d2;
         d2.tx = d->tx;
         d2.data = d->data;
@@ -391,7 +391,7 @@ restart:
             drec->stream.next_out = drec->buffer;
 
             /* successfully passed through, lets continue doing that */
-            drec->passthrough = 1;
+            drec->super.passthrough = 1;
             return HTP_OK;
         }
     }
@@ -444,7 +444,7 @@ htp_decompressor_t *htp_gzip_decompressor_create(htp_connp_t *connp, enum htp_co
                 LzmaDec_Construct(&drec->state);
             } else {
                 htp_log(connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "LZMA decompression disabled");
-                drec->passthrough = 1;
+                drec->super.passthrough = 1;
             }
             rc = Z_OK;
             break;

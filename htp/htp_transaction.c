@@ -886,7 +886,7 @@ static htp_status_t htp_tx_req_process_body_data_decompressor_callback(htp_tx_da
                 htp_log(d->tx->connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
                         "Compression bomb: spent %"PRId64" us decompressing",
                         d->tx->connp->req_decompressor->time_spent);
-                return HTP_ERROR;
+                d->tx->connp->req_decompressor->passthrough = 1;
             }
         }
 
@@ -927,7 +927,7 @@ static htp_status_t htp_tx_res_process_body_data_decompressor_callback(htp_tx_da
                 htp_log(d->tx->connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
                         "Compression bomb: spent %"PRId64" us decompressing",
                         d->tx->connp->out_decompressor->time_spent);
-                return HTP_ERROR;
+                d->tx->connp->out_decompressor->passthrough = 1;
             }
         }
 
@@ -989,7 +989,7 @@ htp_status_t htp_tx_res_process_body_data_ex(htp_tx_t *tx, const void *data, siz
                     htp_log(tx->connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
                             "Compression bomb: spent %"PRId64" us decompressing",
                             tx->connp->out_decompressor->time_spent);
-                    return HTP_ERROR;
+                    tx->connp->out_decompressor->passthrough = 1;
                 }
             }
 
