@@ -1,3 +1,12 @@
+0.5.37 (2 March 2021)
+---------------------
+
+- support request body decompression
+
+- several accuracy fixes
+
+- fuzz improvments 
+
 0.5.36 (3 December 2020)
 ------------------------
 
