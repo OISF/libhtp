@@ -418,8 +418,10 @@ htp_status_t htp_connp_RES_BODY_CHUNKED_LENGTH(htp_connp_t *connp) {
             connp->out_chunked_length = htp_parse_chunked_length(data, len);
 
             // empty chunk length line, lets try to continue
-            if (connp->out_chunked_length == -1004)
+            if (connp->out_chunked_length == -1004) {
+                connp->out_current_consume_offset = connp->out_current_read_offset;
                 continue;
+            }
             if (connp->out_chunked_length < 0) {
                 // reset out_current_read_offset so htp_connp_RES_BODY_IDENTITY_STREAM_CLOSE
                 // doesn't miss the first bytes
