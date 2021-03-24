@@ -183,9 +183,13 @@ int htp_parse_authorization(htp_connp_t *connp) {
         // Digest authentication
         connp->in_tx->request_auth_type = HTP_AUTH_DIGEST;
         return htp_parse_authorization_digest(connp, auth_header);
+    } else if (bstr_begins_with_c_nocase(auth_header->value, "bearer")) {
+        // Bearer authentication
+        connp->in_tx->request_auth_type = HTP_AUTH_BEARER;
+        return htp_parse_authorization_digest(connp, auth_header);
     } else {
         // Unrecognized authentication method
-        connp->in_tx->request_auth_type = HTP_AUTH_UNRECOGNIZED;        
+        connp->in_tx->request_auth_type = HTP_AUTH_UNRECOGNIZED;
     }
 
     return HTP_OK;
