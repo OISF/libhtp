@@ -1,3 +1,10 @@
+0.5.38 (30 Jun 2021)
+--------------------
+
+- consume empty lines when parsing chunks to avoid quadratic complexity
+
+- autotools fix for cygwin
+
 0.5.37 (2 March 2021)
 ---------------------
 
