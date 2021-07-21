@@ -40,6 +40,16 @@
 
 #include "htp_private.h"
 
+//inet_pton
+#ifndef __linux__
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#elif _WIN32
+#include <ws2tcpip.h>
+#endif
+
 /**
  * Is character a linear white space character?
  *
@@ -2442,6 +2452,17 @@ int htp_validate_hostname(bstr *hostname) {
 
     if ((len == 0) || (len > 255)) return 0;
 
+    if (data[0] == '[') {
+        // only ipv6 possible
+        if (len < 2) {
+            return 0;
+        }
+        char dst[sizeof(struct in6_addr)];
+        char str[INET6_ADDRSTRLEN];
+        memcpy(str, data+1, len-2);
+        str[len-2] = 0;
+        return inet_pton(AF_INET6, str, dst);
+    }
     while (pos < len) {
         // Validate label characters.
         startpos = pos;
