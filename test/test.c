@@ -186,7 +186,7 @@ int test_next_chunk(test_t *test) {
             if (test->pos >= test->len) {
                 return 0;
             }
-            if (test->buf[test->pos] == '\n') test->pos++;
+            if (test->buf[test->pos-1] == '\r') test->pos++;
             if (test->pos >= test->len) {
                 return 0;
             }
