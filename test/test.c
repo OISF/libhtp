@@ -170,6 +170,7 @@ int test_next_chunk(test_t *test) {
     }
 
     test->chunk = NULL;
+    int isgap = 0;
 
     while (test->pos < test->len) {
         // Do we need to start another chunk?
@@ -181,6 +182,11 @@ int test_next_chunk(test_t *test) {
                 return -1;
             }
 
+            if (test->buf[test->pos + 1] != test->buf[test->pos + 2]) {
+                isgap = 1;
+            } else {
+                isgap = 0;
+            }
             // Move over the boundary
             test->pos += 4;
             if (test->pos >= test->len) {
@@ -194,6 +200,11 @@ int test_next_chunk(test_t *test) {
             // Start new chunk
             test->chunk = test->buf + test->pos;
             test->chunk_offset = test->pos;
+            // if it is empty (boundary already), continue to next chunk
+            if (test_is_boundary(test, test->pos) > 0) {
+                test->chunk = NULL;
+                continue;
+            }
         }
 
         // Are we at the end of a line?
@@ -208,15 +219,14 @@ int test_next_chunk(test_t *test) {
                 if ((test->chunk_len > 0) && (test->chunk[test->chunk_len - 1] == '\r')) {
                     test->chunk_len--;
                 }
-                if (test->buf[test->pos + 1] != test->buf[test->pos + 2]) {
-                    // test gap
-                    test->chunk = NULL;
-                }
 
                 // Position at the next boundary line
                 test->pos++;
                 if (test->pos >= test->len) {
                     return 0;
+                }
+                if (isgap) {
+                    test->chunk = NULL;
                 }
 
                 return 1;
@@ -229,6 +239,9 @@ int test_next_chunk(test_t *test) {
 
     if (test->chunk != NULL) {
         test->chunk_len = test->pos - test->chunk_offset;
+        if (isgap) {
+            test->chunk = NULL;
+        }
         return 1;
     }
 
