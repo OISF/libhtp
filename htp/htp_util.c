@@ -219,7 +219,7 @@ int htp_convert_method_to_number(bstr *method) {
  * @return 0 or 1
  */
 int htp_is_line_empty(unsigned char *data, size_t len) {
-    if ((len == 1) ||
+    if (((len == 1) && ((data[0] == CR) || (data[0] == LF))) ||
         ((len == 2) && (data[0] == CR) && (data[1] == LF))) {
         return 1;
     }
