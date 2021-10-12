@@ -38,8 +38,6 @@
 
 #include "htp_config_auto.h"
 
-#include "htp_private.h"
-
 //inet_pton
 #ifdef __linux__
 #include <sys/types.h>
@@ -51,6 +49,8 @@
 #else // mac
 #include <arpa/inet.h>
 #endif
+
+#include "htp_private.h"
 
 /**
  * Is character a linear white space character?

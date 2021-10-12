@@ -71,11 +71,11 @@ extern "C" {
 #include "htp_table_private.h"
 
 #ifndef CR
-#define CR 0xd
+#define CR '\r'
 #endif
 
 #ifndef LF
-#define LF 0xa
+#define LF '\n'
 #endif
 
 // 1048576 is 1 Mbyte
