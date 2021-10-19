@@ -2454,7 +2454,7 @@ int htp_validate_hostname(bstr *hostname) {
 
     if (data[0] == '[') {
         // only ipv6 possible
-        if (len < 2) {
+        if (len < 2 || len - 2 >= INET6_ADDRSTRLEN) {
             return 0;
         }
         char dst[sizeof(struct in6_addr)];
