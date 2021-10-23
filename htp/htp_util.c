@@ -1147,10 +1147,10 @@ void htp_utf8_validate_path(htp_tx_t *tx, bstr *path) {
  * @param[in] data
  * @return decoded byte
  */
-static int decode_u_encoding_path(htp_cfg_t *cfg, htp_tx_t *tx, unsigned char *data) {
-    unsigned int c1 = x2c(data);
-    unsigned int c2 = x2c(data + 2);
-    int r = cfg->decoder_cfgs[HTP_DECODER_URL_PATH].bestfit_replacement_byte;
+static uint8_t decode_u_encoding_path(htp_cfg_t *cfg, htp_tx_t *tx, unsigned char *data) {
+    uint8_t c1 = x2c(data);
+    uint8_t c2 = x2c(data + 2);
+    uint8_t r = cfg->decoder_cfgs[HTP_DECODER_URL_PATH].bestfit_replacement_byte;
 
     if (c1 == 0x00) {
         r = c2;
@@ -1203,9 +1203,9 @@ static int decode_u_encoding_path(htp_cfg_t *cfg, htp_tx_t *tx, unsigned char *d
  * @param[in] data
  * @return decoded byte
  */
-static int decode_u_encoding_params(htp_cfg_t *cfg, enum htp_decoder_ctx_t ctx, unsigned char *data, uint64_t *flags) {
-    unsigned int c1 = x2c(data);
-    unsigned int c2 = x2c(data + 2);
+static uint8_t decode_u_encoding_params(htp_cfg_t *cfg, enum htp_decoder_ctx_t ctx, unsigned char *data, uint64_t *flags) {
+    uint8_t c1 = x2c(data);
+    uint8_t c2 = x2c(data + 2);
 
     // Check for overlong usage first.
     if (c1 == 0) {
@@ -1222,7 +1222,7 @@ static int decode_u_encoding_params(htp_cfg_t *cfg, enum htp_decoder_ctx_t ctx, 
 
     // Use best-fit mapping.
     unsigned char *p = cfg->decoder_cfgs[ctx].bestfit_map;
-    int r = cfg->decoder_cfgs[ctx].bestfit_replacement_byte;
+    uint8_t r = cfg->decoder_cfgs[ctx].bestfit_replacement_byte;
 
     // TODO Optimize lookup.
 
@@ -1267,7 +1267,7 @@ htp_status_t htp_decode_path_inplace(htp_tx_t *tx, bstr *path) {
     int previous_was_separator = 0;
 
     while ((rpos < len) && (wpos < len)) {
-        int c = data[rpos];
+        unsigned char c = data[rpos];
 
         // Decode encoded characters
         if (c == '%') {
@@ -1489,7 +1489,7 @@ htp_status_t htp_decode_path_inplace(htp_tx_t *tx, bstr *path) {
 
         // Lowercase characters, if necessary
         if (cfg->decoder_cfgs[HTP_DECODER_URL_PATH].convert_lowercase) {
-            c = tolower(c);
+            c = (uint8_t) tolower(c);
         }
 
         // If we're compressing separators then we need
@@ -1557,7 +1557,7 @@ htp_status_t htp_urldecode_inplace_ex(htp_cfg_t *cfg, enum htp_decoder_ctx_t ctx
     size_t wpos = 0;
 
     while ((rpos < len) && (wpos < len)) {
-        int c = data[rpos];
+        uint8_t c = data[rpos];
 
         // Decode encoded characters.
         if (c == '%') {
@@ -1957,7 +1957,7 @@ void htp_normalize_uri_path_inplace(bstr *s) {
         // the output buffer, including the initial "/" character (if
         // any) and any subsequent characters up to, but not including,
         // the next "/" character or the end of the input buffer.
-        data[wpos++] = c;
+        data[wpos++] = (uint8_t) c;
 
         while ((rpos < len) && (data[rpos] != '/') && (wpos < len)) {
             data[wpos++] = data[rpos++];
@@ -2042,7 +2042,7 @@ void fprint_raw_data_ex(FILE *stream, const char *name, const void *_data, size_
         i = 0;
         char *p = buf + strlen(buf);
         while ((offset + i < len) && (i < 16)) {
-            int c = data[offset + i];
+            uint8_t c = data[offset + i];
 
             if (isprint(c)) {
                 *p++ = c;
