@@ -227,8 +227,7 @@ htp_status_t htp_parse_request_header_generic(htp_connp_t *connp, htp_header_t *
     }
 
     // Look for the end of field-content.
-    value_end = value_start;
-    while ((value_end < len) && (data[value_end] != '\0')) value_end++;
+    value_end = len;
 
     // Ignore LWS after field-content.
     prev = value_end - 1;

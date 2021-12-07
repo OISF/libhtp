@@ -154,7 +154,7 @@ TEST_F(ConnectionParsing, ApacheHeaderParsing) {
                 break;
             case 8:
                 ASSERT_EQ(0, bstr_cmp_c(h->name, "Header-With-NUL"));
-                ASSERT_EQ(0, bstr_cmp_c(h->value, "BEFORE"));
+                ASSERT_EQ(0, bstr_cmp_c_nocasenorzero(h->value, "BEFOREAFTER"));
                 break;
         }
 
@@ -1570,7 +1570,7 @@ TEST_F(ConnectionParsing, InvalidRequestHeader) {
 
     htp_header_t *h = (htp_header_t *) htp_table_get_c(tx->request_headers, "Header-With-NUL");
     ASSERT_TRUE(h != NULL);
-    ASSERT_EQ(0, bstr_cmp_c(h->value, "BEFORE"));
+    ASSERT_EQ(0, bstr_cmp_c_nocasenorzero(h->value, "BEFORE  AFTER"));
 }
 
 TEST_F(ConnectionParsing, TestGenericPersonality) {
