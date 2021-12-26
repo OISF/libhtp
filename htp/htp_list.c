@@ -98,7 +98,7 @@ void htp_list_array_release(htp_list_array_t *l) {
 
 void *htp_list_array_get(const htp_list_array_t *l, size_t idx) {
     if (l == NULL) return NULL;    
-    if (idx + 1 > l->current_size) return NULL;
+    if (idx >= l->current_size) return NULL;
     
     if (l->first + idx < l->max_size) {
         return (void *) l->elements[l->first + idx];
