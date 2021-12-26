@@ -97,26 +97,6 @@ static const uint8_t utf8d_allow_overlong[] = {
 };
 
 /**
- * Process one byte of UTF-8 data and return a code point if one is available.
- *
- * @param[in] state
- * @param[in] codep
- * @param[in] byte
- * @return HTP_UTF8_ACCEPT for a valid character, HTP_UTF8_REJECT for an invalid character,
- *         or something else if the character has not yet been formed
- */
-uint32_t htp_utf8_decode(uint32_t* state, uint32_t* codep, uint32_t byte) {
-  uint32_t type = utf8d[byte];
-
-  *codep = (*state != HTP_UTF8_ACCEPT) ?
-    (byte & 0x3fu) | (*codep << 6) :
-    (0xff >> type) & (byte);
-
-  *state = utf8d[256 + *state*16 + type];
-  return *state;
-}
-
-/**
  * Process one byte of UTF-8 data and return a code point if one is available. Allows
  * overlong characters in input.
  *

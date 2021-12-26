@@ -43,17 +43,6 @@
 #include <gtest/gtest.h>
 #include <htp/htp_private.h>
 
-TEST(Utf8, SingleByte) {
-    uint32_t state = HTP_UTF8_ACCEPT;
-    uint32_t codep;
-    uint32_t result;
-
-    result = htp_utf8_decode(&state, &codep, 0x00);
-    EXPECT_EQ(0, result);
-    EXPECT_EQ(HTP_UTF8_ACCEPT, state);
-    EXPECT_EQ(0, codep);
-}
-
 TEST(Base64, Single) {
     EXPECT_EQ(62, htp_base64_decode_single('+'));
     EXPECT_EQ(63, htp_base64_decode_single('/'));
