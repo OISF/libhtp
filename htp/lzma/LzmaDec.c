@@ -634,15 +634,15 @@ static int MY_FAST_CALL LzmaDec_DecodeReal2(CLzmaDec *p, SizeT limit, const Byte
       if (limit - p->dicPos > rem) {
           if (p->dicBufSize < p->prop.dicSize) {
               p->dicBufSize = p->prop.dicSize;
+              if (p->dicBufSize > memlimit) {
+                  return SZ_ERROR_MEM;
+              }
+              Byte *tmp = realloc(p->dic, p->dicBufSize);
+              if (!tmp) {
+                  return SZ_ERROR_MEM;
+              }
+              p->dic = tmp;
           }
-          if (p->dicBufSize > memlimit) {
-              return SZ_ERROR_MEM;
-          }
-          Byte *tmp = realloc(p->dic, p->dicBufSize);
-          if (!tmp) {
-              return SZ_ERROR_MEM;
-          }
-          p->dic = tmp;
         limit2 = p->dicPos + rem;
         }
 
