@@ -162,6 +162,24 @@ int htp_parse_authorization_basic(htp_connp_t *connp, htp_header_t *auth_header)
 }
 
 /**
+ * Parses Bearer Authorization request header.
+ *
+ * @param[in] connp
+ * @param[in] auth_header
+ */
+int htp_parse_authorization_bearer(htp_connp_t *connp, htp_header_t *auth_header) {
+    unsigned char *data = bstr_ptr(auth_header->value);
+    size_t len = bstr_len(auth_header->value);
+    size_t pos = 6;
+
+    // Ignore whitespace
+    while ((pos < len) && (isspace((int) data[pos]))) pos++;
+    if (pos == len) return HTP_DECLINED;
+
+    // There is nothing much else to check with Bearer auth so we just return
+    return HTP_OK;
+}
+/**
  * Parses Authorization request header.
  *
  * @param[in] connp
@@ -183,6 +201,10 @@ int htp_parse_authorization(htp_connp_t *connp) {
         // Digest authentication
         connp->in_tx->request_auth_type = HTP_AUTH_DIGEST;
         return htp_parse_authorization_digest(connp, auth_header);
+    } else if (bstr_begins_with_c_nocase(auth_header->value, "bearer")) {
+        // OAuth Bearer authentication
+        connp->in_tx->request_auth_type = HTP_AUTH_BEARER;
+        return htp_parse_authorization_bearer(connp, auth_header);
     } else {
         // Unrecognized authentication method
         connp->in_tx->request_auth_type = HTP_AUTH_UNRECOGNIZED;        

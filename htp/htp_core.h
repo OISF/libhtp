@@ -136,6 +136,9 @@ enum htp_auth_type_t {
     /** HTTP Digest authentication used. */
     HTP_AUTH_DIGEST = 3,
 
+    /** HTTP Digest authentication used. */
+    HTP_AUTH_BEARER = 4,
+
     /** Unrecognized authentication method. */
     HTP_AUTH_UNRECOGNIZED = 9
 };
