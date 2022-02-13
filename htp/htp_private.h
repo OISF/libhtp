@@ -186,6 +186,7 @@ int64_t htp_parse_positive_integer_whitespace(unsigned char *data, size_t len, i
 int htp_parse_status(bstr *status);
 int htp_parse_authorization_digest(htp_connp_t *connp, htp_header_t *auth_header);
 int htp_parse_authorization_basic(htp_connp_t *connp, htp_header_t *auth_header);
+int htp_parse_authorization_bearer(htp_connp_t *connp, htp_header_t *auth_header);
 
 void htp_print_log(FILE *stream, htp_log_t *log);
 

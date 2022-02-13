@@ -1009,6 +1009,22 @@ TEST_F(ConnectionParsing, AuthDigest) {
     ASSERT_TRUE(tx->request_auth_password == NULL);
 }
 
+TEST_F(ConnectionParsing, AuthBearer) {
+    int rc = test_run(home, "100-auth-bearer.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+
+    htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+
+    ASSERT_EQ(HTP_REQUEST_COMPLETE, tx->request_progress);
+
+    ASSERT_EQ(HTP_AUTH_BEARER, tx->request_auth_type);
+
+    ASSERT_TRUE(tx->request_auth_username == NULL);
+
+    ASSERT_TRUE(tx->request_auth_password == NULL);
+}
+
 TEST_F(ConnectionParsing, Unknown_MethodOnly) {
     int rc = test_run(home, "42-unknown-method_only.t", cfg, &connp);
     ASSERT_GE(rc, 0);
