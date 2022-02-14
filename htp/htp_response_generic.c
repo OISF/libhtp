@@ -221,6 +221,12 @@ htp_status_t htp_parse_response_header_generic(htp_connp_t *connp, htp_header_t 
             break;
         }
     }
+    // Ignore LWS after field-content.
+    prev = value_end - 1;
+    while ((prev > value_start) && (htp_is_lws(data[prev]))) {
+        prev--;
+        value_end--;
+    }
 
     // Now extract the name and the value.
     h->name = bstr_dup_mem(data + name_start, name_end - name_start);
