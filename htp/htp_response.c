@@ -603,29 +603,37 @@ htp_status_t htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
     }
 
     // Check for an interim "100 Continue" response. Ignore it if found, and revert back to RES_LINE.
-    if (connp->out_tx->response_status_number == 100 && te == NULL && cl == NULL) {
-        if (connp->out_tx->seen_100continue != 0) {
-            htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Already seen 100-Continue.");
-            return HTP_ERROR;
+    if (connp->out_tx->response_status_number == 100 && te == NULL) {
+        int is100continue = 1;
+        if (cl != NULL){
+            if (htp_parse_content_length(cl->value, connp) > 0) {
+                is100continue = 0;
+            }
         }
+        if (is100continue) {
+            if (connp->out_tx->seen_100continue != 0) {
+                htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Already seen 100-Continue.");
+                return HTP_ERROR;
+            }
 
-        // Ignore any response headers seen so far.
-        htp_header_t *h = NULL;
-        for (size_t i = 0, n = htp_table_size(connp->out_tx->response_headers); i < n; i++) {
-            h = htp_table_get_index(connp->out_tx->response_headers, i, NULL);
-            bstr_free(h->name);
-            bstr_free(h->value);
-            free(h);
+            // Ignore any response headers seen so far.
+            htp_header_t *h = NULL;
+            for (size_t i = 0, n = htp_table_size(connp->out_tx->response_headers); i < n; i++) {
+                h = htp_table_get_index(connp->out_tx->response_headers, i, NULL);
+                bstr_free(h->name);
+                bstr_free(h->value);
+                free(h);
+            }
+
+            htp_table_clear(connp->out_tx->response_headers);
+
+            // Expecting to see another response line next.
+            connp->out_state = htp_connp_RES_LINE;
+            connp->out_tx->response_progress = HTP_RESPONSE_LINE;
+            connp->out_tx->seen_100continue++;
+
+            return HTP_OK;
         }
-
-        htp_table_clear(connp->out_tx->response_headers);
-
-        // Expecting to see another response line next.
-        connp->out_state = htp_connp_RES_LINE;
-        connp->out_tx->response_progress = HTP_RESPONSE_LINE;
-        connp->out_tx->seen_100continue++;
-
-        return HTP_OK;
     }
 
     // A request can indicate it waits for headers validation
