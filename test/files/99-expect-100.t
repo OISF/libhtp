@@ -17,6 +17,7 @@ Expect: 100-continue
 
 <<<
 HTTP/1.0 100 continue
+Content-Length: 0
 
 
 >>>
