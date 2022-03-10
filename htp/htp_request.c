@@ -1050,18 +1050,10 @@ int htp_connp_req_data(htp_connp_t *connp, const htp_time_t *timestamp, const vo
         htp_status_t rc;
         //handle gap
         if (data == NULL && len > 0) {
-            //cannot switch over a function pointer in C
-            if (connp->in_state == htp_connp_REQ_BODY_IDENTITY ||
-                connp->in_state == htp_connp_REQ_IGNORE_DATA_AFTER_HTTP_0_9) {
-                rc = connp->in_state(connp);
-            } else if (connp->in_state == htp_connp_REQ_FINALIZE) {
-                //simple version without probing
-                rc = htp_tx_state_request_complete(connp->in_tx);
-            } else {
-                // go to htp_connp_REQ_CONNECT_PROBE_DATA ?
-                htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Gaps are not allowed during this state");
-                return HTP_STREAM_CLOSED;
-            }
+            // if there is any gap, drop the transaction
+            // at this point only request will be in transaction
+            htp_tx_destroy_incomplete(connp->in_tx);
+            return HTP_DECLINED;
         } else {
             rc = connp->in_state(connp);
         }
