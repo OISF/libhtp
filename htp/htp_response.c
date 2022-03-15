@@ -1176,15 +1176,38 @@ htp_status_t htp_connp_RES_IDLE(htp_connp_t *connp) {
     // Parsing a new response
 
     // Find the next outgoing transaction
-    // find last request
-    // if there are no gaps..then current response should match with last request in the transaction
-    size_t size = htp_list_size(connp->conn->transactions);
-    connp->out_next_tx_index = size -1;
+    // If there is none, we just create one so that responses without
+    // request can still be processed.
     connp->out_tx = htp_list_get(connp->conn->transactions, connp->out_next_tx_index);
     if (connp->out_tx == NULL) {
-        // there is no request matching to this response
-        // discard it
-        return HTP_DECLINED;
+        htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Unable to match response to request");
+        // finalize dangling request waiting for next request or body
+        if (connp->in_state == htp_connp_REQ_FINALIZE) {
+            htp_tx_state_request_complete(connp->in_tx);
+        }
+        connp->out_tx = htp_connp_tx_create(connp);
+        if (connp->out_tx == NULL) {
+            return HTP_ERROR;
+        }
+        connp->out_tx->parsed_uri = htp_uri_alloc();
+        if (connp->out_tx->parsed_uri == NULL) {
+            return HTP_ERROR;
+        }
+        connp->out_tx->parsed_uri->path = bstr_dup_c(REQUEST_URI_NOT_SEEN);
+        if (connp->out_tx->parsed_uri->path == NULL) {
+            return HTP_ERROR;
+        }
+        connp->out_tx->request_uri = bstr_dup_c(REQUEST_URI_NOT_SEEN);
+        if (connp->out_tx->request_uri == NULL) {
+            return HTP_ERROR;
+        }
+
+        connp->in_state = htp_connp_REQ_FINALIZE;
+#ifdef HTP_DEBUG
+        fprintf(stderr, "picked up response w/o request");
+#endif
+        // We've used one transaction
+        connp->out_next_tx_index++;
     } else {
         // We've used one transaction
         connp->out_next_tx_index++;
@@ -1291,23 +1314,17 @@ int htp_connp_res_data(htp_connp_t *connp, const htp_time_t *timestamp, const vo
 
         //handle gap
         if (data == NULL && len > 0) {
-            //discard request .. if any
-            if(connp->out_tx == NULL) {
-                size_t size = htp_list_size(connp->conn->transactions);
-                connp->out_next_tx_index = size -1 ;
-                connp->out_tx = htp_list_get(connp->conn->transactions, connp->out_next_tx_index);
+            if (connp->out_state == htp_connp_RES_BODY_IDENTITY_CL_KNOWN ||
+                connp->out_state == htp_connp_RES_BODY_IDENTITY_STREAM_CLOSE) {
+                rc = connp->out_state(connp);
+            } else if (connp->out_state == htp_connp_RES_FINALIZE) {
+                rc = htp_tx_state_response_complete_ex(connp->out_tx, 0);
+            } else {
+                htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Gaps are not allowed during this state");
+                return HTP_STREAM_CLOSED;
             }
-            htp_tx_destroy_incomplete(connp->out_tx);
-            connp->out_state = htp_connp_RES_IDLE; // reset the state
-            return HTP_DECLINED;
         } else {
             rc = connp->out_state(connp);
-            // handle multiple response in the stream
-            if ( connp->out_state == htp_connp_RES_IDLE) {
-                //one response is processed and reached to Idle state
-                // then dicard all other data in the stream
-                return HTP_DECLINED;
-            }
         }
         if (rc == HTP_OK) {
             if (connp->out_status == HTP_STREAM_TUNNEL) {
