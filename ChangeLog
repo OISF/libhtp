@@ -1,5 +1,24 @@
-0.5.39 (16 Nov 2021)
---------------------
+0.5.40 (21 April 2022)
+----------------------
+
+- uri: optionally allows spaces in uri
+
+- ints: integer handling improvements
+
+- headers: continue on nul byte
+
+- headers: consistent trailing space handling
+
+- list: fix integer overflow
+
+- util: remove unused htp_utf8_decode
+
+- fix 100-continue with CL 0
+
+- lzma: don't do unnecessary realloc
+
+0.5.39 (16 November 2021)
+-------------------------
 
 - host: ipv6 address is a valid host
 
@@ -7,8 +26,8 @@
 
 - test and fuzz improvements
 
-0.5.38 (30 Jun 2021)
---------------------
+0.5.38 (30 June 2021)
+---------------------
 
 - consume empty lines when parsing chunks to avoid quadratic complexity
 
