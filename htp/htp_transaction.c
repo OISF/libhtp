@@ -630,11 +630,11 @@ htp_status_t htp_tx_req_process_body_data_ex(htp_tx_t *tx, const void *data, siz
         case HTP_COMPRESSION_DEFLATE:
         case HTP_COMPRESSION_LZMA:
             // In severe memory stress these could be NULL
-            if (tx->connp->req_decompressor == NULL || tx->connp->req_decompressor->decompress == NULL)
+            if (tx->connp->req_decompressor == NULL)
                 return HTP_ERROR;
 
             // Send data buffer to the decompressor.
-            tx->connp->req_decompressor->decompress(tx->connp->req_decompressor, &d);
+            htp_gzip_decompressor_decompress(tx->connp->req_decompressor, &d);
 
             if (data == NULL) {
                 // Shut down the decompressor, if we used one.
@@ -826,7 +826,7 @@ static void htp_tx_res_destroy_decompressors(htp_connp_t *connp) {
     htp_decompressor_t *comp = connp->out_decompressor;
     while (comp) {
         htp_decompressor_t *next = comp->next;
-        comp->destroy(comp);
+        htp_gzip_decompressor_destroy(comp);
         comp = next;
     }
     connp->out_decompressor = NULL;
@@ -836,7 +836,7 @@ static void htp_tx_req_destroy_decompressors(htp_connp_t *connp) {
     htp_decompressor_t *comp = connp->req_decompressor;
     while (comp) {
         htp_decompressor_t *next = comp->next;
-        comp->destroy(comp);
+        htp_gzip_decompressor_destroy(comp);
         comp = next;
     }
     connp->req_decompressor = NULL;
@@ -974,14 +974,14 @@ htp_status_t htp_tx_res_process_body_data_ex(htp_tx_t *tx, const void *data, siz
         case HTP_COMPRESSION_DEFLATE:
         case HTP_COMPRESSION_LZMA:
             // In severe memory stress these could be NULL
-            if (tx->connp->out_decompressor == NULL || tx->connp->out_decompressor->decompress == NULL)
+            if (tx->connp->out_decompressor == NULL)
                 return HTP_ERROR;
 
             struct timeval after;
             gettimeofday(&tx->connp->out_decompressor->time_before, NULL);
             // Send data buffer to the decompressor.
             tx->connp->out_decompressor->nb_callbacks=0;
-            tx->connp->out_decompressor->decompress(tx->connp->out_decompressor, &d);
+            htp_gzip_decompressor_decompress(tx->connp->out_decompressor, &d);
             gettimeofday(&after, NULL);
             // sanity check for race condition if system time changed
             if ( htp_timer_track(&tx->connp->out_decompressor->time_spent, &after, &tx->connp->out_decompressor->time_before) == HTP_OK) {
