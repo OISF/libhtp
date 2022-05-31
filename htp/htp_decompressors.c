@@ -182,10 +182,11 @@ static void htp_gzip_decompressor_end(htp_decompressor_gzip_t *drec) {
  * @param[in] d
  * @return HTP_OK on success, HTP_ERROR or some other negative integer on failure.
  */
-static htp_status_t htp_gzip_decompressor_decompress(htp_decompressor_gzip_t *drec, htp_tx_data_t *d) {
+htp_status_t htp_gzip_decompressor_decompress(htp_decompressor_t *drec1, htp_tx_data_t *d) {
     size_t consumed = 0;
     int rc = 0;
     htp_status_t callback_rc;
+    htp_decompressor_gzip_t *drec = (htp_decompressor_gzip_t*) drec1;
 
     // Pass-through the NULL chunk, which indicates the end of the stream.
 
@@ -404,7 +405,8 @@ restart:
  *
  * @param[in] drec
  */
-static void htp_gzip_decompressor_destroy(htp_decompressor_gzip_t *drec) {
+void htp_gzip_decompressor_destroy(htp_decompressor_t *drec1) {
+    htp_decompressor_gzip_t *drec = (htp_decompressor_gzip_t*) drec1;
     if (drec == NULL) return;
 
     htp_gzip_decompressor_end(drec);
@@ -424,8 +426,8 @@ htp_decompressor_t *htp_gzip_decompressor_create(htp_connp_t *connp, enum htp_co
     htp_decompressor_gzip_t *drec = calloc(1, sizeof (htp_decompressor_gzip_t));
     if (drec == NULL) return NULL;
 
-    drec->super.decompress = (int (*)(htp_decompressor_t *, htp_tx_data_t *))htp_gzip_decompressor_decompress;
-    drec->super.destroy = (void (*)(htp_decompressor_t *))htp_gzip_decompressor_destroy;
+    drec->super.decompress = NULL;
+    drec->super.destroy = NULL;
     drec->super.next = NULL;
 
     drec->buffer = malloc(GZIP_BUF_SIZE);
