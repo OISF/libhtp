@@ -46,6 +46,7 @@
 
 #include <gtest/gtest.h>
 #include <htp/htp_private.h>
+#include <htp/htp_decompressors.h>
 
 #ifndef O_BINARY
 #define O_BINARY 0
@@ -103,7 +104,7 @@ protected:
 
         // Decompress
 
-        htp_status_t rc = decompressor->decompress(decompressor, &d);
+        htp_status_t rc = htp_gzip_decompressor_decompress(decompressor, &d);
 
         free((void *)d.data);
 
@@ -134,7 +135,7 @@ protected:
     virtual void TearDown() {
         bstr_free(output);
         bstr_free(o_boxing_wizards);
-        decompressor->destroy(decompressor);
+        htp_gzip_decompressor_destroy(decompressor);
         htp_connp_destroy_all(connp);
         htp_config_destroy(cfg);
     }

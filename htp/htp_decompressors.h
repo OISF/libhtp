@@ -55,8 +55,10 @@ typedef struct htp_decompressor_t htp_decompressor_t;
 #define DEFLATE_MAGIC_2         0x8b
 
 struct htp_decompressor_t {
+    // no longer used
     htp_status_t (*decompress)(htp_decompressor_t *, htp_tx_data_t *);
     htp_status_t (*callback)(htp_tx_data_t *);
+    // no longer used
     void (*destroy)(htp_decompressor_t *);
     struct htp_decompressor_t *next;
     struct timeval time_before;
@@ -81,6 +83,8 @@ struct htp_decompressor_gzip_t {
 };
 
 htp_decompressor_t *htp_gzip_decompressor_create(htp_connp_t *connp, enum htp_content_encoding_t format);
+htp_status_t htp_gzip_decompressor_decompress(htp_decompressor_t *drec, htp_tx_data_t *d);
+void htp_gzip_decompressor_destroy(htp_decompressor_t *drec);
 
 #ifdef __cplusplus
 }
