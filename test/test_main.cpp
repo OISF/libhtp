@@ -121,7 +121,7 @@ TEST_F(ConnectionParsing, ApacheHeaderParsing) {
 
         switch (count) {
             case 0:
-                ASSERT_EQ(0, bstr_cmp_c(h->name, " Invalid-Folding"));
+                ASSERT_EQ(0, bstr_cmp_c(h->name, "Invalid-Folding"));
                 ASSERT_EQ(0, bstr_cmp_c(h->value, "1"));
                 break;
             case 1:
