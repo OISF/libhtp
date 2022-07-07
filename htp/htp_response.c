@@ -946,7 +946,14 @@ htp_status_t htp_connp_RES_HEADERS(htp_connp_t *connp) {
                     }
 
                     // Keep the header data for parsing later.
-                    connp->out_header = bstr_dup_mem(data, len);
+                    size_t trim = 0;
+                    while(trim < len) {
+                        if (!htp_is_folding_char(data[trim])) {
+                            break;
+                        }
+                        trim++;
+                    }
+                    connp->out_header = bstr_dup_mem(data + trim, len - trim);
                     if (connp->out_header == NULL) return HTP_ERROR;
                 } else {
                     size_t colon_pos = 0;
