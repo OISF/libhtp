@@ -1073,6 +1073,7 @@ htp_status_t htp_connp_RES_LINE(htp_connp_t *connp) {
 
                 connp->out_current_consume_offset = connp->out_current_read_offset;
                 htp_status_t rc = htp_tx_res_process_body_data_ex(connp->out_tx, data, len + chomp_result);
+                htp_connp_res_clear_buffer(connp);
                 if (rc != HTP_OK) return rc;
 
                 // Continue to process response body. Because we don't have
