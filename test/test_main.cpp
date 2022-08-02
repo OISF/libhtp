@@ -37,6 +37,7 @@
  * @author Ivan Ristic <ivanr@webkreator.com>
  */
 
+#include <cstring>
 #include <iostream>
 #include <gtest/gtest.h>
 #include <htp/htp_private.h>
@@ -2087,4 +2088,61 @@ TEST_F(ConnectionParsing, Expect100) {
     ASSERT_EQ(HTP_REQUEST_COMPLETE, tx->request_progress);
     ASSERT_EQ(200, tx->response_status_number);
     ASSERT_EQ(HTP_RESPONSE_COMPLETE, tx->response_progress);
+}
+
+struct ResponseBodyDataCallback {
+  unsigned char *data = NULL;
+  size_t len = 0;
+};
+
+static int callback_RESPONSE_BODY_DATA(htp_tx_data_t *d) {
+    struct ResponseBodyDataCallback *user_data = (struct ResponseBodyDataCallback *) htp_tx_get_user_data(d->tx);
+
+    if (!user_data) {
+        user_data = (ResponseBodyDataCallback *) malloc(sizeof(*user_data));
+
+        if (!user_data) return HTP_ERROR;
+
+        user_data->data = NULL;
+        user_data->len = 0;
+
+        htp_tx_set_user_data(d->tx, user_data);
+    }
+
+    size_t size_needed = user_data->len + d->len;
+
+    user_data->data = (unsigned char *) realloc(user_data->data, size_needed);
+
+    if(!user_data->data) return HTP_ERROR;
+
+    memcpy(user_data->data + user_data->len, d->data, d->len);
+    user_data->len = size_needed;
+
+    return HTP_OK;
+}
+
+TEST_F(ConnectionParsing, ResponseBodyData) {
+    htp_config_register_response_body_data(cfg, callback_RESPONSE_BODY_DATA);
+
+    int rc = test_run(home, "100-response-body-data.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+
+    ASSERT_EQ(1, htp_list_size(connp->conn->transactions));
+    htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+    ASSERT_EQ(HTP_REQUEST_COMPLETE, tx->request_progress);
+    ASSERT_EQ(HTP_RESPONSE_COMPLETE, tx->response_progress);
+
+    struct ResponseBodyDataCallback *user_data = (struct ResponseBodyDataCallback *) htp_tx_get_user_data(tx);
+    ASSERT_TRUE(user_data);
+
+    char *response_body = strndup((const char *) user_data->data, user_data->len);
+    ASSERT_TRUE(response_body);
+
+    EXPECT_EQ(6, user_data->len);
+    EXPECT_STREQ("1\n23\n4", response_body);
+
+    free(response_body);
+    free(user_data->data);
+    free(user_data);
 }
