@@ -2088,3 +2088,43 @@ TEST_F(ConnectionParsing, Expect100) {
     ASSERT_EQ(200, tx->response_status_number);
     ASSERT_EQ(HTP_RESPONSE_COMPLETE, tx->response_progress);
 }
+
+struct ResponseBodyDataCallback {
+    std::vector<std::string> data;
+};
+
+static int callback_RESPONSE_BODY_DATA(htp_tx_data_t *d) {
+    struct ResponseBodyDataCallback *user_data = (struct ResponseBodyDataCallback *) htp_tx_get_user_data(d->tx);
+
+    if (!user_data) {
+        user_data = new ResponseBodyDataCallback();
+        htp_tx_set_user_data(d->tx, user_data);
+    }
+
+    if(d->data) user_data->data.emplace_back(std::string(reinterpret_cast<const char *>(d->data), d->len));
+
+    return HTP_OK;
+}
+
+TEST_F(ConnectionParsing, ResponseBodyData) {
+    htp_config_register_response_body_data(cfg, callback_RESPONSE_BODY_DATA);
+
+    int rc = test_run(home, "100-response-body-data.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+
+    ASSERT_EQ(1, htp_list_size(connp->conn->transactions));
+    htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+    ASSERT_EQ(HTP_REQUEST_COMPLETE, tx->request_progress);
+    ASSERT_EQ(HTP_RESPONSE_COMPLETE, tx->response_progress);
+
+    struct ResponseBodyDataCallback *user_data = (struct ResponseBodyDataCallback *) htp_tx_get_user_data(tx);
+    ASSERT_TRUE(user_data);
+
+    ASSERT_EQ(3, user_data->data.size());
+    EXPECT_EQ("1\n", user_data->data[0]);
+    EXPECT_EQ("23\n", user_data->data[1]);
+    EXPECT_EQ("4", user_data->data[2]);
+
+    delete user_data;
+}
