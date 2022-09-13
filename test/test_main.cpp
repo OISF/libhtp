@@ -2089,6 +2089,8 @@ TEST_F(ConnectionParsing, Expect100) {
     ASSERT_EQ(HTP_RESPONSE_COMPLETE, tx->response_progress);
 }
 
+// emplace_back needs at least C++ 11
+#if __cplusplus > 199711L
 struct ResponseBodyDataCallback {
     std::vector<std::string> data;
 };
@@ -2128,3 +2130,4 @@ TEST_F(ConnectionParsing, ResponseBodyData) {
 
     delete user_data;
 }
+#endif
