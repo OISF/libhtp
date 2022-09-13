@@ -612,6 +612,7 @@ htp_status_t htp_tx_req_process_body_data_ex(htp_tx_t *tx, const void *data, siz
     d.tx = tx;
     d.data = (unsigned char *) data;
     d.len = len;
+    d.is_last = (data == NULL && len == 0);
 
     switch(tx->request_content_encoding) {
         case HTP_COMPRESSION_UNKNOWN:
