@@ -153,6 +153,7 @@ int htp_parse_authorization_basic(htp_connp_t *connp, htp_header_t *auth_header)
     if (connp->in_tx->request_auth_password == NULL) {
         bstr_free(decoded);
         bstr_free(connp->in_tx->request_auth_username);
+        connp->in_tx->request_auth_username = NULL;
         return HTP_ERROR;
     }
 
