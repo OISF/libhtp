@@ -401,7 +401,7 @@ htp_status_t htp_connp_RES_BODY_CHUNKED_LENGTH(htp_connp_t *connp) {
 
         // Have we reached the end of the line? Or is this not chunked after all?
         if (connp->out_next_byte == LF ||
-                (!is_chunked_ctl_char(connp->out_next_byte) && !data_probe_chunk_length(connp))) {
+                (!is_chunked_ctl_char((unsigned char) connp->out_next_byte) && !data_probe_chunk_length(connp))) {
             unsigned char *data;
             size_t len;
 
