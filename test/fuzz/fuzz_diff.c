@@ -275,6 +275,14 @@ static int bstrDiff(void* rsbstr, bstr * cbstr, const char *field) {
     if (rsbstr == NULL && cbstr == NULL) {
         return 0;
     }
+    if (rsbstr == NULL) {
+        printf("Assertion failure: Bstr %s rust is zero\n", field);
+        return 1;
+    }
+    if (cbstr == NULL) {
+        printf("Assertion failure: Bstr %s C is zero\n", field);
+        return 1;
+    }
     size_t len =  bstr_len(cbstr);
     uint8_t * rsptr = bstr_ptr_rs(rsbstr);
     uint8_t * cptr = bstr_ptr(cbstr);
