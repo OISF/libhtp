@@ -1,0 +1,90 @@
+name: builds
+
+on:
+  - push
+  - pull_request
+
+permissions: read-all
+
+env:
+  DEFAULT_CFLAGS: "-Wall -Wextra -Werror -Wno-unused-parameter -Wno-unused-function"
+
+  # Apt sometimes likes to ask for user input, this will prevent that.
+  DEBIAN_FRONTEND: "noninteractive"
+
+jobs:
+  ubuntu-2004:
+    name: Ubuntu 20.04
+    runs-on: ubuntu-latest
+    container: ubuntu:20.04
+    steps:
+      - uses: actions/checkout@v3.1.0
+      - name: Install system dependencies
+        run: |
+            apt update
+            apt-get upgrade -y
+            apt-get -y install make \
+                autoconf \
+                build-essential \
+                autoconf \
+                automake \
+                dpkg-dev \
+                debhelper \
+                libtool \
+                make \
+                pkg-config \
+                zlib1g-dev
+      - run: ./autogen.sh
+      - run: CFLAGS="${DEFAULT_CFLAGS}" ./configure
+      - run: make -j2
+      - run: make install
+      - run: make distcheck
+
+  ubuntu-2204:
+    name: Ubuntu 22.04
+    runs-on: ubuntu-latest
+    container: ubuntu:22.04
+    steps:
+      - uses: actions/checkout@v3.1.0
+      - name: Install system dependencies
+        run: |
+            apt update
+            apt-get upgrade -y
+            apt-get -y install make \
+                autoconf \
+                build-essential \
+                autoconf \
+                automake \
+                libtool \
+                make \
+                pkg-config \
+                zlib1g-dev
+      - run: ./autogen.sh
+      - run: CFLAGS="${DEFAULT_CFLAGS}" ./configure
+      - run: make -j2
+      - run: make install
+      - run: make distcheck
+
+  centos-7:
+    name: CentOS 7
+    runs-on: ubuntu-latest
+    container: centos:7
+    steps:
+      - uses: actions/checkout@v3.1.0
+      - name: Install system dependencies
+        run: |
+          yum -y install \
+                autoconf \
+                automake \
+                gcc \
+                gcc-c++ \
+                libtool \
+                make \
+                pkgconfig \
+                which \
+                zlib-devel
+      - run: ./autogen.sh
+      - run: CFLAGS="${DEFAULT_CFLAGS}" ./configure
+      - run: make -j2
+      - run: make install
+      - run: make distcheck
