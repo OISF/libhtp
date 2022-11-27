@@ -1,3 +1,14 @@
+0.5.42 (27 November 2022)
+-------------------------
+
+- github: add initial workflow
+
+- htp: fixes warning about bad delimiter in URI
+
+- fuzz: fix a null dereference in a diff report
+
+- htp: fixes warning about integer
+
 0.5.41 (27 September 2022)
 --------------------------
 
