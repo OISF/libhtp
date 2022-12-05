@@ -103,7 +103,7 @@ int htp_base64_decode(htp_base64_decoder *decoder, const void *_code_in, int len
                     }
                     fragment = (char) htp_base64_decode_single(*codechar++);
                 } while (fragment < 0);
-                *plainchar = (fragment & 0x03f) << 2;
+                *plainchar = (unsigned char) ((fragment & 0x03f) << 2);
                 /* fall through */
 
                 case step_b:
@@ -116,7 +116,7 @@ int htp_base64_decode(htp_base64_decoder *decoder, const void *_code_in, int len
                     fragment = (char) htp_base64_decode_single(*codechar++);
                 } while (fragment < 0);
                 *plainchar++ |= (fragment & 0x030) >> 4;
-                *plainchar = (fragment & 0x00f) << 4;                
+                *plainchar = (unsigned char) ((fragment & 0x00f) << 4);
                 if (--length_out == 0) {
                     return plainchar - plaintext_out;
                 }
@@ -132,7 +132,7 @@ int htp_base64_decode(htp_base64_decoder *decoder, const void *_code_in, int len
                     fragment = (char) htp_base64_decode_single(*codechar++);
                 } while (fragment < 0);
                 *plainchar++ |= (fragment & 0x03c) >> 2;
-                *plainchar = (fragment & 0x003) << 6;
+                *plainchar = (unsigned char) ((fragment & 0x003) << 6);
                 if (--length_out == 0) {
                     return plainchar - plaintext_out;
                 }

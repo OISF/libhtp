@@ -700,7 +700,14 @@ htp_status_t htp_connp_REQ_HEADERS(htp_connp_t *connp) {
                     }
 
                     // Keep the header data for parsing later.
-                    connp->in_header = bstr_dup_mem(data, len);
+                    size_t trim = 0;
+                    while(trim < len) {
+                        if (!htp_is_folding_char(data[trim])) {
+                            break;
+                        }
+                        trim++;
+                    }
+                    connp->in_header = bstr_dup_mem(data + trim, len - trim);
                     if (connp->in_header == NULL) return HTP_ERROR;
                 } else {
                     // Add to the existing header.                    

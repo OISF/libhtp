@@ -379,7 +379,17 @@ htp_status_t htp_parse_request_line_generic_ex(htp_connp_t *connp, int nul_termi
             // special case: even though RFC's allow only SP (0x20), many
             // implementations allow other delimiters, like tab or other
             // characters that isspace() accepts.
-            while ((pos < len) && (!htp_is_space(data[pos]))) pos++;
+            pos = len - 1;
+            while ((pos > start) && (!htp_is_space(data[pos]))) pos--;
+        } else {
+            // reset bad_delim found in protocol part
+            bad_delim = 0;
+            for (size_t i = start; i < pos; i++) {
+                if (data[i] != 0x20 && htp_is_space(data[i])) {
+                    bad_delim = 1;
+                    break;
+                }
+            }
         }
         if (bad_delim) {
 #ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION

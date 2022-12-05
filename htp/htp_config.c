@@ -724,11 +724,11 @@ void htp_config_set_bestfit_map(htp_cfg_t *cfg, enum htp_decoder_ctx_t ctx, void
 void htp_config_set_bestfit_replacement_byte(htp_cfg_t *cfg, enum htp_decoder_ctx_t ctx, int b) {
     if (ctx >= HTP_DECODER_CONTEXTS_MAX) return;
 
-    cfg->decoder_cfgs[ctx].bestfit_replacement_byte = b;
+    cfg->decoder_cfgs[ctx].bestfit_replacement_byte = (unsigned char) b;
 
     if (ctx == HTP_DECODER_DEFAULTS) {
         for (size_t i = 0; i < HTP_DECODER_CONTEXTS_MAX; i++) {
-            cfg->decoder_cfgs[i].bestfit_replacement_byte = b;
+            cfg->decoder_cfgs[i].bestfit_replacement_byte = (unsigned char) b;
         }
     }
 }

@@ -339,7 +339,7 @@ bstr *bstr_to_lowercase(bstr *b) {
 
     size_t i = 0;
     while (i < len) {
-        data[i] = tolower(data[i]);
+        data[i] = (uint8_t)tolower(data[i]);
         i++;
     }
 
