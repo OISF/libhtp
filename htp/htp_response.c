@@ -668,6 +668,7 @@ htp_status_t htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
             connp->out_state = htp_connp_RES_FINALIZE;
         } else {
             htp_log(connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Unexpected Response body");
+            connp->out_state = htp_connp_RES_FINALIZE;
         }
     }
     // Hack condition to check that we do not assume "no body"
@@ -1156,9 +1157,7 @@ htp_status_t htp_connp_RES_FINALIZE(htp_connp_t *connp) {
     if (htp_treat_response_line_as_body(data, bytes_left)) {
         // Interpret remaining bytes as body data
         htp_log(connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Unexpected response body");
-        htp_status_t rc = htp_tx_res_process_body_data_ex(connp->out_tx, data, bytes_left);
-        htp_connp_res_clear_buffer(connp);
-        return rc;
+        return htp_tx_state_response_complete_ex(connp->out_tx, 0);
     }
 
     //unread last end of line so that RES_LINE works

@@ -899,6 +899,7 @@ htp_status_t htp_connp_REQ_FINALIZE(htp_connp_t *connp) {
         if (connp->in_body_data_left <= 0) {
             // log only once per transaction
             htp_log(connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Unexpected request body");
+            return htp_tx_state_request_complete(connp->in_tx);
         } else {
             connp->in_body_data_left = 1;
         }
