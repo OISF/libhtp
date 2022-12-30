@@ -431,7 +431,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
     if (connDiff(rsconnp, conn)) {
         printf("results are different\n");
     }
-    libhtprsFreeFuzzRun(rsconnp);
+    libhtprsFreeFuzzRun(rstest);
 
     htp_connp_destroy_all(connp);
 
