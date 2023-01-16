@@ -2510,7 +2510,7 @@ void htp_uri_free(htp_uri_t *uri) {
     free(uri);
 }
 
-htp_uri_t *htp_uri_alloc() {
+htp_uri_t *htp_uri_alloc(void) {
     htp_uri_t *u = calloc(1, sizeof (htp_uri_t));
     if (u == NULL) return NULL;
 
