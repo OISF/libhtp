@@ -67,7 +67,7 @@ void bstr_builder_clear(bstr_builder_t *bb) {
     htp_list_clear(bb->pieces);
 }
 
-bstr_builder_t *bstr_builder_create() {
+bstr_builder_t *bstr_builder_create(void) {
     bstr_builder_t *bb = calloc(1, sizeof (bstr_builder_t));
     if (bb == NULL) return NULL;
 
