@@ -1252,6 +1252,8 @@ htp_status_t htp_tx_state_response_complete_ex(htp_tx_t *tx, int hybrid_mode) {
         }
     }
 
+    htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "completing the response.. tx %llx", tx);
+
     // Make a copy of the connection parser pointer, so that
     // we don't have to reference it via tx, which may be destroyed later.
     htp_connp_t *connp = tx->connp;

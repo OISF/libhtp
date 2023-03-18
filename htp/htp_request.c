@@ -948,7 +948,7 @@ htp_status_t htp_connp_REQ_IDLE(htp_connp_t * connp) {
 
     connp->in_tx = htp_connp_tx_create(connp);
     if (connp->in_tx == NULL) return HTP_ERROR;
-
+    connp->out_tx = connp->in_tx; // use this whenever request starts
     // Change state to TRANSACTION_START
     htp_tx_state_request_start(connp->in_tx);
 
@@ -995,6 +995,14 @@ int htp_connp_req_data(htp_connp_t *connp, const htp_time_t *timestamp, const vo
         htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Missing inbound transaction data");
 
         return HTP_STREAM_ERROR;
+    }
+    if (connp->in_state == htp_connp_REQ_IDLE && connp->out_state != htp_connp_RES_IDLE) {
+        //complete the response state
+        htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "response is not in idle state.. complete it");
+        htp_tx_state_response_complete(connp->out_tx);
+        // after this out_tx should become NULL.. anyway force it 
+        connp->out_tx == NULL;
+        // htp_connp_REQ_IDLE handler will set it to in_tx(new transaction)
     }
 
     // If the length of the supplied data chunk is zero, proceed
@@ -1058,24 +1066,14 @@ int htp_connp_req_data(htp_connp_t *connp, const htp_time_t *timestamp, const vo
         htp_status_t rc;
         //handle gap
         if (data == NULL && len > 0) {
-            // if there is gap, only transaction in final states are allowed to complete
-            // else skip these transaction(No response can be matched to these requests)
-            if (connp->in_state == htp_connp_REQ_FINALIZE) {
-                //simple version without probing
+            htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "gap found in request");
+            // req is is not complete..then finish it.. response is already checked if it Idle
+            if (connp->in_state != htp_connp_REQ_IDLE) {
+                htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "request is not in idle state");
                 rc = htp_tx_state_request_complete(connp->in_tx);
-            } else {
-                // go to htp_connp_REQ_CONNECT_PROBE_DATA ?
-                htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Gaps are not allowed during this state");
-                //reset state
-                connp->in_tx=NULL;
-                connp->in_state = htp_connp_REQ_IDLE;
-                // gap is in request, we can not match response(even if there is no gap in response stream)
-                // any response in the response stream can not be matched with any transactions in the list
-                // move next response index to use new transaction(either created by new request, or response w/o request)
-                connp->out_next_tx_index = htp_list_size(connp->conn->transactions);
-
-                return HTP_STREAM_CLOSED;
+                connp->out_tx = NULL;
             }
+            return HTP_STREAM_CLOSED;
         } else {
             rc = connp->in_state(connp);
         }
