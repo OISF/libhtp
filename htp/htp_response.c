@@ -613,7 +613,6 @@ htp_status_t htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
         if (is100continue) {
             if (connp->out_tx->seen_100continue != 0) {
                 htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Already seen 100-Continue.");
-                return HTP_ERROR;
             }
 
             // Ignore any response headers seen so far.
