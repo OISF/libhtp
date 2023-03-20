@@ -1071,8 +1071,8 @@ int htp_connp_req_data(htp_connp_t *connp, const htp_time_t *timestamp, const vo
             if (connp->in_state != htp_connp_REQ_IDLE) {
                 htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "request is not in idle state");
                 rc = htp_tx_state_request_complete(connp->in_tx);
-                connp->out_tx = NULL;
             }
+            connp->out_tx = NULL;
             return HTP_STREAM_CLOSED;
         } else {
             rc = connp->in_state(connp);

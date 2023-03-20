@@ -1340,11 +1340,8 @@ int htp_connp_res_data(htp_connp_t *connp, const htp_time_t *timestamp, const vo
                 htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "response is not in idle state");
                 rc = htp_tx_state_response_complete(connp->out_tx);
                 // gap occured in response stream
-                // leave this transaction as it is
-                // move next index to use new transaction(either created by request, or response w/o request)
-                connp->out_next_tx_index = htp_list_size(connp->conn->transactions);
-                
             }
+            connp->out_tx = NULL;
             return HTP_STREAM_CLOSED;
         } else {
             rc = connp->out_state(connp);
