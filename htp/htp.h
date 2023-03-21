@@ -542,6 +542,8 @@ struct htp_tx_t {
 
     /** Total repetitions for headers in response. */
     uint16_t res_header_repetitions;
+
+    uint16_t force_complete;
 };
 
 /**

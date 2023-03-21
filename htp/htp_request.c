@@ -999,6 +999,9 @@ int htp_connp_req_data(htp_connp_t *connp, const htp_time_t *timestamp, const vo
     if (connp->in_state == htp_connp_REQ_IDLE && connp->out_state != htp_connp_RES_IDLE) {
         //complete the response state
         htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "response is not in idle state.. complete it");
+        if(connp->out_tx != NULL) {
+            connp->out_tx->force_complete = 1;
+        }
         htp_tx_state_response_complete(connp->out_tx);
         // after this out_tx should become NULL.. anyway force it 
         connp->out_tx = NULL;
@@ -1070,6 +1073,12 @@ int htp_connp_req_data(htp_connp_t *connp, const htp_time_t *timestamp, const vo
             // req is is not complete..then finish it.. response is already checked if it Idle
             if (connp->in_state != htp_connp_REQ_IDLE) {
                 htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "request is not in idle state");
+                if(connp->in_tx != NULL) {
+                    connp->in_tx->force_complete = 1;
+                    //this helps in transaction without response
+                    connp->in_tx->response_progress = HTP_RESPONSE_COMPLETE;
+                }
+                //request wii be made complete 
                 rc = htp_tx_state_request_complete(connp->in_tx);
             }
             connp->out_tx = NULL;

@@ -70,6 +70,7 @@ htp_tx_t *htp_tx_create(htp_connp_t *connp) {
     tx->request_progress = HTP_REQUEST_NOT_STARTED;
     tx->request_protocol_number = HTP_PROTOCOL_UNKNOWN;
     tx->request_content_length = -1;
+    tx->force_complete = 0;
 
     tx->parsed_uri_raw = htp_uri_alloc();
     if (tx->parsed_uri_raw == NULL) {
