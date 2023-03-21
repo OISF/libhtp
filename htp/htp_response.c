@@ -1196,10 +1196,6 @@ htp_status_t htp_connp_RES_IDLE(htp_connp_t *connp) {
     //connp->out_tx = htp_list_get(connp->conn->transactions, connp->out_next_tx_index);
     if (connp->out_tx == NULL) {
         htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Unable to match response to request");
-        // finalize dangling request waiting for next request or body
-        if (connp->in_state == htp_connp_REQ_FINALIZE) {
-            htp_tx_state_request_complete(connp->in_tx);
-        }
         connp->out_tx = htp_connp_tx_create(connp);
         if (connp->out_tx == NULL) {
             return HTP_ERROR;
@@ -1216,8 +1212,6 @@ htp_status_t htp_connp_RES_IDLE(htp_connp_t *connp) {
         if (connp->out_tx->request_uri == NULL) {
             return HTP_ERROR;
         }
-
-        connp->in_state = htp_connp_REQ_FINALIZE;
 #ifdef HTP_DEBUG
         fprintf(stderr, "picked up response w/o request");
 #endif
