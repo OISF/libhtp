@@ -1001,7 +1001,7 @@ int htp_connp_req_data(htp_connp_t *connp, const htp_time_t *timestamp, const vo
         htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "response is not in idle state.. complete it");
         htp_tx_state_response_complete(connp->out_tx);
         // after this out_tx should become NULL.. anyway force it 
-        connp->out_tx == NULL;
+        connp->out_tx = NULL;
         // htp_connp_REQ_IDLE handler will set it to in_tx(new transaction)
     }
 
