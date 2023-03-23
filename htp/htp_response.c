@@ -1330,16 +1330,13 @@ int htp_connp_res_data(htp_connp_t *connp, const htp_time_t *timestamp, const vo
 
         //handle gap
         if (data == NULL && len > 0) {
-            if (connp->out_state == htp_connp_RES_FINALIZE) {
+            if (connp->out_state == htp_connp_RES_BODY_IDENTITY_CL_KNOWN ||
+                connp->out_state == htp_connp_RES_BODY_IDENTITY_STREAM_CLOSE) {
+                rc = connp->out_state(connp);
+            } else if (connp->out_state == htp_connp_RES_FINALIZE) {
                 rc = htp_tx_state_response_complete_ex(connp->out_tx, 0);
             } else {
                 htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Gaps are not allowed during this state");
-                connp->out_tx=NULL;
-                connp->out_state = htp_connp_RES_IDLE;
-                // gap occured in response stream
-                // leave this transaction as it is
-                // move next index to use new transaction(either created by request, or response w/o request)
-                connp->out_next_tx_index = htp_list_size(connp->conn->transactions);
                 return HTP_STREAM_CLOSED;
             }
         } else {
