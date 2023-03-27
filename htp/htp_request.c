@@ -81,6 +81,15 @@ if ((X)->in_current_read_offset < (X)->in_current_len) { \
     return HTP_DATA_BUFFER; \
 }
 
+#define IN_COPY_BYTE_OR_IGNORE(X) \
+if ((X)->in_current_read_offset < (X)->in_current_len) { \
+    (X)->in_next_byte = (X)->in_current_data[(X)->in_current_read_offset]; \
+    (X)->in_current_read_offset++; \
+    (X)->in_stream_offset++; \
+} else { \
+    return HTP_IGNORE; \
+}
+
 /**
  * Sends outstanding connection data to the currently active data receiver hook.
  *
@@ -766,6 +775,51 @@ htp_status_t htp_connp_REQ_PROTOCOL(htp_connp_t *connp) {
 }
 
 /**
+ * Ignore request line.
+ *
+ * @param[in] connp
+ * @returns HTP_OK on succesful ignore, HTP_ERROR on error.
+ */
+htp_status_t htp_connp_REQ_IGNORE_line(htp_connp_t *connp) {
+    unsigned char *data;
+    size_t len;
+
+    if (htp_connp_req_consolidate_data(connp, &data, &len) != HTP_OK) {
+        return HTP_ERROR;
+    }
+
+    #ifdef HTP_DEBUG
+    fprintf(stderr, "Ignoring request data htp_connp_IGNORE_REQ_line(connp->in_status %x)\n", connp->in_status);
+    fprint_raw_data(stderr, __func__, data, len);
+    #endif
+    if (len == 0) {
+        htp_connp_req_clear_buffer(connp);
+        return HTP_IGNORE;
+    }
+
+    // Process request line.
+
+    // htp_chomp(data, &len);
+
+    // connp->in_tx->request_line = bstr_dup_mem(data, len);
+    // if (connp->in_tx->request_line == NULL)
+    //     return HTP_ERROR;
+
+    // if (connp->cfg->parse_request_line(connp) != HTP_OK)
+    //     return HTP_ERROR;
+
+    // // Finalize request line parsing.
+
+    // if (htp_tx_state_request_line(connp->in_tx) != HTP_OK)
+    //     return HTP_ERROR;
+
+    htp_connp_req_clear_buffer(connp);
+
+    return HTP_IGNORE;
+}
+
+
+/**
  * Parse the request line.
  *
  * @param[in] connp
@@ -836,6 +890,35 @@ htp_status_t htp_connp_REQ_LINE(htp_connp_t *connp) {
         // Have we reached the end of the line?
         if (connp->in_next_byte == LF) {
             return htp_connp_REQ_LINE_complete(connp);
+        }
+    }
+
+    return HTP_ERROR;
+}
+
+/**
+ * Ignore request body.
+ *
+ * @param[in] connp
+ * @returns HTP_OK on state change, HTP_ERROR on error, or HTP_DATA when more data is needed.
+ */
+htp_status_t htp_connp_REQ_IGNORE(htp_connp_t *connp) {
+
+    if (connp->in_current_data == NULL) {
+        return HTP_IGNORE;
+    }
+
+    for (;;) {
+        // Get one byte
+        IN_PEEK_NEXT(connp);
+        if (connp->in_status == HTP_STREAM_CLOSED && connp->in_next_byte == -1) {
+            return htp_connp_REQ_IGNORE_line(connp);
+        }
+        IN_COPY_BYTE_OR_IGNORE(connp);
+
+        // Have we reached the end of the line?
+        if (connp->in_next_byte == LF) {
+            return htp_connp_REQ_IGNORE_line(connp);
         }
     }
 
@@ -951,6 +1034,10 @@ htp_status_t htp_connp_REQ_IDLE(htp_connp_t * connp) {
     // Change state to TRANSACTION_START
     htp_tx_state_request_start(connp->in_tx);
 
+    if (connp->out_state == htp_connp_RES_IGNORE) {
+        connp->out_state = htp_connp_RES_IDLE;
+    }
+
     return HTP_OK;
 }
 
@@ -988,7 +1075,7 @@ int htp_connp_req_data(htp_connp_t *connp, const htp_time_t *timestamp, const vo
     }
 
     // Sanity check: we must have a transaction pointer if the state is not IDLE (no inbound transaction)
-    if ((connp->in_tx == NULL)&&(connp->in_state != htp_connp_REQ_IDLE)) {
+    if ((connp->in_tx == NULL) && !(connp->in_state == htp_connp_REQ_IDLE || connp->in_state == htp_connp_REQ_IGNORE)) {
         connp->in_status = HTP_STREAM_ERROR;
 
         htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Missing inbound transaction data");
@@ -1057,18 +1144,23 @@ int htp_connp_req_data(htp_connp_t *connp, const htp_time_t *timestamp, const vo
         htp_status_t rc;
         //handle gap
         if (data == NULL && len > 0) {
-            //cannot switch over a function pointer in C
-            if (connp->in_state == htp_connp_REQ_BODY_IDENTITY ||
-                connp->in_state == htp_connp_REQ_IGNORE_DATA_AFTER_HTTP_0_9) {
-                rc = connp->in_state(connp);
-            } else if (connp->in_state == htp_connp_REQ_FINALIZE) {
-                //simple version without probing
-                rc = htp_tx_state_request_complete(connp->in_tx);
-            } else {
-                // go to htp_connp_REQ_CONNECT_PROBE_DATA ?
-                htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Gaps are not allowed during this state");
-                return HTP_STREAM_CLOSED;
-            }
+            // //cannot switch over a function pointer in C
+            // if (connp->in_state == htp_connp_REQ_BODY_IDENTITY ||
+            //     connp->in_state == htp_connp_REQ_IGNORE_DATA_AFTER_HTTP_0_9) {
+            //     rc = connp->in_state(connp);
+            // } else if (connp->in_state == htp_connp_REQ_FINALIZE) {
+            //     //simple version without probing
+            //     rc = htp_tx_state_request_complete(connp->in_tx);
+            // } else {
+            //     // go to htp_connp_REQ_CONNECT_PROBE_DATA ?
+            //     htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Gaps are not allowed during this state");
+            //     return HTP_STREAM_CLOSED;
+            // }
+            htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Gap found in request. Changing req and res state to IGNORE");
+            
+            connp->in_state = htp_connp_REQ_IGNORE;
+            connp->out_state = htp_connp_RES_IGNORE;
+            rc = connp->in_state(connp);
         } else {
             rc = connp->in_state(connp);
         }
@@ -1140,6 +1232,10 @@ int htp_connp_req_data(htp_connp_t *connp, const htp_time_t *timestamp, const vo
                 connp->in_status = HTP_STREAM_STOP;
 
                 return HTP_STREAM_STOP;
+            }
+
+            if (rc == HTP_IGNORE) {
+                return HTP_STREAM_DATA;
             }
 
             #ifdef HTP_DEBUG

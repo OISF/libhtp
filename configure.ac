@@ -57,7 +57,7 @@ if test "x$enable_debug" = "xyes"; then
     echo "Debug mode enabled"
 fi
 
-OLEVEL=2
+OLEVEL=0
 
 AC_ARG_ENABLE(devmode, [  --enable-devmode  Enable development mode],, [ enable_devmode=no ])
 if test "$enable_devmode" = "yes"; then

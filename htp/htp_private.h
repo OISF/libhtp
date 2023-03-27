@@ -112,6 +112,7 @@ htp_status_t htp_connp_REQ_BODY_CHUNKED_DATA(htp_connp_t *connp);
 htp_status_t htp_connp_REQ_BODY_CHUNKED_DATA_END(htp_connp_t *connp);
 htp_status_t htp_connp_REQ_FINALIZE(htp_connp_t *connp);
 htp_status_t htp_connp_REQ_IGNORE_DATA_AFTER_HTTP_0_9(htp_connp_t *connp);
+htp_status_t htp_connp_REQ_IGNORE(htp_connp_t *connp);
 
 htp_status_t htp_connp_RES_IDLE(htp_connp_t *connp);
 htp_status_t htp_connp_RES_LINE(htp_connp_t *connp);
@@ -123,6 +124,7 @@ htp_status_t htp_connp_RES_BODY_CHUNKED_LENGTH(htp_connp_t *connp);
 htp_status_t htp_connp_RES_BODY_CHUNKED_DATA(htp_connp_t *connp);
 htp_status_t htp_connp_RES_BODY_CHUNKED_DATA_END(htp_connp_t *connp);
 htp_status_t htp_connp_RES_FINALIZE(htp_connp_t *connp);
+htp_status_t htp_connp_RES_IGNORE(htp_connp_t *connp);
 
 // Parsing functions
 

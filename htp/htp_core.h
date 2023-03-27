@@ -111,6 +111,8 @@ typedef struct timeval htp_time_t;
  */
 #define HTP_DATA_BUFFER             5
 
+#define HTP_IGNORE                  6
+
 /**
  * The highest htp_status_t value LibHTP will use internally.
  */

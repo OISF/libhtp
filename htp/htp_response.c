@@ -991,6 +991,139 @@ htp_status_t htp_connp_RES_HEADERS(htp_connp_t *connp) {
     return HTP_ERROR;
 }
 
+htp_status_t htp_connp_RES_IGNORE(htp_connp_t *connp) {
+
+    if (connp->in_state == htp_connp_REQ_IGNORE) {
+        htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Request is in htp_connp_REQ_IGNORE state when response is being processed. Changing req back to IDLE");
+        connp->in_state = htp_connp_REQ_IDLE;
+    }
+
+    return HTP_IGNORE;
+
+    // for (;;) {
+    //     // Don't try to get more data if the stream is closed. If we do, we'll return, asking for more data.
+    //     if (connp->out_status != HTP_STREAM_CLOSED) {
+    //         // Get one byte
+    //         OUT_COPY_BYTE_OR_RETURN(connp);
+    //     }
+
+    //     // Have we reached the end of the line? We treat stream closure as end of line in
+    //     // order to handle the case when the first line of the response is actually response body
+    //     // (and we wish it processed as such).
+    //     if (connp->out_next_byte == CR) {
+    //         OUT_PEEK_NEXT(connp);
+    //         if (connp->out_next_byte == -1) {
+    //             return HTP_DATA_BUFFER;
+    //         } else if (connp->out_next_byte == LF) {
+    //             continue;
+    //         }
+    //         connp->out_next_byte = LF;
+    //     }
+
+    //     if ((connp->out_next_byte == LF)||(connp->out_status == HTP_STREAM_CLOSED)) {
+    //         unsigned char *data;
+    //         size_t len;
+
+    //         if (htp_connp_res_consolidate_data(connp, &data, &len) != HTP_OK) {
+    //             return HTP_ERROR;
+    //         }
+
+    //         #ifdef HTP_DEBUG
+    //         fprint_raw_data(stderr, __func__, data, len);
+    //         #endif
+
+    //         // // Is this a line that should be ignored?
+    //         // if (htp_connp_is_line_ignorable(connp, data, len)) {
+    //         //     if (connp->out_status == HTP_STREAM_CLOSED) {
+    //         //         connp->out_state = htp_connp_RES_FINALIZE;
+    //         //     }
+    //         //     // We have an empty/whitespace line, which we'll note, ignore and move on
+    //         //     connp->out_tx->response_ignored_lines++;
+
+    //         //     // TODO How many lines are we willing to accept?
+
+    //         //     // Start again
+    //         //     htp_connp_res_clear_buffer(connp);
+
+    //         //     return HTP_OK;
+    //         // }
+
+    //         // Deallocate previous response line allocations, which we would have on a 100 response.
+
+    //         if (connp->out_tx->response_line != NULL) {
+    //             bstr_free(connp->out_tx->response_line);
+    //             connp->out_tx->response_line = NULL;
+    //         }
+
+    //         if (connp->out_tx->response_protocol != NULL) {
+    //             bstr_free(connp->out_tx->response_protocol);
+    //             connp->out_tx->response_protocol = NULL;
+    //         }
+
+    //         if (connp->out_tx->response_status != NULL) {
+    //             bstr_free(connp->out_tx->response_status);
+    //             connp->out_tx->response_status = NULL;
+    //         }
+
+    //         if (connp->out_tx->response_message != NULL) {
+    //             bstr_free(connp->out_tx->response_message);
+    //             connp->out_tx->response_message = NULL;
+    //         }
+
+    //         // Process response line.           
+
+    //         // int chomp_result = htp_chomp(data, &len);
+
+    //         // If the response line is invalid, determine if it _looks_ like
+    //         // a response line. If it does not look like a line, process the
+    //         // data as a response body because that is what browsers do.
+           
+    //         // if (htp_treat_response_line_as_body(data, len)) {
+    //         //     connp->out_tx->response_content_encoding_processing = HTP_COMPRESSION_NONE;
+
+    //         //     connp->out_current_consume_offset = connp->out_current_read_offset;
+    //         //     htp_status_t rc = htp_tx_res_process_body_data_ex(connp->out_tx, data, len + chomp_result);
+    //         //     htp_connp_res_clear_buffer(connp);
+    //         //     if (rc != HTP_OK) return rc;
+
+    //         //     // Continue to process response body. Because we don't have
+    //         //     // any headers to parse, we assume the body continues until
+    //         //     // the end of the stream.
+
+    //         //     // Have we seen the entire response body?
+    //         //     if (connp->out_current_len <= connp->out_current_read_offset) {
+    //         //         connp->out_tx->response_transfer_coding = HTP_CODING_IDENTITY;
+    //         //         connp->out_tx->response_progress = HTP_RESPONSE_BODY;
+    //         //         connp->out_body_data_left = -1;
+    //         //         connp->out_state = htp_connp_RES_FINALIZE;
+    //         //     }
+
+    //         //     return HTP_OK;
+    //         // }
+
+    //         // connp->out_tx->response_line = bstr_dup_mem(data, len);
+    //         // if (connp->out_tx->response_line == NULL) return HTP_ERROR;
+
+    //         // if (connp->cfg->parse_response_line(connp) != HTP_OK) return HTP_ERROR;
+
+    //         // htp_status_t rc = htp_tx_state_response_line(connp->out_tx);
+    //         // if (rc != HTP_OK) return rc;
+
+    //         htp_connp_res_clear_buffer(connp);
+
+    //         // Move on to the next phase.
+    //         // connp->out_state = htp_connp_RES_HEADERS;
+    //         // connp->out_tx->response_progress = HTP_RESPONSE_HEADERS;
+
+    //         return HTP_OK;
+    //     }
+    // }
+
+    // return HTP_ERROR;
+}
+
+
+
 /**
  * Parses response line.
  *
@@ -1265,7 +1398,7 @@ int htp_connp_res_data(htp_connp_t *connp, const htp_time_t *timestamp, const vo
     }
 
     // Sanity check: we must have a transaction pointer if the state is not IDLE (no outbound transaction)
-    if ((connp->out_tx == NULL)&&(connp->out_state != htp_connp_RES_IDLE)) {
+    if ((connp->out_tx == NULL)&& !(connp->out_state == htp_connp_RES_IDLE || connp->out_state == htp_connp_RES_IGNORE)) {
         connp->out_status = HTP_STREAM_ERROR;
 
         htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Missing outbound transaction data");
@@ -1409,6 +1542,10 @@ int htp_connp_res_data(htp_connp_t *connp, const htp_time_t *timestamp, const vo
                     // Partial chunk consumption
                     return HTP_STREAM_DATA_OTHER;
                 }
+            }
+
+            if (rc == HTP_IGNORE) {
+                return HTP_STREAM_DATA;
             }
 
             #ifdef HTP_DEBUG

@@ -2083,6 +2083,7 @@ char *htp_connp_in_state_as_string(htp_connp_t *connp) {
     if (connp->in_state == htp_connp_REQ_BODY_CHUNKED_DATA_END) return "REQ_BODY_CHUNKED_DATA_END";
     if (connp->in_state == htp_connp_REQ_FINALIZE) return "REQ_FINALIZE";
     if (connp->in_state == htp_connp_REQ_IGNORE_DATA_AFTER_HTTP_0_9) return "REQ_IGNORE_DATA_AFTER_HTTP_0_9";
+    if (connp->in_state == htp_connp_REQ_IGNORE) return "REQ_IGNORE";
 
     return "UNKNOWN";
 }
@@ -2103,6 +2104,7 @@ char *htp_connp_out_state_as_string(htp_connp_t *connp) {
     if (connp->out_state == htp_connp_RES_BODY_CHUNKED_DATA) return "RES_BODY_CHUNKED_DATA";
     if (connp->out_state == htp_connp_RES_BODY_CHUNKED_DATA_END) return "RES_BODY_CHUNKED_DATA_END";
     if (connp->out_state == htp_connp_RES_FINALIZE) return "RES_BODY_FINALIZE";
+    if (connp->out_state == htp_connp_RES_IGNORE) return "RES_IGNORE";
 
     return "UNKNOWN";
 }
