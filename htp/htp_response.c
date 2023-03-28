@@ -1463,15 +1463,18 @@ int htp_connp_res_data(htp_connp_t *connp, const htp_time_t *timestamp, const vo
 
         //handle gap
         if (data == NULL && len > 0) {
-            if (connp->out_state == htp_connp_RES_BODY_IDENTITY_CL_KNOWN ||
-                connp->out_state == htp_connp_RES_BODY_IDENTITY_STREAM_CLOSE) {
-                rc = connp->out_state(connp);
-            } else if (connp->out_state == htp_connp_RES_FINALIZE) {
-                rc = htp_tx_state_response_complete_ex(connp->out_tx, 0);
-            } else {
-                htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Gaps are not allowed during this state");
-                return HTP_STREAM_CLOSED;
-            }
+            // if (connp->out_state == htp_connp_RES_BODY_IDENTITY_CL_KNOWN ||
+            //     connp->out_state == htp_connp_RES_BODY_IDENTITY_STREAM_CLOSE) {
+            //     rc = connp->out_state(connp);
+            // } else if (connp->out_state == htp_connp_RES_FINALIZE) {
+            //     rc = htp_tx_state_response_complete_ex(connp->out_tx, 0);
+            // } else {
+            //     htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Gaps are not allowed during this state");
+            //     return HTP_STREAM_CLOSED;
+            // }
+
+            connp->out_state = htp_connp_RES_IGNORE;
+            rc = connp->out_state(connp);
         } else {
             rc = connp->out_state(connp);
         }
