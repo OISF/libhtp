@@ -1453,7 +1453,7 @@ htp_status_t htp_tx_state_response_headers(htp_tx_t *tx) {
                                 "Compression bomb: multiple encoding with lzma");
                         break;
                     }
-                } else if (bstr_util_cmp_mem(tok, tok_len, "inflate", 7) == 0) {
+                } else if (bstr_util_cmp_mem(tok, tok_len, "inflate", 7) == 0 || bstr_util_cmp_mem(tok, tok_len, "none", 4) == 0) {
                     cetype = HTP_COMPRESSION_NONE;
                 } else {
                     // continue
