@@ -926,7 +926,8 @@ htp_status_t htp_connp_RES_HEADERS(htp_connp_t *connp) {
 
                 OUT_PEEK_NEXT(connp);
 
-                if (htp_is_folding_char(connp->out_next_byte) == 0) {
+                if (connp->out_next_byte != -1 &&
+                    htp_is_folding_char(connp->out_next_byte) == 0) {
                     // Because we know this header is not folded, we can process the buffer straight away.
                     if (connp->cfg->process_response_header(connp, data, len) != HTP_OK) return HTP_ERROR;
                 } else {
