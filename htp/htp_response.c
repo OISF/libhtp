@@ -795,6 +795,14 @@ htp_status_t htp_connp_RES_HEADERS(htp_connp_t *connp) {
 
     for (;;) {
         if (connp->out_status == HTP_STREAM_CLOSED) {
+            if (connp->out_header != NULL) {
+                if (connp->cfg->process_response_header(connp, bstr_ptr(connp->out_header),
+                        bstr_len(connp->out_header)) != HTP_OK) return HTP_ERROR;
+
+                bstr_free(connp->out_header);
+                connp->out_header = NULL;
+            }
+
             // Finalize sending raw trailer data.
             htp_status_t rc = htp_connp_res_receiver_finalize_clear(connp);
             if (rc != HTP_OK) return rc;
@@ -926,7 +934,8 @@ htp_status_t htp_connp_RES_HEADERS(htp_connp_t *connp) {
 
                 OUT_PEEK_NEXT(connp);
 
-                if (htp_is_folding_char(connp->out_next_byte) == 0) {
+                if (connp->out_next_byte != -1 &&
+                    htp_is_folding_char(connp->out_next_byte) == 0) {
                     // Because we know this header is not folded, we can process the buffer straight away.
                     if (connp->cfg->process_response_header(connp, data, len) != HTP_OK) return HTP_ERROR;
                 } else {
