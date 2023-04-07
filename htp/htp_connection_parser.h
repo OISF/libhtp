@@ -209,6 +209,8 @@ size_t htp_connp_res_data_consumed(htp_connp_t *connp);
  */
 htp_tx_t *htp_connp_tx_create(htp_connp_t *connp);
 
+size_t htp_connp_tx_freed(htp_connp_t *connp);
+
 #ifdef	__cplusplus
 }
 #endif

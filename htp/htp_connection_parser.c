@@ -230,3 +230,27 @@ void htp_connp_tx_remove(htp_connp_t *connp, htp_tx_t *tx) {
         connp->out_tx = NULL;
     }
 }
+
+/**
+ * Removes all front NULL-ed transactions
+ *
+ * @param[in] connp
+ * @return numbers of removed NULL transactions
+ */
+size_t htp_connp_tx_freed(htp_connp_t *connp) {
+    // Transactions first got freed and NULLed
+    // Now, we can recycle the space that hold them by shifting the list
+    size_t r = 0;
+    size_t nb = htp_list_size(connp->conn->transactions);
+    for (size_t i = 0; i < nb; i++) {
+        // 0 and not i because at next iteration, we have removed the first
+        void * tx = htp_list_get(connp->conn->transactions, 0);
+        if (tx != NULL) {
+            break;
+        }
+        htp_list_shift(connp->conn->transactions);
+        r++;
+        connp->out_next_tx_index--;
+    }
+    return r;
+}

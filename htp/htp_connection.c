@@ -148,8 +148,13 @@ htp_status_t htp_conn_open(htp_conn_t *conn, const char *client_addr, int client
 htp_status_t htp_conn_remove_tx(htp_conn_t *conn, const htp_tx_t *tx) {
     if ((tx == NULL) || (conn == NULL)) return HTP_ERROR;
     if (conn->transactions == NULL) return HTP_ERROR;
-
-    return htp_list_replace(conn->transactions, tx->index, NULL);
+    for (size_t i = 0, n = htp_list_size(conn->transactions); i < n; i++) {
+        htp_tx_t *tx2 = htp_list_get(conn->transactions, i);
+        if (tx2 == tx) {
+            return htp_list_replace(conn->transactions, i, NULL);
+        }
+    }
+    return HTP_DECLINED;
 }
 
 void htp_conn_track_inbound_data(htp_conn_t *conn, size_t len, const htp_time_t *timestamp) {
