@@ -1,3 +1,20 @@
+0.5.43 (13 April 2023)
+----------------------
+
+- htp: do not log content-encoding: none
+
+- htp: do not error on multiple 100 Continue
+
+- readme: remove note on libhtp not being stable
+
+- uri: fix compile warning strict-prototypes
+
+- bstr: fix compile warning strict-prototypes
+
+- fuzz_diff: Free the rust test object.
+
+- github: add CIFuzz workflow
+
 0.5.42 (27 November 2022)
 -------------------------
 
