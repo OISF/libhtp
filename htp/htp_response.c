@@ -1075,6 +1075,12 @@ htp_status_t htp_connp_RES_LINE(htp_connp_t *connp) {
             // data as a response body because that is what browsers do.
            
             if (htp_treat_response_line_as_body(data, len)) {
+                // if we have a next line beginning with H, skip this one
+                if (connp->out_current_read_offset+1 < connp->out_current_len && (connp->out_current_data[connp->out_current_read_offset] == 'H' || len <= 2)) {
+                    connp->out_tx->response_ignored_lines++;
+                    htp_connp_res_clear_buffer(connp);
+                    return HTP_OK;
+                }
                 connp->out_tx->response_content_encoding_processing = HTP_COMPRESSION_NONE;
 
                 connp->out_current_consume_offset = connp->out_current_read_offset;
