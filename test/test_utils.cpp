@@ -215,7 +215,7 @@ TEST(UtilTest, ParseContentLength) {
 }
 
 TEST(UtilTest, ParseChunkedLength) {
-    EXPECT_EQ(0x12a5, htp_parse_chunked_length((unsigned char*) "12a5", 4));
+    EXPECT_EQ(0x12a5, htp_parse_chunked_length((unsigned char*) "12a5", 4, NULL));
 }
 
 TEST(UtilTest, IsLineFolded) {

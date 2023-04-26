@@ -415,8 +415,11 @@ htp_status_t htp_connp_RES_BODY_CHUNKED_LENGTH(htp_connp_t *connp) {
             fprint_raw_data(stderr, "Chunk length line", data, len);
             #endif
 
-            connp->out_chunked_length = htp_parse_chunked_length(data, len);
-
+            int chunk_ext = 0;
+            connp->out_chunked_length = htp_parse_chunked_length(data, len, &chunk_ext);
+            if (chunk_ext == 1) {
+                htp_log(connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Request chunk extension");
+            }
             // empty chunk length line, lets try to continue
             if (connp->out_chunked_length == -1004) {
                 connp->out_current_consume_offset = connp->out_current_read_offset;

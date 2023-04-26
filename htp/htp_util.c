@@ -300,7 +300,7 @@ int64_t htp_parse_content_length(bstr *b, htp_connp_t *connp) {
  * @param[in] len
  * @return Chunk length, or a negative number on error.
  */
-int64_t htp_parse_chunked_length(unsigned char *data, size_t len) {
+int64_t htp_parse_chunked_length(unsigned char *data, size_t len, int *extension) {
     // skip leading line feeds and other control chars
     while (len) {
         unsigned char c = *data;
@@ -323,6 +323,16 @@ int64_t htp_parse_chunked_length(unsigned char *data, size_t len) {
     }
     // cut off trailing junk
     if (i != len) {
+        if (extension) {
+            size_t j = i;
+            while (j < len) {
+                if (data[j] == ';') {
+                    *extension = 1;
+                    break;
+                }
+                j++;
+            }
+        }
         len = i;
     }
 

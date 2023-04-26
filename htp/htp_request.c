@@ -499,7 +499,11 @@ htp_status_t htp_connp_REQ_BODY_CHUNKED_LENGTH(htp_connp_t *connp) {
 
             htp_chomp(data, &len);
 
-            connp->in_chunked_length = htp_parse_chunked_length(data, len);
+            int chunk_ext = 0;
+            connp->in_chunked_length = htp_parse_chunked_length(data, len, &chunk_ext);
+            if (chunk_ext == 1) {
+                htp_log(connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Request chunk extension");
+            }
 
             htp_connp_req_clear_buffer(connp);
 
