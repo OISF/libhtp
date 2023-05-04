@@ -173,7 +173,7 @@ htp_status_t htp_parse_response_header_generic(htp_connp_t *connp, htp_header_t 
 
         // Ignore unprintable after field-name.
         prev = name_end;
-        while ((prev > name_start) && (data[prev - 1] <= 0x20)) {
+        while ((prev > name_start) && htp_is_space(data[prev - 1])) {
             prev--;
             name_end--;
 
