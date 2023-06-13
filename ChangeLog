@@ -1,3 +1,12 @@
+0.5.44 (13 June 2023)
+---------------------
+
+- response: only trim spaces at headers names end
+
+- response: skips lines before response line
+
+- headers: log a warning for chunks extension
+
 0.5.43 (13 April 2023)
 ----------------------
 
