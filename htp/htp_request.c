@@ -1068,10 +1068,12 @@ int htp_connp_req_data(htp_connp_t *connp, const htp_time_t *timestamp, const vo
             } else if (connp->in_state == htp_connp_REQ_FINALIZE) {
                 //simple version without probing
                 rc = htp_tx_state_request_complete(connp->in_tx);
+            } else if (connp->in_state == htp_connp_REQ_IDLE) {
+                // wait for the next request start
+                return HTP_OK;
             } else {
-                // go to htp_connp_REQ_CONNECT_PROBE_DATA ?
                 htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Gaps are not allowed during this state");
-                return HTP_STREAM_CLOSED;
+                return HTP_STREAM_ERROR;
             }
         } else {
             rc = connp->in_state(connp);
