@@ -207,9 +207,9 @@ static htp_status_t htp_connp_req_buffer(htp_connp_t *connp) {
         newlen += bstr_len(connp->in_header);
     }
 
-    if (newlen > connp->in_tx->cfg->field_limit_hard) {
+    if (newlen > connp->cfg->field_limit_hard) {
         htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Request buffer over the limit: size %zd limit %zd.",
-                newlen, connp->in_tx->cfg->field_limit_hard);        
+                newlen, connp->cfg->field_limit_hard);
         return HTP_ERROR;
     }
 
@@ -357,7 +357,14 @@ htp_status_t htp_connp_REQ_CONNECT_PROBE_DATA(htp_connp_t *connp) {
 #ifdef HTP_DEBUG
         fprint_raw_data(stderr, "htp_connp_REQ_CONNECT_PROBE_DATA: tunnel contains plain text HTTP", data, len);
 #endif
-        return htp_tx_state_request_complete(connp->in_tx);
+        if (connp->in_tx) {
+            return htp_tx_state_request_complete(connp->in_tx);
+        } else {
+            // If we had a leading gap, we are probing for the next request without a transaction
+            connp->in_state = htp_connp_REQ_IDLE;
+        }
+    } else if (!connp->in_tx) {
+        return HTP_DATA;
     } else {
 #ifdef HTP_DEBUG
         fprint_raw_data(stderr, "htp_connp_REQ_CONNECT_PROBE_DATA: tunnel is not HTTP", data, len);
@@ -992,7 +999,9 @@ int htp_connp_req_data(htp_connp_t *connp, const htp_time_t *timestamp, const vo
     }
 
     // Sanity check: we must have a transaction pointer if the state is not IDLE (no inbound transaction)
-    if ((connp->in_tx == NULL)&&(connp->in_state != htp_connp_REQ_IDLE)) {
+    // We may also be probing data after a leading gap
+    if (connp->in_tx == NULL && connp->in_state != htp_connp_REQ_IDLE &&
+        connp->in_state != htp_connp_REQ_CONNECT_PROBE_DATA) {
         connp->in_status = HTP_STREAM_ERROR;
 
         htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Missing inbound transaction data");
@@ -1069,7 +1078,8 @@ int htp_connp_req_data(htp_connp_t *connp, const htp_time_t *timestamp, const vo
                 //simple version without probing
                 rc = htp_tx_state_request_complete(connp->in_tx);
             } else if (connp->in_state == htp_connp_REQ_IDLE) {
-                // wait for the next request start
+                // probe for the next request start
+                connp->in_state = htp_connp_REQ_CONNECT_PROBE_DATA;
                 return HTP_OK;
             } else {
                 htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Gaps are not allowed during this state");
@@ -1091,6 +1101,10 @@ int htp_connp_req_data(htp_connp_t *connp, const htp_time_t *timestamp, const vo
         }
 
         if (rc != HTP_OK) {
+            // we may be probing after a leading gap, and still get no newline
+            if (connp->in_tx == NULL && rc == HTP_DATA_BUFFER) {
+                return HTP_STREAM_DATA;
+            }
             // Do we need more data?
             if ((rc == HTP_DATA) || (rc == HTP_DATA_BUFFER)) {
                 htp_connp_req_receiver_send_data(connp, 0 /* not last */);
