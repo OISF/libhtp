@@ -445,7 +445,11 @@ void htp_log(htp_connp_t *connp, const char *file, int line, enum htp_log_level_
     log->code = code;
     log->msg = strdup(buf);
 
-    htp_list_add(connp->conn->messages, log);
+    if (htp_list_add(connp->conn->messages, log) != HTP_OK) {
+        free((void *) log->msg);
+        free(log);
+        return;
+    }
 
     if (level == HTP_LOG_ERROR) {
         connp->last_error = log;
