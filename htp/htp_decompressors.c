@@ -232,12 +232,12 @@ htp_status_t htp_gzip_decompressor_decompress(htp_decompressor_t *drec1, htp_tx_
     }
 
 restart:
-    if (consumed > d->len) {
+    if (consumed > d->len || d->len > UINT32_MAX ) {
         htp_log(d->tx->connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "GZip decompressor: consumed > d->len");
         return HTP_ERROR;
     }
     drec->stream.next_in = (unsigned char *) (d->data + consumed);
-    drec->stream.avail_in = d->len - consumed;
+    drec->stream.avail_in = (uint32_t) (d->len - consumed);
 
     while (drec->stream.avail_in != 0) {
         // If there's no more data left in the
@@ -275,7 +275,7 @@ restart:
                 }
                 memcpy(drec->header + drec->header_len, drec->stream.next_in, consumed);
                 drec->stream.next_in = (unsigned char *) (d->data + consumed);
-                drec->stream.avail_in = d->len - consumed;
+                drec->stream.avail_in = (uint32_t) (d->len - consumed);
                 drec->header_len += consumed;
             }
             if (drec->header_len == LZMA_PROPS_SIZE + 8) {
