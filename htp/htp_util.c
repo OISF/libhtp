@@ -536,7 +536,7 @@ static htp_status_t htp_parse_port(unsigned char *data, size_t len, int *port, i
         *invalid = 1;
     } else if ((port_parsed > 0) && (port_parsed < 65536)) {
         // Valid port number.
-        *port = port_parsed;
+        *port = (int) port_parsed;
     } else {
         // Port number out of range.
         *port = -1;
