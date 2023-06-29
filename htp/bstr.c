@@ -198,7 +198,7 @@ int bstr_chr(const bstr *b, int c) {
     size_t i = 0;
     while (i < len) {
         if (data[i] == c) {
-            return i;
+            return (int) i;
         }
 
         i++;
@@ -322,7 +322,7 @@ int bstr_rchr(const bstr *b, int c) {
     size_t i = len;
     while (i > 0) {
         if (data[i - 1] == c) {
-            return i - 1;
+            return (int) (i - 1);
         }
 
         i--;
@@ -506,7 +506,7 @@ int bstr_util_mem_index_of_mem(const void *_data1, size_t len1, const void *_dat
         }
 
         if (j == len2) {
-            return i;
+            return (int) i;
         }
     }
 
@@ -529,7 +529,7 @@ int bstr_util_mem_index_of_mem_nocase(const void *_data1, size_t len1, const voi
         }
 
         if (j == len2) {
-            return i;
+            return (int) i;
         }
     }
 
@@ -560,7 +560,7 @@ int bstr_util_mem_index_of_mem_nocasenorzero(const void *_data1, size_t len1, co
         }
 
         if (j == len2) {
-            return i;
+            return (int) i;
         }
     }
 
