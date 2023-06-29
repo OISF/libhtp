@@ -528,7 +528,7 @@ void htp_config_set_compression_bomb_limit(htp_cfg_t *cfg, size_t bomblimit) {
     if (bomblimit > INT32_MAX) {
         cfg->compression_bomb_limit = INT32_MAX;
     } else {
-        cfg->compression_bomb_limit = bomblimit;
+        cfg->compression_bomb_limit = (int32_t) bomblimit;
     }
 }
 
@@ -538,7 +538,7 @@ void htp_config_set_compression_time_limit(htp_cfg_t *cfg, size_t useclimit) {
     if (useclimit >= 1000000) {
         cfg->compression_time_limit = 1000000;
     } else {
-        cfg->compression_time_limit = useclimit;
+        cfg->compression_time_limit = (int32_t) useclimit;
     }
 }
 

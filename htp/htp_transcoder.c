@@ -74,7 +74,7 @@ int htp_transcode_params(htp_connp_t *connp, htp_table_t **params, int destroy_o
     // Convert the parameters, one by one
     bstr *name = NULL;
     bstr *value = NULL;    
-    for (int i = 0, n = htp_table_size(input_params); i < n; i++) {
+    for (size_t i = 0, n = htp_table_size(input_params); i < n; i++) {
         value = htp_table_get_index(input_params, i, &name);
         
         bstr *new_name = NULL, *new_value = NULL;        
@@ -85,7 +85,7 @@ int htp_transcode_params(htp_connp_t *connp, htp_table_t **params, int destroy_o
             iconv_close(cd);
 
             bstr *b = NULL;
-            for (int j = 0, k = htp_table_size(output_params); j < k; j++) {
+            for (size_t j = 0, k = htp_table_size(output_params); j < k; j++) {
                 b = htp_table_get_index(output_params, j, NULL);
                 bstr_free(b);
             }
@@ -101,7 +101,7 @@ int htp_transcode_params(htp_connp_t *connp, htp_table_t **params, int destroy_o
             iconv_close(cd);
 
             bstr *b = NULL;
-            for (int j = 0, k = htp_table_size(output_params); j < k; j++) {
+            for (size_t j = 0, k = htp_table_size(output_params); j < k; j++) {
                 b = htp_table_get_index(output_params, j, NULL);
                 bstr_free(b);
             }
@@ -120,7 +120,7 @@ int htp_transcode_params(htp_connp_t *connp, htp_table_t **params, int destroy_o
     // Destroy the old parameter table if necessary
     if (destroy_old) {
         bstr *b = NULL;
-        for (int i = 0, n = htp_table_size(input_params); i < n; i++) {
+        for (size_t i = 0, n = htp_table_size(input_params); i < n; i++) {
             b = htp_table_get_index(input_params, i, NULL);
             bstr_free(b);
         }      
