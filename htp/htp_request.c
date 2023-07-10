@@ -999,7 +999,9 @@ int htp_connp_req_data(htp_connp_t *connp, const htp_time_t *timestamp, const vo
     if (connp->in_state == htp_connp_REQ_IDLE && connp->out_state != htp_connp_RES_IDLE) {
         //complete the response state
         htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "response is not in idle state.. complete it");
-        if(connp->out_tx != NULL) {
+        // For HTTP 1.0, we get an additional call to req_data after response is processed with in_status as HTP_STREAM_CLOSED
+        // We should avoid force completing these transactions which is why there's a check here that in_status should not be closed.
+        if(connp->out_tx != NULL && connp->in_status != HTP_STREAM_CLOSED) {
             connp->out_tx->force_complete = 1;
         }
         htp_tx_state_response_complete(connp->out_tx);
