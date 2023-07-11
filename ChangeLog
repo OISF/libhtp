@@ -1,3 +1,10 @@
+0.5.45 (11 July 2023)
+---------------------
+
+- log: resist allocation failure
+
+- support HTTP Bearer authentication
+
 0.5.44 (13 June 2023)
 ---------------------
 
