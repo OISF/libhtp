@@ -275,7 +275,7 @@ int64_t htp_parse_content_length(bstr *b, htp_connp_t *connp) {
     while ((pos < len) && (data[pos] < '0' || data[pos] > '9')) {
         if (!htp_is_lws(data[pos]) && connp != NULL && r == 0) {
             htp_log(connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0,
-                    "C-L value with extra data in the beginnning");
+                    "C-L value with extra data in the beginning");
             r = -1;
         }
         pos++;
