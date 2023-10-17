@@ -459,6 +459,14 @@ void htp_config_set_compression_bomb_limit(htp_cfg_t *cfg, size_t bomblimit);
 void htp_config_set_compression_time_limit(htp_cfg_t *cfg, size_t useclimit);
 
 /**
+ * Configures the maximum number of tx LibHTP will have per connection.
+ *
+ * @param[in] cfg
+ * @param[in] limit
+ */
+void htp_config_set_max_tx(htp_cfg_t *cfg, uint32_t limit);
+
+/**
  * Configures the desired log level.
  * 
  * @param[in] cfg

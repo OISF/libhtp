@@ -202,6 +202,10 @@ htp_tx_t *htp_connp_tx_create(htp_connp_t *connp) {
     if (htp_list_size(connp->conn->transactions) > connp->out_next_tx_index) {
         connp->conn->flags |= HTP_CONN_PIPELINED;
     }
+    if (connp->cfg->max_tx > 0 &&
+        htp_list_size(connp->conn->transactions) > connp->cfg->max_tx) {
+        return NULL;
+    }
 
     htp_tx_t *tx = htp_tx_create(connp);
     if (tx == NULL) return NULL;

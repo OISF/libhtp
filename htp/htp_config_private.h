@@ -360,6 +360,9 @@ struct htp_cfg_t {
 
     /** Whether to decompress compressed request bodies. */
     int request_decompression_enabled;
+
+    /** Maximum number of transactions. */
+    uint32_t max_tx;
 };
 
 #ifdef	__cplusplus

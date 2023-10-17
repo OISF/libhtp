@@ -523,6 +523,11 @@ void htp_config_set_lzma_layers(htp_cfg_t *cfg, int limit) {
     cfg->response_lzma_layer_limit = limit;
 }
 
+void htp_config_set_max_tx(htp_cfg_t *cfg, uint32_t limit) {
+    if (cfg == NULL) return;
+    cfg->max_tx = limit;
+}
+
 void htp_config_set_compression_bomb_limit(htp_cfg_t *cfg, size_t bomblimit) {
     if (cfg == NULL) return;
     if (bomblimit > INT32_MAX) {
