@@ -405,7 +405,7 @@ static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {
         //      (2.2.22 on Ubuntu 12.04 LTS) instead errors out with "Unknown Transfer-Encoding: identity".
         //      And it behaves strangely, too, sending a 501 and proceeding to process the request
         //      (e.g., PHP is run), but without the body. It then closes the connection.
-        if (bstr_cmp_c_nocase(te->value, "chunked") != 0) {
+        if (bstr_index_of_c_nocasenorzero(te->value, "chunked") == -1) {
             // Invalid T-E header value.
             tx->request_transfer_coding = HTP_CODING_INVALID;
             tx->flags |= HTP_REQUEST_INVALID_T_E;
