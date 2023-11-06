@@ -2536,3 +2536,54 @@ htp_uri_t *htp_uri_alloc(void) {
 char *htp_get_version(void) {
     return HTP_VERSION_STRING_FULL;
 }
+
+htp_status_t htp_header_has_token(const unsigned char *hvp, size_t hvlen, const unsigned char *value) {
+    int state = 0;
+    // offset to compare in value
+    size_t v_off = 0;
+    for (size_t i = 0; i < hvlen; i++) {
+        switch (state) {
+            case 0:
+                if (hvp[i] == 0) {
+                    // skip 0 char
+                    continue;
+                }
+                if (v_off == 0 && hvp[i] == ' ') {
+                    // skip leading space
+                    continue;
+                }
+                if (tolower(hvp[i]) == tolower(value[v_off])) {
+                    v_off++;
+                    if (value[v_off] == 0) {
+                        // finish validation if end of token
+                        state = 2;
+                    }
+                    continue;
+                } else {
+                    // wait for a new token
+                    v_off = 0;
+                    state = 1;
+                }
+                // fallthrough
+            case 1:
+                if (hvp[i] == ',') {
+                    // start of next token
+                    state = 0;
+                }
+                break;
+            case 2:
+                if (hvp[i] == ',') {
+                    return HTP_OK;
+                }
+                if (hvp[i] != 0 && hvp[i] != ' ') {
+                    // trailing junk in token, cait for a next one
+                    v_off = 0;
+                    state = 1;
+                }
+        }
+    }
+    if (state == 2) {
+        return HTP_OK;
+    }
+    return HTP_ERROR;
+}
