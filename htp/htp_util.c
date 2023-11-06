@@ -2543,3 +2543,60 @@ htp_uri_t *htp_uri_alloc(void) {
 char *htp_get_version(void) {
     return HTP_VERSION_STRING_FULL;
 }
+
+/**
+ * Tells if a header value (haystack) contains a token (needle)
+ * This is done with a caseless comparison
+ *
+ * @param[in] hvp header value pointer
+ * @param[in] hvlen length of header value buffer
+ * @param[in] value token to look for (null-terminated string), should be a lowercase constant
+ * @return HTP_OK if the header has the token; HTP_ERROR if it has not.
+ */
+htp_status_t htp_header_has_token(const unsigned char *hvp, size_t hvlen, const unsigned char *value) {
+    int state = 0;
+    // offset to compare in value
+    size_t v_off = 0;
+    // The header value is a list of comma-separated tokens (with additional spaces)
+    for (size_t i = 0; i < hvlen; i++) {
+        switch (state) {
+            case 0:
+                if (v_off == 0 && htp_is_space(hvp[i])) {
+                    // skip leading space
+                    continue;
+                }
+                if (tolower(hvp[i]) == value[v_off]) {
+                    v_off++;
+                    if (value[v_off] == 0) {
+                        // finish validation if end of token
+                        state = 2;
+                    }
+                    continue;
+                } else {
+                    // wait for a new token
+                    v_off = 0;
+                    state = 1;
+                }
+                // fallthrough
+            case 1:
+                if (hvp[i] == ',') {
+                    // start of next token
+                    state = 0;
+                }
+                break;
+            case 2:
+                if (hvp[i] == ',') {
+                    return HTP_OK;
+                }
+                if (!htp_is_space(hvp[i])) {
+                    // trailing junk in token, wait for a next one
+                    v_off = 0;
+                    state = 1;
+                }
+        }
+    }
+    if (state == 2) {
+        return HTP_OK;
+    }
+    return HTP_ERROR;
+}
