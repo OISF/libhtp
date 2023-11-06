@@ -248,6 +248,8 @@ htp_status_t htp_tx_urldecode_params_inplace(htp_tx_t *tx, bstr *input);
 
 void htp_connp_destroy_decompressors(htp_connp_t *connp);
 
+htp_status_t htp_header_has_token(const unsigned char *hvp, size_t hvlen, const unsigned char *value);
+
 #ifndef HAVE_STRLCAT
 size_t strlcat(char *dst, const char *src, size_t size);
 #endif

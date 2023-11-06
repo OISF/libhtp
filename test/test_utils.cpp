@@ -1801,3 +1801,39 @@ TEST_F(UrlencodedParser, UrlDecode1) {
     ASSERT_EQ(0, bstr_cmp_c(s, "/one/two/three/%3"));
     bstr_free(s);
 }
+
+TEST(UtilTest, HeaderHasToken) {
+    char data[100];
+
+    // Basic
+    strcpy(data, "chunked");
+    EXPECT_EQ(HTP_OK, htp_header_has_token((unsigned char*) data, strlen(data), (unsigned char *)"chunked"));
+
+    // Negative
+    strcpy(data, "notchunked");
+    EXPECT_EQ(HTP_ERROR, htp_header_has_token((unsigned char*) data, strlen(data), (unsigned char *)"chunked"));
+    strcpy(data, "chunkednot");
+    EXPECT_EQ(HTP_ERROR, htp_header_has_token((unsigned char*) data, strlen(data), (unsigned char *)"chunked"));
+    strcpy(data, "chunk,ed");
+    EXPECT_EQ(HTP_ERROR, htp_header_has_token((unsigned char*) data, strlen(data), (unsigned char *)"chunked"));
+    strcpy(data, "chunk ed");
+    EXPECT_EQ(HTP_ERROR, htp_header_has_token((unsigned char*) data, strlen(data), (unsigned char *)"chunked"));
+
+    // Positive
+    strcpy(data, " notchunked , chunked , yetanother");
+    EXPECT_EQ(HTP_OK, htp_header_has_token((unsigned char*) data, strlen(data), (unsigned char *)"chunked"));
+    strcpy(data, "chunked,yetanother");
+    EXPECT_EQ(HTP_OK, htp_header_has_token((unsigned char*) data, strlen(data), (unsigned char *)"chunked"));
+    strcpy(data, "not,chunked");
+    EXPECT_EQ(HTP_OK, htp_header_has_token((unsigned char*) data, strlen(data), (unsigned char *)"chunked"));
+    strcpy(data, "chunk,chunked");
+    EXPECT_EQ(HTP_OK, htp_header_has_token((unsigned char*) data, strlen(data), (unsigned char *)"chunked"));
+    strcpy(data, " chunked");
+    EXPECT_EQ(HTP_OK, htp_header_has_token((unsigned char*) data, strlen(data), (unsigned char *)"chunked"));
+    strcpy(data, "chunked ");
+    EXPECT_EQ(HTP_OK, htp_header_has_token((unsigned char*) data, strlen(data), (unsigned char *)"chunked"));
+    strcpy(data, "chunked,");
+    EXPECT_EQ(HTP_OK, htp_header_has_token((unsigned char*) data, strlen(data), (unsigned char *)"chunked"));
+    strcpy(data, ",chunked");
+    EXPECT_EQ(HTP_OK, htp_header_has_token((unsigned char*) data, strlen(data), (unsigned char *)"chunked"));
+}
