@@ -585,10 +585,7 @@ static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {
     rc = htp_hook_run_all(tx->connp->cfg->hook_request_headers, tx);
     if (rc != HTP_OK) return rc;
 
-    // We cannot proceed if the request is invalid.
-    if (tx->flags & HTP_REQUEST_INVALID) {
-        return HTP_ERROR;
-    }
+    // We still proceed if the request is invalid.
 
     return HTP_OK;
 }
