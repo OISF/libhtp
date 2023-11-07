@@ -732,6 +732,13 @@ int htp_parse_uri(bstr *input, htp_uri_t **uri) {
 
     unsigned char *data = bstr_ptr(input);
     size_t len = bstr_len(input);
+    // remove trailing spaces
+    while (len > 0) {
+        if (data[len-1] != ' ') {
+            break;
+        }
+        len--;
+    }
     size_t start, pos;
 
     if (len == 0) {
