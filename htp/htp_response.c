@@ -978,10 +978,14 @@ htp_status_t htp_connp_RES_HEADERS(htp_connp_t *connp) {
                             return HTP_ERROR;
                     } else {
                         // Add to the existing header.
-                        bstr *new_out_header = bstr_add_mem(connp->out_header, data, len);
-                        if (new_out_header == NULL)
-                            return HTP_ERROR;
-                        connp->out_header = new_out_header;
+                        if (bstr_len(connp->out_header) < HTP_MAX_HEADER_FOLDED) {
+                            bstr *new_out_header = bstr_add_mem(connp->out_header, data, len);
+                            if (new_out_header == NULL)
+                                return HTP_ERROR;
+                            connp->out_header = new_out_header;
+                        } else {
+                            htp_log(connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Response field length exceeds folded maximum");
+                        }
                     }
                 }
             }

@@ -714,10 +714,14 @@ htp_status_t htp_connp_REQ_HEADERS(htp_connp_t *connp) {
                     connp->in_header = bstr_dup_mem(data + trim, len - trim);
                     if (connp->in_header == NULL) return HTP_ERROR;
                 } else {
-                    // Add to the existing header.                    
-                    bstr *new_in_header = bstr_add_mem(connp->in_header, data, len);
-                    if (new_in_header == NULL) return HTP_ERROR;
-                    connp->in_header = new_in_header;
+                    // Add to the existing header.
+                    if (bstr_len(connp->in_header) < HTP_MAX_HEADER_FOLDED) {
+                        bstr *new_in_header = bstr_add_mem(connp->in_header, data, len);
+                        if (new_in_header == NULL) return HTP_ERROR;
+                        connp->in_header = new_in_header;
+                    } else {
+                        htp_log(connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Request field length exceeds folded maximum");
+                    }
                 }
             }
 

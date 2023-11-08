@@ -262,5 +262,8 @@ size_t strlcpy(char *dst, const char *src, size_t size);
 }
 #endif
 
+// as CURL_MAX_HTTP_HEADER
+#define HTP_MAX_HEADER_FOLDED 102400
+
 #endif	/* _HTP_PRIVATE_H */
 
