@@ -148,10 +148,11 @@ htp_status_t htp_conn_open(htp_conn_t *conn, const char *client_addr, int client
 htp_status_t htp_conn_remove_tx(htp_conn_t *conn, const htp_tx_t *tx) {
     if ((tx == NULL) || (conn == NULL)) return HTP_ERROR;
     if (conn->transactions == NULL) return HTP_ERROR;
-    for (size_t i = 0, n = htp_list_size(conn->transactions); i < n; i++) {
-        htp_tx_t *tx2 = htp_list_get(conn->transactions, i);
-        if (tx2 == tx) {
-            return htp_list_replace(conn->transactions, i, NULL);
+    size_t n = htp_list_size(conn->transactions);
+    if (n > 0) {
+        htp_tx_t *tx2 = htp_list_get(conn->transactions, htp_list_size(tx->conn->transactions) - 1);
+        if (tx2 != NULL) {
+            return htp_list_replace(conn->transactions, htp_list_size(tx->conn->transactions) - 1 + tx->index - tx2->index, NULL);
         }
     }
     return HTP_DECLINED;
