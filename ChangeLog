@@ -1,3 +1,24 @@
+0.5.46 (08 February 2024)
+-------------------------
+
+- tx: configurable number of maximum transactions
+
+- htp: offers possibility to remove transactions
+
+- headers: limit the size of folded headers
+
+- request: be more liberal about transfer-encoding value
+
+- request: continue processing even with invalid headers
+
+- http0.9: process headers if there are non-space characters
+
+- htp_util: fix spelling issue
+
+- src: fix -Wshorten-64-to-32 warnings
+
+- uri: normalization removes trailing spaces
+
 0.5.45 (11 July 2023)
 ---------------------
 
