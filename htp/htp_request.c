@@ -732,6 +732,14 @@ htp_status_t htp_connp_REQ_HEADERS(htp_connp_t *connp) {
     return HTP_ERROR;
 }
 
+// HTTP/0.9 is supposed to be only a request line without protocol.
+// Libhtp will still consider the request to be HTTP/0.9 if there
+// are some junk whitespaces after that request line.
+// Libhtp allows the small value of 16 extra bytes/whitespaces,
+// otherwise we consider it to be a HTTP/1.x request with missing protocol.
+// It is unlikely to meet HTTP/0.9, and we want to limit probing.
+#define HTTP09_MAX_JUNK_LEN 16
+
 /**
  * Determines request protocol.
  *
@@ -749,6 +757,14 @@ htp_status_t htp_connp_REQ_PROTOCOL(htp_connp_t *connp) {
         // Let's check if the protocol was simply missing
         int64_t pos = connp->in_current_read_offset;
         // Probe if data looks like a header line
+        if (connp->in_current_len > connp->in_current_read_offset + HTTP09_MAX_JUNK_LEN) {
+            htp_log(connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Request line: missing protocol");
+            connp->in_tx->is_protocol_0_9 = 0;
+            // Switch to request header parsing.
+            connp->in_state = htp_connp_REQ_HEADERS;
+            connp->in_tx->request_progress = HTP_REQUEST_HEADERS;
+            return HTP_OK;
+        }
         while (pos < connp->in_current_len) {
             if (!htp_is_space(connp->in_current_data[pos])) {
                 htp_log(connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Request line: missing protocol");
