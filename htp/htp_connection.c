@@ -153,9 +153,12 @@ htp_status_t htp_conn_remove_tx(htp_conn_t *conn, const htp_tx_t *tx) {
     if (conn->transactions == NULL) return HTP_ERROR;
     size_t n = htp_list_size(conn->transactions);
     if (n > 0) {
-        htp_tx_t *tx2 = htp_list_get(conn->transactions, htp_list_size(tx->conn->transactions) - 1);
+        htp_tx_t *tx2 = htp_list_get(conn->transactions, n - 1);
         if (tx2 != NULL) {
-            return htp_list_replace(conn->transactions, htp_list_size(tx->conn->transactions) - 1 + tx->index - tx2->index, NULL);
+            return htp_list_replace(conn->transactions, n - 1 + tx->index - tx2->index, NULL);
+        } else {
+            printf("fail with %d/%d\n", tx->index, n);
+            abort();
         }
     }
     return HTP_DECLINED;
