@@ -157,7 +157,7 @@ htp_status_t htp_conn_remove_tx(htp_conn_t *conn, const htp_tx_t *tx) {
         if (tx2 != NULL) {
             return htp_list_replace(conn->transactions, n - 1 + tx->index - tx2->index, NULL);
         } else {
-            printf("fail with %d/%d\n", tx->index, n);
+            printf("fail with %ld/%ld\n", tx->index, n);
             abort();
         }
     }

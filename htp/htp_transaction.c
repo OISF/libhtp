@@ -67,7 +67,7 @@ htp_tx_t *htp_tx_create(htp_connp_t *connp) {
         if (txl != NULL) {
             tx->index = txl->index + 1;
         } else {
-            printf("fail with %d\n", htp_list_size(tx->conn->transactions));
+            printf("fail with %ld\n", htp_list_size(tx->conn->transactions));
             abort();
         }
     }
