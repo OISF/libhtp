@@ -1,3 +1,8 @@
+0.5.47 (19 March 2024)
+----------------------
+
+- request: limit probing after missing protocol
+
 0.5.46 (08 February 2024)
 -------------------------
 
