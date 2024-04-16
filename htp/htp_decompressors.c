@@ -317,7 +317,7 @@ restart:
             return HTP_ERROR;
         }
         if (GZIP_BUF_SIZE > drec->stream.avail_out) {
-            if (rc == Z_DATA_ERROR) {
+            if (rc == Z_DATA_ERROR && drec->restart == 0) {
                 // There is data even if there is an error
                 // So use this data and log a warning
                 htp_log(d->tx->connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "GZip decompressor: inflate failed with %d", rc);
