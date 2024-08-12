@@ -191,8 +191,8 @@ void *htp_table_get(const htp_table_t *table, const bstr *key) {
     // keys with the parameter, return data if found.    
     for (size_t i = 0, n = htp_list_size(&table->list); i < n; i += 2) {
         bstr *key_candidate = htp_list_get(&table->list, i);
-        void *element = htp_list_get(&table->list, i + 1);
         if (bstr_cmp_nocase(key_candidate, key) == 0) {
+            void *element = htp_list_get(&table->list, i + 1);
             return element;
         }
     }
@@ -207,8 +207,8 @@ void *htp_table_get_c(const htp_table_t *table, const char *ckey) {
     // keys with the parameter, return data if found.    
     for (size_t i = 0, n = htp_list_size(&table->list); i < n; i += 2) {
         bstr *key_candidate = htp_list_get(&table->list, i);
-        void *element = htp_list_get(&table->list, i + 1);
         if (bstr_cmp_c_nocasenorzero(key_candidate, ckey) == 0) {
+            void *element = htp_list_get(&table->list, i + 1);
             return element;
         }
     }
@@ -235,8 +235,8 @@ void *htp_table_get_mem(const htp_table_t *table, const void *key, size_t key_le
     // keys with the parameter, return data if found.
     for (size_t i = 0, n = htp_list_size(&table->list); i < n; i += 2) {
         bstr *key_candidate = htp_list_get(&table->list, i);
-        void *element = htp_list_get(&table->list, i + 1);
         if (bstr_cmp_mem_nocase(key_candidate, key, key_len) == 0) {
+            void *element = htp_list_get(&table->list, i + 1);
             return element;
         }
     }
