@@ -23,7 +23,6 @@ jobs:
         run: |
             dnf -y install make \
                 autoconf \
-                build-essential \
                 automake \
                 libtool \
                 make \
@@ -45,7 +44,6 @@ jobs:
         run: |
             dnf -y install make \
                 autoconf \
-                build-essential \
                 automake \
                 libtool \
                 make \
