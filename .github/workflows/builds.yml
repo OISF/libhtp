@@ -25,6 +25,8 @@ jobs:
                 autoconf \
                 automake \
                 libtool \
+                gcc \
+                gcc-c++ \
                 make \
                 pkgconfig \
                 zlib-devel
@@ -46,6 +48,8 @@ jobs:
                 autoconf \
                 automake \
                 libtool \
+                gcc \
+                gcc-c++ \
                 make \
                 pkgconfig \
                 zlib-devel
