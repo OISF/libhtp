@@ -13,6 +13,52 @@ env:
   DEBIAN_FRONTEND: "noninteractive"
 
 jobs:
+  almalinux-9:
+    name: AlmaLinux 9
+    runs-on: ubuntu-latest
+    container: almalinux:9
+    steps:
+      - uses: actions/checkout@v3.1.0
+      - name: Install system dependencies
+        run: |
+            dnf -y install make \
+                autoconf \
+                automake \
+                libtool \
+                gcc \
+                gcc-c++ \
+                make \
+                pkgconfig \
+                zlib-devel
+      - run: ./autogen.sh
+      - run: CFLAGS="${DEFAULT_CFLAGS}" ./configure
+      - run: make -j2
+      - run: make install
+      - run: make distcheck
+
+  almalinux-8:
+    name: AlmaLinux 8
+    runs-on: ubuntu-latest
+    container: almalinux:8
+    steps:
+      - uses: actions/checkout@v3.1.0
+      - name: Install system dependencies
+        run: |
+            dnf -y install make \
+                autoconf \
+                automake \
+                libtool \
+                gcc \
+                gcc-c++ \
+                make \
+                pkgconfig \
+                zlib-devel
+      - run: ./autogen.sh
+      - run: CFLAGS="${DEFAULT_CFLAGS}" ./configure
+      - run: make -j2
+      - run: make install
+      - run: make distcheck
+
   ubuntu-2004:
     name: Ubuntu 20.04
     runs-on: ubuntu-latest
@@ -26,7 +72,6 @@ jobs:
             apt-get -y install make \
                 autoconf \
                 build-essential \
-                autoconf \
                 automake \
                 dpkg-dev \
                 debhelper \
@@ -53,7 +98,6 @@ jobs:
             apt-get -y install make \
                 autoconf \
                 build-essential \
-                autoconf \
                 automake \
                 libtool \
                 make \
