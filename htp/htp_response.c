@@ -321,6 +321,12 @@ htp_status_t htp_connp_RES_BODY_CHUNKED_DATA(htp_connp_t *connp) {
         bytes_to_consume = connp->out_current_len - connp->out_current_read_offset;
     }
 
+    if (connp->out_status == HTP_STREAM_CLOSED) {
+        connp->out_state = htp_connp_RES_FINALIZE;
+        // Sends close signal to decompressors
+        htp_status_t rc = htp_tx_res_process_body_data_ex(connp->out_tx, NULL, 0);
+        return rc;
+    }
     if (bytes_to_consume == 0) return HTP_DATA;
 
     // Consume the data.
