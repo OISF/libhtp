@@ -8,10 +8,10 @@ LibHTP is a security-aware parser for the HTTP protocol and the related bits
 and pieces. The goal of the project is mainly to support the Suricata use case.
 Other use cases might not fully be supported, and we encourage you to cover these.
 
-
- | STATUS      LIBHTP IS VERY YOUNG AT THIS POINT. IT WILL BE SOME TIME BEFORE
- |             IT CAN BE CONSIDER COMPLETE. AT THE MOMENT, THE FOCUS OF DEVELOPMENT
- |             IS ON ACHIEVING THE FIRST TWO GOALS.
+   |   STATUS
+   |
+   |   We are currently in the process of migrating LibHTP to a Rust version and thus
+   |   support will be discontinued.
 
 See the LICENSE, COPYING, and NOTICE files distributed with this work for
 information regarding licensing, copying and copyright ownership.
