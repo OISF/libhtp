@@ -316,15 +316,8 @@ restart:
             // no initialization means previous error on stream
             return HTP_ERROR;
         }
-        if (GZIP_BUF_SIZE > drec->stream.avail_out) {
-            if (rc == Z_DATA_ERROR && drec->restart == 0) {
-                // There is data even if there is an error
-                // So use this data and log a warning
-                htp_log(d->tx->connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "GZip decompressor: inflate failed with %d", rc);
-                rc = Z_STREAM_END;
-            }
-        }
-        if (rc == Z_STREAM_END) {
+        int error_after_data = (rc == Z_DATA_ERROR && drec->restart == 0 && GZIP_BUF_SIZE > drec->stream.avail_out);
+        if (rc == Z_STREAM_END || error_after_data) {
             // How many bytes do we have?
             size_t len = GZIP_BUF_SIZE - drec->stream.avail_out;
 
@@ -351,6 +344,12 @@ restart:
             drec->stream.next_out = drec->buffer;
             // TODO Handle trailer.
 
+            if (error_after_data) {
+                // There is data even if there is an error
+                // So use this data and log a warning
+                htp_log(d->tx->connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "GZip decompressor: inflate failed with %d", rc);
+                return HTP_ERROR;
+            }
             return HTP_OK;
         }
         else if (rc != Z_OK) {
