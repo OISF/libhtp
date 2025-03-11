@@ -212,7 +212,10 @@ enum htp_content_encoding_t {
     HTP_COMPRESSION_DEFLATE = 3,
 
     /** LZMA compression. */
-    HTP_COMPRESSION_LZMA = 4
+    HTP_COMPRESSION_LZMA = 4,
+
+    /** No more data. */
+    HTP_COMPRESSION_OVER = 5
 };
 
 /**
