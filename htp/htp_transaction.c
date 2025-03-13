@@ -972,8 +972,13 @@ htp_status_t htp_tx_res_process_body_data_ex(htp_tx_t *tx, const void *data, siz
         case HTP_COMPRESSION_DEFLATE:
         case HTP_COMPRESSION_LZMA:
             // In severe memory stress these could be NULL
-            if (tx->connp->out_decompressor == NULL)
+            if (tx->connp->out_decompressor == NULL) {
+                if (data == NULL) {
+                    // we were already stopped on a gap finishing CL
+                    return HTP_OK;
+                }
                 return HTP_ERROR;
+            }
 
             struct timeval after;
             gettimeofday(&tx->connp->out_decompressor->time_before, NULL);
