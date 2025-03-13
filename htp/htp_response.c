@@ -375,11 +375,6 @@ static inline int is_chunked_ctl_char(const unsigned char c) {
  * @returns 1 if it looks valid, 0 if it looks invalid
  */
 static inline int data_probe_chunk_length(htp_connp_t *connp) {
-    if (connp->out_current_read_offset - connp->out_current_consume_offset < 8) {
-        // not enough data so far, consider valid still
-        return 1;
-    }
-
     unsigned char *data = connp->out_current_data + connp->out_current_consume_offset;
     size_t len = connp->out_current_read_offset - connp->out_current_consume_offset;
 
