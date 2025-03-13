@@ -289,6 +289,12 @@ static void htp_connp_res_clear_buffer(htp_connp_t *connp) {
 htp_status_t htp_connp_RES_BODY_CHUNKED_DATA_END(htp_connp_t *connp) {
     // TODO We shouldn't really see anything apart from CR and LF,
     //      so we should warn about anything else.
+    if (connp->out_status == HTP_STREAM_CLOSED) {
+        connp->out_state = htp_connp_RES_FINALIZE;
+        // Sends close signal to decompressors
+        htp_status_t rc = htp_tx_res_process_body_data_ex(connp->out_tx, NULL, 0);
+        return rc;
+    }
 
     for (;;) {
         OUT_NEXT_BYTE_OR_RETURN(connp);
@@ -402,6 +408,13 @@ static inline int data_probe_chunk_length(htp_connp_t *connp) {
  * @returns HTP_OK on state change, HTP_ERROR on error, or HTP_DATA when more data is needed.
  */
 htp_status_t htp_connp_RES_BODY_CHUNKED_LENGTH(htp_connp_t *connp) {
+    if (connp->out_status == HTP_STREAM_CLOSED) {
+        connp->out_state = htp_connp_RES_FINALIZE;
+        // Sends close signal to decompressors
+        htp_status_t rc = htp_tx_res_process_body_data_ex(connp->out_tx, NULL, 0);
+        return rc;
+    }
+
     for (;;) {
         OUT_COPY_BYTE_OR_RETURN(connp);
 
