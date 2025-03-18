@@ -1,3 +1,24 @@
+0.5.50 (18 March 2025)
+----------------------
+
+- response: do not error on gap finishing content-length
+
+- chunks: probe validity if data was not buffered
+
+- chunks: abort asap on invalid chunk length
+
+- response: end decompressors in chunked content
+
+- decompressors: do not take data after end
+
+- readme: update status
+
+- readme: update goals
+
+- response: end decompressors in chunked content
+
+- scan-build: work around optin.performance.Padding
+
 0.5.49 (30 September 2024)
 --------------------------
 
