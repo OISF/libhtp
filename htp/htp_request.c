@@ -1006,7 +1006,8 @@ int htp_connp_req_data(htp_connp_t *connp, const htp_time_t *timestamp, const vo
     }
 
     // Sanity check: we must have a transaction pointer if the state is not IDLE (no inbound transaction)
-    if ((connp->in_tx == NULL)&&(connp->in_state != htp_connp_REQ_IDLE)) {
+    if ((connp->in_tx == NULL)&&
+        (connp->in_state != htp_connp_REQ_IDLE && connp->in_state != htp_connp_REQ_IGNORE_DATA_AFTER_HTTP_0_9)) {
         connp->in_status = HTP_STREAM_ERROR;
 
         htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Missing inbound transaction data");
