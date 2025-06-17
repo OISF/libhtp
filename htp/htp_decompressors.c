@@ -350,6 +350,9 @@ restart:
                 // There is data even if there is an error
                 // So use this data and log a warning
                 htp_log(d->tx->connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "GZip decompressor: inflate failed with %d", rc);
+                if (drec->zlib_initialized == HTP_COMPRESSION_LZMA) {
+                    LzmaDec_Free(&drec->state, &lzma_Alloc);
+                }
                 drec->zlib_initialized = HTP_COMPRESSION_OVER;
                 return HTP_ERROR;
             }
