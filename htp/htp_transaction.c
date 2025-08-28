@@ -1347,7 +1347,8 @@ htp_status_t htp_tx_state_response_headers(htp_tx_t *tx) {
             tx->response_content_encoding = HTP_COMPRESSION_DEFLATE;
         } else if (bstr_cmp_c_nocasenorzero(ce->value, "lzma") == 0) {
             tx->response_content_encoding = HTP_COMPRESSION_LZMA;
-        } else if (bstr_cmp_c_nocasenorzero(ce->value, "inflate") == 0) {
+        } else if (bstr_cmp_c_nocasenorzero(ce->value, "inflate") == 0 ||
+                   bstr_cmp_c_nocasenorzero(ce->value, "identify") == 0) {
             // ignore
         } else {
             /* exceptional cases: enter slow path */
