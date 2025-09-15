@@ -1,3 +1,12 @@
+0.5.52 (15 September 2025)
+--------------------------
+
+- htp: typo fix for Content-Encoding: identity
+
+- ci: bump version for cifuzz upload-artifact action
+
+- htp: do not log anomaly for Content-Encoding: identity
+
 0.5.51 (07 July 2025)
 ---------------------
 
