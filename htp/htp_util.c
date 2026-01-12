@@ -623,6 +623,12 @@ htp_status_t htp_parse_hostport(bstr *hostport, bstr **hostname, bstr **port, in
         unsigned char *colon = memchr(data, ':', len);
         if (colon == NULL) {
             // Hostname alone, no port.
+            if (data[0] == '/' && (len == 1 || data[1] != '/')) {
+                //If it starts with "//", we should skip (might have parsed a scheme and no creds)
+                //If it starts with '/', this is a path, not a hostname
+                *invalid = 1;
+                return HTP_OK;
+            }
 
             *hostname = bstr_dup_mem(data, len);
             if (*hostname == NULL) return HTP_ERROR;
