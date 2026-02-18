@@ -116,10 +116,12 @@ int htp_base64_decode(htp_base64_decoder *decoder, const void *_code_in, int len
                     fragment = (char) htp_base64_decode_single(*codechar++);
                 } while (fragment < 0);
                 *plainchar++ |= (fragment & 0x030) >> 4;
-                *plainchar = (unsigned char) ((fragment & 0x00f) << 4);
                 if (--length_out == 0) {
+                    decoder->step = step_c;
+                    decoder->plainchar = (unsigned char) ((fragment & 0x00f) << 4);
                     return (int) (plainchar - plaintext_out);
                 }
+                *plainchar = (unsigned char) ((fragment & 0x00f) << 4);
                 /* fall through */
 
                 case step_c:
@@ -132,10 +134,12 @@ int htp_base64_decode(htp_base64_decoder *decoder, const void *_code_in, int len
                     fragment = (char) htp_base64_decode_single(*codechar++);
                 } while (fragment < 0);
                 *plainchar++ |= (fragment & 0x03c) >> 2;
-                *plainchar = (unsigned char) ((fragment & 0x003) << 6);
                 if (--length_out == 0) {
+                    decoder->step = step_d;
+                    decoder->plainchar = (unsigned char) ((fragment & 0x003) << 6);
                     return (int) (plainchar - plaintext_out);
                 }
+                *plainchar = (unsigned char) ((fragment & 0x003) << 6);
                 /* fall through */
 
                 case step_d:
@@ -149,6 +153,8 @@ int htp_base64_decode(htp_base64_decoder *decoder, const void *_code_in, int len
                 } while (fragment < 0);
                 *plainchar++ |= (fragment & 0x03f);
                 if (--length_out == 0) {
+                    decoder->step = step_a;
+                    decoder->plainchar = 0;
                     return (int) (plainchar - plaintext_out);
                 }
                 /* fall through */

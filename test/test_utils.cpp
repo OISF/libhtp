@@ -60,6 +60,101 @@ TEST(Base64, Decode) {
     bstr_free(out);
 }
 
+// Tests for issue #458: htp_base64_decode out-of-bounds write with undersized output buffer
+
+TEST(Base64, DecodeOutputBuffer1) {
+    // "AAAA" decodes to 3 zero bytes. With output buffer of 1, the old code
+    // wrote past the buffer (heap-buffer-overflow). Should write only 1 byte.
+    htp_base64_decoder dec;
+    htp_base64_decoder_init(&dec);
+    const char *in = "AAAA";
+    unsigned char out[1];
+    memset(out, 0xff, sizeof(out));
+    int ret = htp_base64_decode(&dec, in, 4, out, 1);
+    EXPECT_EQ(1, ret);
+    EXPECT_EQ(0x00, out[0]);
+}
+
+TEST(Base64, DecodeOutputBuffer2) {
+    // Output buffer of size 2 - buffer exhausted at step_c transition.
+    htp_base64_decoder dec;
+    htp_base64_decoder_init(&dec);
+    const char *in = "AAAA";
+    unsigned char out[2];
+    memset(out, 0xff, sizeof(out));
+    int ret = htp_base64_decode(&dec, in, 4, out, 2);
+    EXPECT_EQ(2, ret);
+    EXPECT_EQ(0x00, out[0]);
+    EXPECT_EQ(0x00, out[1]);
+}
+
+TEST(Base64, DecodeStreamingChunkedStepB) {
+    // Streaming decode with chunked input: output buffer exhausted at step_b.
+    // "AQID" decodes to {0x01, 0x02, 0x03}.
+    // Call 1: feed first 2 base64 chars "AQ", output buffer=1.
+    //   step_a consumes 'A', step_b consumes 'Q', writes 1 byte, buffer full.
+    //   Decoder must save step=step_c so next call resumes correctly.
+    // Call 2: feed next 2 base64 chars "ID", output buffer=2.
+    //   Must resume at step_c (not step_a) to produce correct output.
+    htp_base64_decoder dec;
+    htp_base64_decoder_init(&dec);
+    unsigned char out1[1], out2[2];
+
+    int ret1 = htp_base64_decode(&dec, "AQ", 2, out1, 1);
+    EXPECT_EQ(1, ret1);
+    EXPECT_EQ(0x01, out1[0]);
+
+    int ret2 = htp_base64_decode(&dec, "ID", 2, out2, 2);
+    EXPECT_EQ(2, ret2);
+    EXPECT_EQ(0x02, out2[0]);
+    EXPECT_EQ(0x03, out2[1]);
+}
+
+TEST(Base64, DecodeStreamingChunkedStepC) {
+    // Streaming decode: output buffer exhausted at step_c.
+    // "AQID" decodes to {0x01, 0x02, 0x03}.
+    // Call 1: feed first 3 base64 chars "AQI", output buffer=2.
+    //   step_a('A'), step_b('Q') writes byte 1, step_c('I') writes byte 2, buffer full.
+    //   Decoder must save step=step_d so next call resumes correctly.
+    // Call 2: feed last base64 char "D", output buffer=1.
+    //   Must resume at step_d to produce the final byte.
+    htp_base64_decoder dec;
+    htp_base64_decoder_init(&dec);
+    unsigned char out1[2], out2[1];
+
+    int ret1 = htp_base64_decode(&dec, "AQI", 3, out1, 2);
+    EXPECT_EQ(2, ret1);
+    EXPECT_EQ(0x01, out1[0]);
+    EXPECT_EQ(0x02, out1[1]);
+
+    int ret2 = htp_base64_decode(&dec, "D", 1, out2, 1);
+    EXPECT_EQ(1, ret2);
+    EXPECT_EQ(0x03, out2[0]);
+}
+
+TEST(Base64, DecodeStreamingChunkedStepD) {
+    // Streaming decode: output buffer exhausted at step_d.
+    // "AQIDBA==" decodes to {0x01, 0x02, 0x03, 0x04}.
+    // Call 1: feed "AQID" (4 chars), output buffer=3.
+    //   Produces {0x01, 0x02, 0x03}, buffer full at step_d.
+    //   Decoder must save step=step_a so next group starts correctly.
+    // Call 2: feed "BA==" (next 4 chars), output buffer=1.
+    //   Must resume at step_a to decode the next base64 group.
+    htp_base64_decoder dec;
+    htp_base64_decoder_init(&dec);
+    unsigned char out1[3], out2[1];
+
+    int ret1 = htp_base64_decode(&dec, "AQID", 4, out1, 3);
+    EXPECT_EQ(3, ret1);
+    EXPECT_EQ(0x01, out1[0]);
+    EXPECT_EQ(0x02, out1[1]);
+    EXPECT_EQ(0x03, out1[2]);
+
+    int ret2 = htp_base64_decode(&dec, "BA==", 4, out2, 1);
+    EXPECT_EQ(1, ret2);
+    EXPECT_EQ(0x04, out2[0]);
+}
+
 TEST(UtilTest, Separator) {
     EXPECT_EQ(0, htp_is_separator('a'));
     EXPECT_EQ(0, htp_is_separator('^'));
