@@ -1,3 +1,8 @@
+0.5.53 (11 March 2026)
+----------------------
+
+- htp: checks a hostname does not begin with a slash
+
 0.5.52 (15 September 2025)
 --------------------------
 
