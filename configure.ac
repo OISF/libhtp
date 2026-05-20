@@ -89,6 +89,11 @@ AC_PROG_CXX
 LT_INIT
 AM_SANITY_CHECK
 
+# Verify that the selected compiler actually supports C11
+AS_IF([test "x$ac_cv_prog_cc_c11" = "xno"], [
+       CFLAGS="${CFLAGS} -std=gnu99 -Wno-c11-extensions"
+       ])
+
 # Checks for library functions
 #AC_CHECK_FUNCS([strlcpy strlcat])
     OCFLAGS=$CFLAGS

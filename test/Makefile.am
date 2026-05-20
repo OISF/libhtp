@@ -1,6 +1,6 @@
 LDADD = $(top_builddir)/htp/libhtp.la -lz @LIBICONV@ 
 
-AM_CFLAGS = -D_GNU_SOURCE -g -Wall -Wextra -std=gnu99 -pedantic \
+AM_CFLAGS = -D_GNU_SOURCE -g -Wall -Wextra -pedantic \
 	-Wextra -Wno-missing-field-initializers -Wshadow -Wpointer-arith \
         -Wstrict-prototypes -Wmissing-prototypes -Wno-unused-parameter
         
